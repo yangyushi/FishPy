@@ -1,16 +1,53 @@
 #!/usr/bin/env python3
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage 
 from scipy import signal
+import numba
+
+
+@numba.jit(nopython=True, parallel=True)
+def get_diff(image: np.ndarray, kernel: np.ndarray):
+    lx, ly = image.shape
+    lkx, lky = kernel.shape
+    left = int(lkx // 2)
+    top  = int(lky // 2)
+    diff = np.zeros(image.shape)
+    for x in range(left, lx - lkx + left):
+        for y in range(top, ly - lky + top):
+            error = 0
+            for kx in range(lkx):
+                for ky in range(lky):
+                    error += np.abs(image[x - left + kx, y - top + ky] - kernel[kx, ky])
+            diff[x, y] = error
+    return diff
+                    
+def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
+    mse = []
+    for angle in angles:
+        mse.append([])
+        for kernel in kernels:
+            area = kernel.shape[0] * kernel.shape[1]
+            cc_kernel = ndimage.rotate(kernel, angle)
+            diff = get_diff(image, cc_kernel) / area
+            mse[-1].append(diff)
+    return np.array(mse)
 
 
 def get_cross_correlation_nd(image: np.ndarray, angles: list, kernels: list) -> np.ndarray:
     corr = []
-    cc_image = image - image.mean()
+    cc_image = image
     for angle in angles:
         corr.append([])
         for kernel in kernels:
-            cc_kernel = ndimage.rotate(kernel, angle)
+            cc_kernel = ndimage.rotate(kernel, angle, mode='constant', cval=kernel.min())
+            centre = np.array(cc_kernel.shape) // 2
+            location = np.array(np.unravel_index(np.argmax(cc_kernel), cc_kernel.shape))
+            shift = centre - location
+            cc_kernel = ndimage.shift(cc_kernel, shift, mode='constant', cval=cc_kernel.min())
+            roi = ( slice(centre[0] - kernel.shape[0] // 2, centre[0] + kernel.shape[0] // 2),
+                    slice(centre[1] - kernel.shape[1] // 2, centre[1] + kernel.shape[1] // 2))
+            cc_kernel = cc_kernel[roi]
             cross_correlation = signal.correlate(cc_image, cc_kernel, mode='same')
             corr[-1].append(cross_correlation)
     return np.array(corr)
@@ -34,6 +71,29 @@ def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, im
             ) == cc
 
     mmap *= cc > (cc.max() * cc_threshold)
+    mmap *= image > (image.max() * img_threshold)
+    maxima = np.array(mmap.nonzero())
+
+    return maxima
+
+def oishi_locate_mse(image: np.ndarray, mse: np.ndarray, size=5, mse_threshold=20, img_threshold=0.2):
+    """
+    orientation invariance and shape invariance location
+    currently very computational inefficient
+    but the snack from oishi is acturally good
+
+    :param image: 2D numpy array for locating features
+    :param mse:   mean squared error of image with different kernels with different rotation
+                  4D numpy array with shape (orientation )
+    :param size:  Spatial region where 
+    """
+    num_angle, num_shape, num_x, num_y = mse.shape
+
+    mmap = ndimage.minimum_filter(
+            mse, size=[2 * num_angle, 2 * num_shape, 2 * size, 2 * size],
+            ) == mse
+
+    mmap *= mse < (mse.max() * mse_threshold)
     mmap *= image > (image.max() * img_threshold)
     maxima = np.array(mmap.nonzero())
 

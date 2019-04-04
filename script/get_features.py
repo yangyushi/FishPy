@@ -1,5 +1,5 @@
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 import sys
 sys.path.append('result')
 import numpy as np
@@ -66,14 +66,20 @@ for frame, image in enumerate(images):
 
     fg = background - image
     fg = fg[roi]
-    for_locating = ndimage.gaussian_filter(fg, blur)
+
+    fg = ndimage.gaussian_filter(fg, blur)
+
+    fg -= fg.mean()
+    fg /= fg.std()
+    kernels = [k / k.std() for k in kernels]
+
     cross_correlation = ft.oishi.get_cross_correlation_nd(
-            for_locating, angles, kernels
+            fg, angles, kernels
             )
 
     maxima = ft.oishi.oishi_locate(
-            for_locating, cross_correlation, fish_mvd.shape.size_min,
-            cc_threshold, fish_mvd.intensity.threshold,
+            fg, cross_correlation, fish_mvd.shape.size_min,
+            cc_threshold, img_threshold
             )
 
     pickle.dump(maxima, f_out)
@@ -93,15 +99,13 @@ for frame, image in enumerate(images):
             color='w', linewidth=0.5,
         )
 
-    plt.gca().set_xlim(0, image.shape[1])
-    plt.gca().set_ylim(image.shape[0], 0)
     plt.imshow(image, cmap='gray')
     plt.scatter(y, x, color='red', edgecolor='w', marker='o', linewidth=0.5, s=12)
     plt.gcf().set_frameon(False)
     plt.axis('off')
     plt.gcf().axes[0].get_xaxis().set_visible(False)
     plt.gcf().axes[0].get_yaxis().set_visible(False)
-    plt.savefig(f'oishi_locate_frame_{frame + frame_start:04}.pdf', bbox_inches='tight', pad_inches=0)
+    plt.savefig(f'oishi_locate_frame_{frame + frame_start:04}.png', bbox_inches='tight', pad_inches=0)
     plt.close()
 
 f_out.close()

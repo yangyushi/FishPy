@@ -36,7 +36,6 @@ class Camera():
         self.ext = np.hstack([self.r, np.array([self.t]).T])  # R, t --> [R|t]
         return np.dot(self.k, self.ext)
 
-
     def read_calibration(self, mat_file):
         """
         Read calibration result from TOOLBOX_calib
@@ -64,9 +63,9 @@ class Camera():
         return pos_uv
 
     def undistort(self, image):
-        pass
+        return cv2.undistort(image, self.k, self.distortion, cv2.INTER_LINEAR)
 
-    def calibrate(self, int_images: list, ext_image: str, grid_size: float, corner_number=(6, 6), win_size=(5, 5)):
+    def calibrate(self, int_images: list, ext_image: str, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update intrinsic and extrinsic camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
@@ -75,7 +74,7 @@ class Camera():
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-        obj_points_single = np.zeros((corner_number * corner_number, 3), np.float32)
+        obj_points_single = np.zeros((corner_number[0] * corner_number[1], 3), np.float32)
         obj_points_single[:, :2] = np.mgrid[0:corner_number[0], 0:corner_number[1]].T.reshape(-1, 2) * grid_size  # unit mm
 
         # Arrays to store object points and image points from all the images.
@@ -95,9 +94,10 @@ class Camera():
                 obj_points.append(obj_points_single)
                 corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
                 img_points.append(corners_refined)
-                img = cv2.drawChessboardCorners(img, (6, 6), corners2, ret)
-                cv2.imshow('img', img)
-                cv2.waitKey(500)
+                img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
+                if show:
+                    cv2.imshow('img', img)
+                    cv2.waitKey(50)
 
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
@@ -108,11 +108,13 @@ class Camera():
 
         # get matrices for undistorted image
         camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
-        camera_matrix, distortion, gray.shape, 1, gray.shape
+            camera_matrix, distortion, 
+            imageSize=gray.shape, 
+            alpha=1,
+            newImgSize=gray.shape
         )
-
 
         self.k = camera_matrix
         self.distortion = np.squeeze(distortion)
-        self.rotation = R.from_rotvec(rvecs)
-        self.tvecs = np.ravel(tvecs)
+        self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
+        self.tvecs = np.ravel(tvecs[-1])
