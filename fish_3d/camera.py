@@ -4,7 +4,137 @@ import glob
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
+def draw(img, corners, obj_points, imgpts):
+    for i, op in enumerate(obj_points):
+        if np.allclose(op, np.zeros(3)):
+            break
+    corner = tuple(corners[i].ravel())
+    img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255, 0, 0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0, 255, 0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0, 0, 255), 5)
+    return img
+
+def find_pairs(arr_1, arr_2):
+    assert len(arr_1.ravel()) == len(set(arr_1.ravel()))
+    assert len(arr_2.ravel()) == len(set(arr_2.ravel()))
+    assert set(arr_1.ravel()) == set(arr_2.ravel())
+    pairs = [[], []]
+    for i in range(arr_2.shape[0]):
+        for j in range(arr_2.shape[1]):
+            index_1 = np.squeeze(np.where(arr_1 == arr_2[i, j]))
+            pairs[0].append(index_1)  # arr_1
+            pairs[1].append((i, j))  # arr_2
+    return np.array(pairs)
+
+
+def get_points_from_order(corner_number, order='x312'):
+    """
+    the expected calibration image is
+        ┌───────┬───────┬───────┐
+        │  ╲ ╱  │◜◜◜◜◜◜◜│   ╮   │
+        │   ╳   │◜◜◜◜◜◜◜│   │   │
+        │  ╱ ╲  │◜◜◜◜◜◜◜│   ┴   │
+        ├───────┼───────┼───────┤
+        │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
+        │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
+        │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
+        ├───────┼───────┼───────┤
+        │  ──┐  │◜◜◜◜◜◜◜│  ╶─╮  │
+        │  ╶─┤  │◜◜◜◜◜◜◜│  ╭─╯  │
+        │  ──┘  │◜◜◜◜◜◜◜│  ╰──  │
+        └───────┴───────┴───────┘
+    and the corresponding order is x132 (row, colume)
+    """
+    obj_points = []
+    standard_order, standard = 'x132', np.arange(4).reshape(2, 2)
+    reality = np.array([standard_order.index(letter) for letter in order], dtype=int).reshape(2, 2)
+
+    pairs = find_pairs(standard, reality)
+    pairs = 2 * pairs - 1
+
+    transformations = []
+    for angle in [0, 0.5 * np.pi, np.pi, 1.5 * np.pi]:
+        for inv in [-1, 1]:
+            trans = np.zeros((2, 2), dtype=np.float32)
+            trans[0, 0] = np.cos(angle) * inv
+            trans[0, 1] = -np.sin(angle)
+            trans[1, 0] = np.sin(angle) * inv
+            trans[1, 1] = np.cos(angle)
+            transformations.append(trans)
+
+    for t in transformations:
+        err = np.zeros((2, 2))
+        for p1, p2 in zip(*pairs):
+            err += np.abs(t @ p1 - p2)
+        if np.allclose(err, 0):
+            break
+
+    if not np.allclose(err, 0):
+        raise RuntimeError("Impossible order")
+
+    std = []
+    centre = np.ones(2, dtype=np.float64) * (np.array(corner_number) - 1) / 2
+    for c1 in range(corner_number[0]):
+        for c2 in range(corner_number[1]):
+            p = np.array((c1, c2), dtype=centre.dtype)
+            std.append(p.copy())
+            p -= centre
+            p = t @ p
+            p += centre
+            obj_points.append(np.hstack([p, 0]))
+    std = np.array(std)
+    count = 0
+
+    if 0:
+        for s, r in zip(std, obj_points):
+            c = np.random.random(3)
+            plt.scatter(*s, color=c, marker='.', s=200)
+            plt.scatter(*r[:2], color=c, facecolor='none', s=100)
+            plt.quiver(*s, *(r[:2]-s), color=c)
+            count += 1
+        plt.show()
+    obj_points = np.array(obj_points, dtype=np.float32)
+    return obj_points
+
+
+def plot_cameras(axis, cameras, water_level=0, depth=400):
+    origins = []
+    camera_size = 100
+    focal_length = 2
+    ray_length = 400
+    camera_segments = [
+            np.array(([0, 0, 0], [1, -1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [-1, 1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [-1, -1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [1, 1, focal_length])) * camera_size,
+            np.array(([1, 1, focal_length], [1, -1, focal_length])) * camera_size,
+            np.array(([1, -1, focal_length], [-1, -1, focal_length])) * camera_size,
+            np.array(([-1, -1, focal_length], [-1, 1, focal_length])) * camera_size,
+            np.array(([-1, 1, focal_length], [1, 1, focal_length])) * camera_size
+            ]
+    for cam in cameras:
+        origin = -cam.r.T @ cam.t
+        orient = cam.r.T @ np.array([0, 0, 1])
+        origins.append(origin)
+        for seg in camera_segments:
+            to_plot = np.array([cam.r.T @ p + origin for p in seg])
+            axis.plot(*to_plot.T, color='b')
+        axis.scatter(*origin, color='w', edgecolor='k')
+        axis.quiver(*origin, *orient * ray_length, color='k')
+
+    xlim, ylim, zlim = np.array(origins).T
+    mid_x = np.mean(xlim)
+    mid_y = np.mean(ylim)
+    x = np.linspace(mid_x - 1e3, mid_x + 1e3, 11, endpoint=True)
+    y = np.linspace(mid_y - 1e3, mid_y + 1e3, 11, endpoint=True)
+    x, y = np.meshgrid(x, y)
+    axis.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
+    axis.set_zlim(depth, depth - 2e3)
+    return axis
 
 class Camera():
     def __init__(self):
@@ -30,10 +160,12 @@ class Camera():
         """principal point of the camera"""
         return [self.k[0, 2], self.k[1, 2]]
 
+    @property
+    def ext(self):
+        return np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
 
     @property
     def p(self):
-        self.ext = np.hstack([self.r, np.array([self.t]).T])  # R, t --> [R|t]
         return np.dot(self.k, self.ext)
 
     def read_calibration(self, mat_file):
@@ -65,7 +197,7 @@ class Camera():
     def undistort(self, image):
         return cv2.undistort(image, self.k, self.distortion, cv2.INTER_LINEAR)
 
-    def calibrate(self, int_images: list, ext_image: str, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
+    def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update intrinsic and extrinsic camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
@@ -73,16 +205,13 @@ class Camera():
         # termination criteria
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-        # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-        obj_points_single = np.zeros((corner_number[0] * corner_number[1], 3), np.float32)
-        obj_points_single[:, :2] = np.mgrid[0:corner_number[0], 0:corner_number[1]].T.reshape(-1, 2) * grid_size  # unit mm
-
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space
         img_points = [] # 2d points in image plane.
 
         image_files = int_images + [ext_image]
 
+        for_plot = []
         for i, fname in enumerate(image_files):
             img = cv2.imread(fname)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -91,13 +220,12 @@ class Camera():
             ret, corners = cv2.findChessboardCorners(gray, corner_number, None)
 
             if ret == True:
+                obj_points_single = get_points_from_order(corner_number, order=order) * grid_size
                 obj_points.append(obj_points_single)
                 corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
                 img_points.append(corners_refined)
-                img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
-                if show:
-                    cv2.imshow('img', img)
-                    cv2.waitKey(50)
+            if fname == ext_image:
+                for_plot += [corner_number, corners_refined, ret]
 
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
@@ -105,6 +233,8 @@ class Camera():
         ret, camera_matrix, distortion, rvecs, tvecs = cv2.calibrateCamera(
                 obj_points, img_points, gray.shape[::-1], None, None
         )
+
+        self.k = camera_matrix
 
         # get matrices for undistorted image
         camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
@@ -114,7 +244,25 @@ class Camera():
             newImgSize=gray.shape
         )
 
-        self.k = camera_matrix
+        #self.k = camera_matrix
         self.distortion = np.squeeze(distortion)
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
-        self.tvecs = np.ravel(tvecs[-1])
+        self.t = np.ravel(tvecs[-1])
+
+        if show:
+            length = 200
+            axis = np.float32([[length, 0, 0], [0, length, 0], [0, 0, length]]).reshape(-1,3)
+            img_pts, jac = cv2.projectPoints(axis, rvecs[-1], tvecs[-1], self.k, self.distortion)
+            img = cv2.drawChessboardCorners(img, *for_plot)
+            img = draw(img, corners_refined, obj_points[-1], img_pts)
+            cv2.imshow('img', img)
+            cv2.waitKey(500000)
+
+
+    @property
+    def o(self):
+        return self.r.T @ np.array([0, 0, 1])
+
+
+if __name__ == "__main__":
+    points = get_points_from_order((8, 8), '1x23')
