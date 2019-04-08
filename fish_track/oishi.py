@@ -33,21 +33,34 @@ def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
             mse[-1].append(diff)
     return np.array(mse)
 
+def rotate_kernel(kernel, angle):
+    """
+    rotate the kernel with given angle
+    and shift the highest value to the centre
+    """
+    after_rot = ndimage.rotate(kernel, angle, mode='constant', cval=kernel.min())
+    centre = np.array(after_rot.shape) // 2
+    maximum = np.array(np.unravel_index(np.argmax(after_rot), after_rot.shape))
+    shift = centre - maximum
+    shifted = ndimage.shift(after_rot, shift, mode='constant', cval=kernel.min())
+    return shifted
+
 
 def get_cross_correlation_nd(image: np.ndarray, angles: list, kernels: list) -> np.ndarray:
+    """
+    rotate different kernels at different angles
+    and calculate the correlations
+    """
     corr = []
     cc_image = image
     for angle in angles:
         corr.append([])
         for kernel in kernels:
-            cc_kernel = ndimage.rotate(kernel, angle, mode='constant', cval=kernel.min())
+            cc_kernel = rotate_kernel(kernel, angle)
             centre = np.array(cc_kernel.shape) // 2
-            location = np.array(np.unravel_index(np.argmax(cc_kernel), cc_kernel.shape))
-            shift = centre - location
-            cc_kernel = ndimage.shift(cc_kernel, shift, mode='constant', cval=cc_kernel.min())
             roi = ( slice(centre[0] - kernel.shape[0] // 2, centre[0] + kernel.shape[0] // 2),
                     slice(centre[1] - kernel.shape[1] // 2, centre[1] + kernel.shape[1] // 2))
-            cc_kernel = cc_kernel[roi]
+            cc_kernel = cc_kernel[roi]  # make sure all kernels have the same size
             cross_correlation = signal.correlate(cc_image, cc_kernel, mode='same')
             corr[-1].append(cross_correlation)
     return np.array(corr)
@@ -72,20 +85,15 @@ def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, im
 
     mmap *= cc > (cc.max() * cc_threshold)
     mmap *= image > (image.max() * img_threshold)
-    maxima = np.array(mmap.nonzero())
+    maxima = mmap.nonzero()
+    probabilities = mmap[maxima]
 
-    return maxima
+    return np.vstack([maxima, probabilities])
+
 
 def oishi_locate_mse(image: np.ndarray, mse: np.ndarray, size=5, mse_threshold=20, img_threshold=0.2):
     """
-    orientation invariance and shape invariance location
-    currently very computational inefficient
-    but the snack from oishi is acturally good
-
-    :param image: 2D numpy array for locating features
-    :param mse:   mean squared error of image with different kernels with different rotation
-                  4D numpy array with shape (orientation )
-    :param size:  Spatial region where 
+    todo: write a MUCH faster version
     """
     num_angle, num_shape, num_x, num_y = mse.shape
 
@@ -98,6 +106,51 @@ def oishi_locate_mse(image: np.ndarray, mse: np.ndarray, size=5, mse_threshold=2
     maxima = np.array(mmap.nonzero())
 
     return maxima
+
+
+def get_box_for_kernel(kernel, x, y):
+    """
+    get a boundary of the kernel in a bigger image
+    the kernel is located at (x, y)
+    """
+    if kernel.shape[0] % 2:
+        top = kernel.shape[0] // 2
+        bottom = kernel.shape[0] // 2 + 1
+    else:
+        top = kernel.shape[0] // 2
+        bottom = kernel.shape[0] // 2
+    if kernel.shape[1] % 2:
+        left = kernel.shape[1] // 2
+        right = kernel.shape[1] // 2 + 1
+    else:
+        left = kernel.shape[1] // 2
+        right = kernel.shape[1] // 2
+    return slice(x - top, x + bottom), slice(y - left, y + right)
+
+
+def get_clusters(feature, image, kernels, angles, roi, threshold=0.5):
+    """
+    return the pixels in the image that 'belong' to different features
+    """
+    clusters = []
+
+    for o, s, x, y, p in zip(*feature.tolist()):
+        kernel = kernels[s]
+        kernel = rotate_kernel(kernel, angles[o])
+        mask = kernel > 0
+        box = get_box_for_kernel(kernel, x, y)
+
+        fg = image[roi]
+        binary = (fg > fg.max() * threshold)[box]
+
+        offset_1 = np.array([b.start for b in box])
+        offset_2 = np.array([r.start for r in roi])
+        offset = np.hstack(offset_1 + offset_2)
+
+        cluster = np.array(np.nonzero(binary * mask)).T
+        clusters.append(cluster + offset)
+
+    return clusters
 
 
 if __name__ == "__main__":
