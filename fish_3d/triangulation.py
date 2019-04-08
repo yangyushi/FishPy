@@ -18,7 +18,6 @@ def triangulate_3point(x1, x2, x3, p1, p2, p3):
     return X / X[3]
 
 def triangulate_in_water(positions, cameras, water_level, frame=0):
-
     fish = positions_gt.T[frame]
     assert len(positions) == len(cameras)
 

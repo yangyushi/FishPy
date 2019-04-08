@@ -95,6 +95,7 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
 
     return shape_kernels
 
+
 if __name__ == "__main__":
     shapes = np.load('./fish_shape_collection_cam-1.npy')
     indices = np.arange(2, 4)
