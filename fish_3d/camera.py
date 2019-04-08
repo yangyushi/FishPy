@@ -18,6 +18,7 @@ def draw(img, corners, obj_points, imgpts):
     img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0, 0, 255), 5)
     return img
 
+
 def find_pairs(arr_1, arr_2):
     assert len(arr_1.ravel()) == len(set(arr_1.ravel()))
     assert len(arr_2.ravel()) == len(set(arr_2.ravel()))
@@ -135,6 +136,7 @@ def plot_cameras(axis, cameras, water_level=0, depth=400):
     axis.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
     axis.set_zlim(depth, depth - 2e3)
     return axis
+
 
 class Camera():
     def __init__(self):
