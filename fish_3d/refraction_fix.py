@@ -28,6 +28,20 @@ def get_poi(p, z, x):
     x, y = np.linalg.solve(M, b).ravel()
     return np.array([x, y, z])
 
+    M = np.zeros((3, 3))
+    for i in range(3):
+        for j in range(2):
+            M[i, j] = p[i, j]# * x[j]
+    M[2, 2] = -1
+
+    b = np.zeros((3, 1))
+    for i in range(2):
+        b[i] = x[i] - p[i, 2] * z - p[i, 3]
+    b[2] = - p[2, 2] * z - p[2, 3]
+
+    x, y, w = np.linalg.solve(M, b).ravel()
+    return np.array([x, y, z])
+
 
 def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
     """
