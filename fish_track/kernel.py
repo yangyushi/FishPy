@@ -81,7 +81,7 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
         average = shape_images.mean(0)
         if plot:
             ax[k].imshow(average.reshape(dim, dim), vmin=0, vmax=images.max())
-        kernel = average.reshape(dim, dim) - np.mean(average)
+        kernel = average.reshape(dim, dim)# - np.mean(average)
         shape_kernels.append(kernel)
 
     if plot:
