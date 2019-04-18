@@ -17,6 +17,7 @@ mvd_path = config['Data']['mvd']
 data_type = config['Data']['type']
 
 roi = config['Process']['roi']
+refine_otol = config['Refine']['otol']
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
 roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
@@ -55,7 +56,6 @@ f_out = open('features.pkl', 'wb')
 dpi = 150
 
 for frame, image in enumerate(images):
-    print(image.shape)
 
     if frame < frame_start:
         continue
@@ -64,14 +64,11 @@ for frame, image in enumerate(images):
     else:
         pass
 
-    fg = background - image
+    fg = np.abs(background - image).astype(np.float32)
+    fg[fg < 0] = 0
     fg = fg[roi]
-
+    fg /= fg.max()
     fg = ndimage.gaussian_filter(fg, blur)
-
-    fg -= fg.mean()
-    fg /= fg.std()
-    kernels = [k / k.std() for k in kernels]
 
     cross_correlation = ft.oishi.get_cross_correlation_nd(
             fg, angles, kernels
@@ -82,13 +79,14 @@ for frame, image in enumerate(images):
             cc_threshold, img_threshold
             )
 
+    maxima = ft.oishi.oishi_refine(maxima, angles, fish_mvd.shape.size_max, otol=refine_otol)
+
+
     pickle.dump(maxima, f_out)
 
-    o, r, x, y = maxima
-    x += y0
-    y += x0
+    o, r, x, y, p = maxima
 
-    plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
+    plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
     length = 50
     for i, m in enumerate(maxima.T):
         angle = angles[o[i]] / 180 * np.pi
@@ -96,11 +94,12 @@ for frame, image in enumerate(images):
         plt.plot(
             [base[1] - length/2 * np.sin(angle), base[1] + length/2 * np.sin(angle)],
             [base[0] - length/2 * np.cos(angle), base[0] + length/2 * np.cos(angle)],
-            color='w', linewidth=0.5,
+            color='tomato', linewidth=1,
         )
-
-    plt.imshow(image, cmap='gray')
-    plt.scatter(y, x, color='red', edgecolor='w', marker='o', linewidth=0.5, s=12)
+    plt.imshow(image[roi], cmap='gray')
+    plt.scatter(y, x, color='w', edgecolor='tomato', marker='o', linewidth=1, s=12)
+    plt.xlim(0, fg.shape[1])
+    plt.ylim(fg.shape[0], 0)
     plt.gcf().set_frameon(False)
     plt.axis('off')
     plt.gcf().axes[0].get_xaxis().set_visible(False)

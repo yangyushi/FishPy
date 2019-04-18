@@ -3,8 +3,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage 
 from scipy import signal
+from scipy.spatial.distance import pdist, squareform
 import numba
 
+def join_pairs(pairs) -> list:
+    if len(pairs) == 0:
+        return []
+    max_val = np.max(np.hstack(pairs)) + 1
+    canvas = np.zeros((max_val, max_val), dtype=int)
+    p = np.array(pairs)
+    canvas[tuple(p.T)] = 1
+    labels, _ = ndimage.label(canvas)
+    joined_pairs = []
+    for val in set(labels[labels > 0]):
+        joined_pair = np.unique(np.vstack(np.where(labels == val)))
+        joined_pairs.append(joined_pair)
+    return joined_pairs
 
 @numba.jit(nopython=True, parallel=True)
 def get_diff(image: np.ndarray, kernel: np.ndarray):
@@ -153,13 +167,56 @@ def get_clusters(feature, image, kernels, angles, roi, threshold=0.5):
     return clusters
 
 
+def o2v(orientation, angles):
+    """
+    convert orientation to a unit vector
+    the angles were in the unit of degree
+    """
+    assert orientation < len(angles), "angle array and orientation does not match"
+    angle = angles[orientation]
+    rad = angle / 180 * np.pi
+    x, y = np.cos(rad), np.sin(rad)
+    return np.array((x, y))
+
+
+def oishi_refine(features, angles, length, otol):
+    """
+    otol: tolerance on orientations (angle between two orientations), the unit is degree
+    """
+    o, s, x, y, p = features
+    positions = np.vstack((x, y)).T
+    distances = np.triu(squareform(pdist(positions)))
+    distances[np.isclose(distances, 0)] = np.nan
+    close_pairs = np.array(np.where(distances < length * 1.414)).T  # only works in 2D with sqrt(2)!
+    to_merge = []
+    for (i1, i2) in close_pairs:
+        v1, v2 = o2v(o[i1], angles), o2v(o[i2], angles)
+        v3 = np.array((x[i1] - x[i2], y[i1] - y[i2]))
+        v3 = v3 / np.linalg.norm(v3)
+        a12 = np.rad2deg(np.arccos(np.abs(v1 @ v2)))
+        a13 = np.rad2deg(np.arccos(np.abs(v1 @ v3)))
+        a23 = np.rad2deg(np.arccos(np.abs(v2 @ v3)))
+        angle = np.array((a12, a13, a23))
+        if (angle < otol).all():
+            to_merge.append((i1, i2))
+    to_merge = join_pairs(to_merge)
+    to_delete = []
+    for overlapped in to_merge:
+        to_keep = overlapped[np.argmax(p[np.array(overlapped)])]  # leave the one with higher probabiilty
+        to_delete += [i for i in overlapped if i != to_keep]
+
+    refined = np.delete(features, to_delete, axis=1)
+    return refined
+
+
+
 if __name__ == "__main__":
-    import load_video
+    import read
     import matplotlib.pyplot as plt
 
     want_cc = True
 
-    images = load_video.iter_video('../clip.mp4')
+    images = read.iter_video('../clip.mp4')
     background = np.load('background.npy')
     image = next(images)
     fg = background - image
@@ -175,7 +232,7 @@ if __name__ == "__main__":
         cross_correlation = np.load('cc.npy')
 
     maxima = oishi_locate(for_locating, cross_correlation, cc_threshold=0.2, img_threshold=0.2, size=10)
-    o, r, x, y = maxima
+    o, r, x, y, p = maxima
 
     length = 50
 
