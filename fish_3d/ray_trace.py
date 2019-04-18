@@ -168,6 +168,75 @@ def epipolar_refractive(xy, camera_1, camera_2, image_2, interface=0, normal=(0,
     return epipolar_pixels
 
 
+def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+    """
+    return all the pixels that contains the epipolar line in image_2
+
+    The meanings of variable names can be found in this paper
+
+    :param xy: (x, y) location of a pixel on image from camera_1, NOT (u, v)
+    :param interface: height of water level in WORLD coordinate system
+    :param normal: normal of the air-water interface, from water to air
+    :param n: refractive index of water (or some other media)
+    
+    """
+    
+    co_1 = -camera_1.r.T @ camera_1.t  # camera origin
+    co_2 = -camera_2.r.T @ camera_2.t  # camera origin
+    poi_1 = get_poi(camera_1.p, interface, xy[::-1])
+    incid = poi_1 - co_1
+    trans = get_trans_vec(incid, normal=normal)
+    is_in_image = True
+    m = poi_1.copy()
+    epipolar_pixels = []
+    step = 1
+    count = 0
+    last_xy = None
+
+    while is_in_image:
+        m += step * trans
+        z = abs(m[-1])
+        if z > depth:
+            break
+        d = abs(co_2[-1] - interface)
+        x = np.linalg.norm(m[:2] - co_2[:2])
+        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.2, x1=x).root
+        assert u <= x
+        assert u >= 0
+        o = np.hstack((co_2[:2], interface))
+        oq_vec = np.hstack((m[:2], interface)) - o
+        q = o + u * (oq_vec / np.linalg.norm(oq_vec))
+        uv_2 = camera_2.p @ np.hstack((q, 1))
+        uv_2 /= uv_2[-1]
+        uv_2 = uv_2[:2]  # (u, v, w)  -> (u, v)
+        xy_2 = uv_2[::-1].astype(int)  # (u, v)  -> (x, y)
+
+        is_in_image = is_inside_image(xy_2, image_2)
+
+        if count == 0:
+            is_connected = True
+            is_different = True
+        else:
+            is_connected = np.sum(np.power(xy_2 - last_xy, 2)) <= 2
+            is_different = not np.allclose(xy_2, last_xy)
+
+        should_draw = is_different and is_in_image and is_connected
+
+        if should_draw:
+            epipolar_pixels.append(xy_2.copy())
+            last_xy = xy_2.copy()
+        else:
+            if not is_different:
+                step *= 2
+            if not is_connected:
+                m -= step * trans
+                step /= 3
+
+        count += 1
+
+    return np.array(epipolar_pixels)
+
+
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
     :param centres: a list of homogenerous centres in different views
