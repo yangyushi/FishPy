@@ -34,11 +34,11 @@ def pl_dist(point, line):
     return np.linalg.norm(np.cross(ac, ab)) / np.linalg.norm(ab)
 
 
-def get_poi(p, z, x):
+def get_poi(p, z, coordinate):
     """
     - p: the projection matrix of the camera
     - z: the hight of water level with respect to world origin
-    - x: the position (u, v) of object on the image, unit is pixel
+    - corrdinate: the position (x, y) of object on the image, unit is pixel
     - poi, point on interface. See the sketch for its meaning
 
                    camera
@@ -50,28 +50,18 @@ def get_poi(p, z, x):
                |
                |
              fish
+
+
+    The equation: P @ [X, Y, Z, 1]' = [w * v, w * u, w]
     """
+
     M = np.zeros((2, 2))
     b = np.zeros((2, 1))
     for i in range(2):
         for j in range(2):
-            M[i, j] = p[i, j] - x[i] * p[2, j]
-        b[i] = x[i] * p[2, 2] * z + x[i] * p[2, 3] - p[i, 2] * z - p[i, 3]
+            M[i, j] = p[i, j] - coordinate[i] * p[2, j]
+        b[i] = coordinate[i] * p[2, 2] * z + coordinate[i] * p[2, 3] - p[i, 2] * z - p[i, 3]
     x, y = np.linalg.solve(M, b).ravel()
-    return np.array([x, y, z])
-
-    M = np.zeros((3, 3))
-    for i in range(3):
-        for j in range(2):
-            M[i, j] = p[i, j]# * x[j]
-    M[2, 2] = -1
-
-    b = np.zeros((3, 1))
-    for i in range(2):
-        b[i] = x[i] - p[i, 2] * z - p[i, 3]
-    b[2] = - p[2, 2] * z - p[2, 3]
-
-    x, y, w = np.linalg.solve(M, b).ravel()
     return np.array([x, y, z])
 
 
@@ -88,6 +78,7 @@ def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
             |
     water   |
             |
+
     """
     rri = 1 / refractive_index
     n = np.array(normal)
@@ -96,18 +87,18 @@ def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
     cos_i = -i @ n
     sin_t_2 = rri ** 2 * (1 - cos_i ** 2)
     t = rri * i + (rri * cos_i - np.sqrt(1 - sin_t_2)) * n
-    return t
+    return t / np.linalg.norm(t)
 
 
-def is_inside_image(xy, image):
-    x0, x1 = 0, image.shape[0]
-    y0, y1 = 0, image.shape[1]
-    x, y = xy
+def is_inside_image(uv, image):
+    u0, u1 = 0, image.shape[0]
+    v0, v1 = 0, image.shape[1]
+    u, v = uv
     is_inside = True
-    is_inside *= x > x0
-    is_inside *= x < x1
-    is_inside *= y > y0
-    is_inside *= y < y1
+    is_inside *= u > u0
+    is_inside *= u < u1
+    is_inside *= v > v0
+    is_inside *= v < v1
     return is_inside
 
 
@@ -119,18 +110,18 @@ def find_u(u, n, d, x, z):
     return (n**2 * (d**2 + u**2) - u**2) * (x - u)**2 - u**2 * z**2
 
 
-def epipolar_refractive(xy, camera_1, camera_2, image_2, interface=0, normal=(0, 0, 1), step=1, n=1.33):
+def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0, 0, 1), step=1, n=1.33):
     """
     The meanings of variable names can be found in this paper
         10.1109/CRV.2011.26
 
-    :param xy: (x, y) location of a pixel on image from camera_1, NOT (u, v)
+    :param uv: (u, v) location of a pixel on image from camera_1, NOT (x, y)
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
     
     Here the goal is: 
-        1.  For given pixel (xy) in image taken by camera #1, calculated
+        1.  For given pixel (u, v) in image taken by camera #1, calculated
             it's projection on air-water interface (poi_1), and the
             direction of the refractted ray (trans_vec)
         2.  While the projection is still on image from camera_2:
@@ -141,7 +132,7 @@ def epipolar_refractive(xy, camera_1, camera_2, image_2, interface=0, normal=(0,
     
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
-    poi_1 = get_poi(camera_1.p, interface, xy[::-1])
+    poi_1 = get_poi(camera_1.p, interface, uv[::-1])
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
     is_in_image = True
@@ -161,20 +152,19 @@ def epipolar_refractive(xy, camera_1, camera_2, image_2, interface=0, normal=(0,
         uv_2 = camera_2.p @ np.hstack((q, 1))
         uv_2 /= uv_2[-1]
         uv_2 = uv_2[:2]  # (u, v, w)  -> (u, v)
-        xy_2 = uv_2[::-1]  # (u, v)  -> (x, y)
-        is_in_image = is_inside_image(xy_2, image_2)
+        is_in_image = is_inside_image(uv_2, image_2)
         if is_in_image:
-            epipolar_pixels.append(xy_2)
+            epipolar_pixels.append(uv_2)
     return epipolar_pixels
 
 
-def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     return all the pixels that contains the epipolar line in image_2
 
     The meanings of variable names can be found in this paper
 
-    :param xy: (x, y) location of a pixel on image from camera_1, NOT (u, v)
+    :param uv: (u, v) location of a pixel on image from camera_1, NOT (x, y)
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
@@ -183,7 +173,7 @@ def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, norma
     
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
-    poi_1 = get_poi(camera_1.p, interface, xy[::-1])
+    poi_1 = get_poi(camera_1.p, interface, uv[::-1])
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
     is_in_image = True
@@ -191,7 +181,7 @@ def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, norma
     epipolar_pixels = []
     step = 1
     count = 0
-    last_xy = None
+    last_uv = None
 
     while is_in_image:
         m += step * trans
@@ -200,38 +190,39 @@ def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, norma
             break
         d = abs(co_2[-1] - interface)
         x = np.linalg.norm(m[:2] - co_2[:2])
-        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.2, x1=x).root
-        assert u <= x
-        assert u >= 0
+        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.5, x1=x).root
+        if (u > x) or (u < 0):
+            print("root finding in refractive epipolar geometry fails")
+            break
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
-        uv_2 = camera_2.p @ np.hstack((q, 1))
-        uv_2 /= uv_2[-1]
-        uv_2 = uv_2[:2]  # (u, v, w)  -> (u, v)
-        xy_2 = uv_2[::-1].astype(int)  # (u, v)  -> (x, y)
+        xy_2 = camera_2.p @ np.hstack((q, 1))
+        xy_2 /= xy_2[-1]
+        xy_2 = np.floor(xy_2[:2]).astype(int)
+        uv_2 = xy_2[::-1]
 
-        is_in_image = is_inside_image(xy_2, image_2)
+        is_in_image = is_inside_image(uv_2, image_2)
 
         if count == 0:
             is_connected = True
             is_different = True
         else:
-            is_connected = np.sum(np.power(xy_2 - last_xy, 2)) <= 2
-            is_different = not np.allclose(xy_2, last_xy)
+            is_connected = np.sum(np.power(uv_2 - last_uv, 2)) <= 2
+            is_different = not np.allclose(uv_2, last_uv)
 
         should_draw = is_different and is_in_image and is_connected
 
         if should_draw:
-            epipolar_pixels.append(xy_2.copy())
-            last_xy = xy_2.copy()
+            epipolar_pixels.append(uv_2.copy())
+            epipolar_pixels.append(uv_2.copy() + 1)
+            last_uv = uv_2.copy()
         else:
             if not is_different:
                 step *= 2
             if not is_connected:
                 m -= step * trans
                 step /= 3
-
         count += 1
 
     return np.array(epipolar_pixels)
@@ -239,25 +230,59 @@ def epipolar_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, norma
 
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of homogenerous centres in different views
+    :param centres: a list of centres (u, v) in different views
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
     camera_origins = [-camera.r.T @ camera.t for camera in cameras]
     pois = [
-        get_poi(camera.p, z, centre[::-1]) for camera, centre in zip(cameras, centres)
-    ]  # ::-1 changes from (x, y) to (u, v)
+        get_poi(camera.p, z=z, coordinate=centre[::-1]) for camera, centre in zip(cameras, centres)
+    ]  # ::-1 changes from (u, v) to (x, y)
     incid_rays = [poi - co for poi, co in zip(pois, camera_origins)]
     trans_rays = [get_trans_vec(incid, normal=normal) for incid in incid_rays]
-    trans_lines = [{'unit': trans, 'point': poi} for trans, poi in zip(trans_rays, pois)]
+    trans_lines = [{'unit': t, 'point': poi} for t, poi in zip(trans_rays, pois)]
     
     point_3d = get_intersect_of_lines(trans_lines)
     
     error = 0
     for line in trans_lines:
         error += pl_dist(point_3d, line)
-    return point_3d, error
+    return point_3d, error / len(cameras)
 
+
+def cost_snell(xy, z, location, origin, normal, refractive_index):
+    poi = np.hstack([xy, z])
+    incid = poi - origin
+    trans = get_trans_vec(incid, refractive_index, normal)
+    line = {'unit': trans, 'point': poi}
+    distance = pl_dist(location, line)
+    return distance
+
+
+def same_direction(v1, v2, v3, axis):
+    return (v1[axis] - v2[axis]) * (v3[axis] - v1[axis])
+
+
+def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractive_index=1.333):
+    camera_origin = -camera.r.T @ camera.t
+
+    c_ = (
+            { 'type': 'ineq', 'fun': lambda v1, v2, v3: same_direction(v1, v2, v3, 0), 'args': (xyz, camera_origin) },
+            { 'type': 'ineq', 'fun': lambda v1, v2, v3: same_direction(v1, v2, v3, 1), 'args': (xyz, camera_origin) },
+            )
+
+    result = optimize.minimize(
+            cost_snell,
+            x0=(xyz[0], xyz[1]),
+            args=(water_level, xyz, camera_origin, np.array(normal), refractive_index),
+            method='SLSQP',
+            constraints=c_
+            )
+    poi_xy = result.x
+    poi = np.hstack((poi_xy, water_level, 1))
+    img_xy = camera.p @ poi
+    img_xy = (img_xy / img_xy[-1])[:2]
+    return img_xy
 
 if __name__ == "__main__":
     l1 = {'unit': (1.3, 1.3, -10), 'point': (-14.2, 17, -1)}

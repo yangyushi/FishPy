@@ -122,46 +122,57 @@ def oishi_locate_mse(image: np.ndarray, mse: np.ndarray, size=5, mse_threshold=2
     return maxima
 
 
-def get_box_for_kernel(kernel, x, y):
+def get_box_for_kernel(kernel, u, v, image):
     """
     get a boundary of the kernel in a bigger image
-    the kernel is located at (x, y)
+    the kernel is located at (u, v) in the image
     """
-    if kernel.shape[0] % 2:
-        top = kernel.shape[0] // 2
-        bottom = kernel.shape[0] // 2 + 1
-    else:
-        top = kernel.shape[0] // 2
-        bottom = kernel.shape[0] // 2
-    if kernel.shape[1] % 2:
-        left = kernel.shape[1] // 2
-        right = kernel.shape[1] // 2 + 1
-    else:
-        left = kernel.shape[1] // 2
-        right = kernel.shape[1] // 2
-    return slice(x - top, x + bottom), slice(y - left, y + right)
+    size_u, size_v = image.shape
+    top = kernel.shape[0] // 2
+    bottom = kernel.shape[0] // 2 + kernel.shape[0] % 2
+    right = kernel.shape[1] // 2
+    left = kernel.shape[1] // 2 + kernel.shape[1] % 2
+
+    # box don't go beyond image
+    top = min(size_u - u, top)
+    bottom = min(u, bottom)
+
+    left = min(v, left)
+    right = min(size_v - v, right)
+
+    # box in kernel
+    kcu, kcv = kernel.shape[0] // 2 + kernel.shape[0] % 2, kernel.shape[1] // 2 + kernel.shape[1] % 2  # kernel centre
 
 
-def get_clusters(feature, image, kernels, angles, roi, threshold=0.5):
+    box_in_image = (slice(u - bottom, u + top), slice(v - left, v + right))
+    box_in_kernel = (slice(kcu - bottom, kcu + top), slice(kcv - left, kcv + right))
+
+    return box_in_image, box_in_kernel
+
+
+def get_clusters(feature, image, kernels, angles, roi, threshold=0.5, kernel_threshold=0.0):
     """
     return the pixels in the image that 'belong' to different features
+    the returnned results are (u, v), the shape is (number, dimension)
     """
     clusters = []
+    fg = image[roi]
 
-    for o, s, x, y, p in zip(*feature.tolist()):
+    for o, s, u, v, p in zip(*feature.tolist()):
         kernel = kernels[s]
         kernel = rotate_kernel(kernel, angles[o])
-        mask = kernel > 0
-        box = get_box_for_kernel(kernel, x, y)
 
-        fg = image[roi]
-        binary = (fg > fg.max() * threshold)[box]
+        box_in_image, box_in_kernel = get_box_for_kernel(kernel, u, v, fg)
 
-        offset_1 = np.array([b.start for b in box])
+        mask = (kernel > kernel_threshold)[box_in_kernel]
+
+        binary = (fg > fg.max() * threshold)[box_in_image]
+
+        offset_1 = np.array([b.start for b in box_in_image])
         offset_2 = np.array([r.start for r in roi])
         offset = np.hstack(offset_1 + offset_2)
 
-        cluster = np.array(np.nonzero(binary * mask)).T
+        cluster = np.array(np.nonzero(binary * mask)).T  # format is (u, v)
         clusters.append(cluster + offset)
 
     return clusters
