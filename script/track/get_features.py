@@ -17,7 +17,7 @@ mvd_path = config['Data']['mvd']
 data_type = config['Data']['type']
 
 roi = config['Process']['roi']
-refine_otol = config['Refine']['otol']
+refine_otol = float(config['Refine']['otol'])
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
 roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 

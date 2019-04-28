@@ -8,14 +8,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
-def draw(img, corners, obj_points, imgpts):
-    for i, op in enumerate(obj_points):
-        if np.allclose(op, np.zeros(3)):
-            break
-    corner = tuple(corners[i].ravel())
-    img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255, 0, 0), 5)
-    img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0, 255, 0), 5)
-    img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0, 0, 255), 5)
+def draw(img, axes):
+    origin = tuple(axes[0].ravel().astype(int))
+    img = cv2.line(img, origin, tuple(axes[1].ravel()), (255, 120, 100), 5, lineType=cv2.LINE_AA)
+    img = cv2.line(img, origin, tuple(axes[2].ravel()), (100, 255, 120), 5, lineType=cv2.LINE_AA)
+    img = cv2.line(img, origin, tuple(axes[3].ravel()), (100, 120, 255), 5, lineType=cv2.LINE_AA)
     return img
 
 
@@ -32,7 +29,7 @@ def find_pairs(arr_1, arr_2):
     return np.array(pairs)
 
 
-def get_points_from_order(corner_number, order='x312'):
+def get_points_from_order(corner_number, order='x123'):
     """
     the expected calibration image is
         ┌───────┬───────┬───────┐
@@ -44,14 +41,14 @@ def get_points_from_order(corner_number, order='x312'):
         │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
         │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
         ├───────┼───────┼───────┤
-        │  ──┐  │◜◜◜◜◜◜◜│  ╶─╮  │
-        │  ╶─┤  │◜◜◜◜◜◜◜│  ╭─╯  │
-        │  ──┘  │◜◜◜◜◜◜◜│  ╰──  │
+        │  ╶─╮  │◜◜◜◜◜◜◜│   ──┐ │   
+        │  ╭─╯  │◜◜◜◜◜◜◜│   ╶─┤ │   
+        │  ╰──  │◜◜◜◜◜◜◜│   ──┘ │   
         └───────┴───────┴───────┘
-    and the corresponding order is x132 (row, colume)
+    and the corresponding order is x123 (row, colume)
     """
     obj_points = []
-    standard_order, standard = 'x132', np.arange(4).reshape(2, 2)
+    standard_order, standard = 'x123', np.arange(4).reshape(2, 2)
     reality = np.array([standard_order.index(letter) for letter in order], dtype=int).reshape(2, 2)
 
     pairs = find_pairs(standard, reality)
@@ -59,7 +56,7 @@ def get_points_from_order(corner_number, order='x312'):
 
     transformations = []
     for angle in [0, 0.5 * np.pi, np.pi, 1.5 * np.pi]:
-        for inv in [-1, 1]:
+        for inv in [1, -1]:
             trans = np.zeros((2, 2), dtype=np.float32)
             trans[0, 0] = np.cos(angle) * inv
             trans[0, 1] = -np.sin(angle)
@@ -70,7 +67,7 @@ def get_points_from_order(corner_number, order='x312'):
     for t in transformations:
         err = np.zeros((2, 2))
         for p1, p2 in zip(*pairs):
-            err += np.abs(t @ p1 - p2)
+            err += np.abs(t @ p1 - p2)  # t @ std -> real
         if np.allclose(err, 0):
             break
 
@@ -78,17 +75,18 @@ def get_points_from_order(corner_number, order='x312'):
         raise RuntimeError("Impossible order")
 
     std = []
-    centre = np.ones(2, dtype=np.float64) * (np.array(corner_number) - 1) / 2
-    for c1 in range(corner_number[0]):
-        for c2 in range(corner_number[1]):
+    centre = np.ones(2, dtype=np.float64) * (np.array(corner_number)[::-1] - 1) / 2
+    for c1 in range(corner_number[1]):
+        for c2 in range(corner_number[0]):
             p = np.array((c1, c2), dtype=centre.dtype)
             std.append(p.copy())
             p -= centre
-            p = t @ p
-            p += centre
+            p = t @ p  # std -> real
             obj_points.append(np.hstack([p, 0]))
     std = np.array(std)
     count = 0
+    obj_points = np.array(obj_points, dtype=np.float32)
+    obj_points -= obj_points.min(0)
 
     if 0:
         for s, r in zip(std, obj_points):
@@ -98,7 +96,6 @@ def get_points_from_order(corner_number, order='x312'):
             plt.quiver(*s, *(r[:2]-s), color=c)
             count += 1
         plt.show()
-    obj_points = np.array(obj_points, dtype=np.float32)
     return obj_points
 
 
@@ -130,11 +127,11 @@ def plot_cameras(axis, cameras, water_level=0, depth=400):
     xlim, ylim, zlim = np.array(origins).T
     mid_x = np.mean(xlim)
     mid_y = np.mean(ylim)
-    x = np.linspace(mid_x - 1e3, mid_x + 1e3, 11, endpoint=True)
-    y = np.linspace(mid_y - 1e3, mid_y + 1e3, 11, endpoint=True)
+    x = np.linspace(mid_x - 2e3, mid_x + 2e3, 11, endpoint=True)
+    y = np.linspace(mid_y - 2e3, mid_y + 2e3, 11, endpoint=True)
     x, y = np.meshgrid(x, y)
     axis.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
-    axis.set_zlim(depth, depth - 2e3)
+    axis.set_zlim(-depth, 2000)
     return axis
 
 
@@ -203,6 +200,7 @@ class Camera():
         """
         update intrinsic and extrinsic camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
+        the corner number should be in the format of (row, column)
         """
         # termination criteria
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -252,14 +250,13 @@ class Camera():
         self.t = np.ravel(tvecs[-1])
 
         if show:
-            length = 200
-            axis = np.float32([[length, 0, 0], [0, length, 0], [0, 0, length]]).reshape(-1,3)
-            img_pts, jac = cv2.projectPoints(axis, rvecs[-1], tvecs[-1], self.k, self.distortion)
+            length = 100
+            axes = np.float32([[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]])
+            axes_img, _ = cv2.projectPoints(axes, rvecs[-1], tvecs[-1], self.k, self.distortion)
             img = cv2.drawChessboardCorners(img, *for_plot)
-            img = draw(img, corners_refined, obj_points[-1], img_pts)
+            img = draw(img, axes_img)
             cv2.imshow('img', img)
-            cv2.waitKey(500000)
-
+            cv2.waitKey(5000)
 
     @property
     def o(self):
@@ -267,4 +264,7 @@ class Camera():
 
 
 if __name__ == "__main__":
-    points = get_points_from_order((8, 8), '1x23')
+    points = get_points_from_order((8, 6), 'x123')
+    points = get_points_from_order((8, 6), '13x2')
+    points = get_points_from_order((8, 6), '321x')
+    points = get_points_from_order((8, 6), '2x31')
