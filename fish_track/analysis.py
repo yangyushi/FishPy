@@ -1,10 +1,12 @@
 """analysis the trajectories"""
 #!/usr/bin/env python3
+from tqdm import tqdm
 import numpy as np
 import pickle
 from scipy.optimize import least_squares
+from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
-from numba import jit
+from numba import njit, jit
 
 class Analyser():
     def __init__(self, trajs, origin=None):
@@ -15,8 +17,10 @@ class Analyser():
             self.origin = self._get_com()  # different origin at each time point
         else:
             self.origin = np.array([origin for _ in self._get_com()])
-        self.rot_matrices, self.dila_matrices = self._get_rot_dila_matrices()
+        self.ndim = len(self.origin[0])
         self.coms = self._get_com()
+        self.rot_matrices, self.dila_matrices = self._get_rot_dila_matrices()
+        self.rot_vecs = [Rotation.from_dcm(rm).as_rotvec() for rm in self.rot_matrices]
         
     def _get_com(self):
         """calculate the centre of mass at different frames"""
@@ -178,6 +182,7 @@ class Analyser():
             orders.append(np.abs(np.nanmean(directions)))
         return orders
     
+    @jit
     def get_rot_orders(self):
         """
         get rotational order parameter at different frame
@@ -185,15 +190,21 @@ class Analyser():
         since this is in 2D, we know the rotational axis should always be (0, 0, 1)
         """
         orders = []
-        for frame in self.frame_nums[:-1]:  # diff --> x(t+1) - x(t)
+        for j, frame in enumerate(self.frame_nums[:-1]):  # diff --> x(t+1) - x(t)
             rotations = []
             for i, t in enumerate(self.trajs):
                 if frame in t.time:
                     index = np.argmin(np.abs(t.time - frame))
                     if index < len(t.time) - 1:  # ignore trajectory if its last time point is frame
-                        v = self.get_velocities(t)[index]
-                        p = np.hstack([self.get_positions_r()[i][index], 0])
-                        rotations.append(np.cross(p, v) * np.array([0, 0, 1]))
+                        #v = self.get_velocities(t)[index]
+                        v = (t.positions[index] - t.positions[index - 1]) / (t.time[index] - t.time[index - 1])
+                        p = t.positions[index] - self.origin[index]
+                        if self.ndim == 2:
+                            p = np.hstack([p, 0])
+                            rotations.append(np.cross(p, v) @ np.array([0, 0, 1]))
+                        else:
+                            k = self.rot_vecs[j]
+                            rotations.append(np.cross(p, v) @ k)
             rot_directions = rotations / np.linalg.norm(rotations, axis=0)
             orders.append(np.nanmean(rot_directions))
         return orders
