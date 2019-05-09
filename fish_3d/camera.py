@@ -224,6 +224,10 @@ class Camera():
                 obj_points.append(obj_points_single)
                 corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
                 img_points.append(corners_refined)
+                img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
+                #img = draw(img, axes_img)
+                cv2.imshow('img', img)
+                cv2.waitKey(100)
             if fname == ext_image:
                 for_plot += [corner_number, corners_refined, ret]
 
