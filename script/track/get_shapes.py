@@ -55,10 +55,16 @@ for i, img in enumerate(images):
         break
 
 fig, ax = plt.subplots(2, 1)
-ax[0].hist(volumes, bins=51, histtype='step')
+pv, _ = np.histogram(volumes, bins=51)
+pa, _ = np.histogram(aspect_ratios, bins=51)
+ax[0].hist(volumes, bins=51, histtype='step', color='teal')
+ax[0].plot([fish_mvd.intensity.volume_min] * 2, [0, np.max(pv)], color='tomato')
+ax[0].plot([fish_mvd.intensity.volume_max] * 2, [0, np.max(pv)], color='tomato')
 ax[0].set_title("Intensity Volume Distribution")
 ax[0].set_xlabel("sum(I)")
-ax[1].hist(aspect_ratios, bins=51, histtype='step')
+ax[1].hist(aspect_ratios, bins=51, histtype='step', color='teal')
+ax[1].plot([fish_mvd.shape.aspect_ratio_min] * 2, [0, np.max(pa)], color='tomato')
+ax[1].plot([fish_mvd.shape.aspect_ratio_max] * 2, [0, np.max(pa)], color='tomato')
 ax[1].set_title("Aspect Ratio Distribution")
 ax[1].set_xlabel("Aspect Ratio")
 plt.tight_layout()
