@@ -164,7 +164,7 @@ def get_clusters(feature, image, kernels, angles, roi, threshold=0.5, kernel_thr
 
         box_in_image, box_in_kernel = get_box_for_kernel(kernel, u, v, fg)
 
-        mask = (kernel > kernel_threshold)[box_in_kernel]
+        mask = (kernel > kernel_threshold * kernel.max())[box_in_kernel]
 
         binary = (fg > fg.max() * threshold)[box_in_image]
 
@@ -173,7 +173,8 @@ def get_clusters(feature, image, kernels, angles, roi, threshold=0.5, kernel_thr
         offset = np.hstack(offset_1 + offset_2)
 
         cluster = np.array(np.nonzero(binary * mask)).T  # format is (u, v)
-        clusters.append(cluster + offset)
+        if len(cluster) > 0:
+            clusters.append(cluster + offset)
 
     return clusters
 
