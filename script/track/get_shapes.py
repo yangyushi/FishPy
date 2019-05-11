@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import fish_track as ft
 import configparser
 
+
 config = configparser.ConfigParser()
 config.read('configure.ini')
 
