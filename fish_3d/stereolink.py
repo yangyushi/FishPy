@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import itertools
 import numpy as np
+from scipy.spatial.distance import cdist
+from . import ray_trace
 
 
 def get_fundamental_from_projections(p1, p2):
@@ -51,3 +54,140 @@ def line2func(line):
     slope = - line[0] / line[1]
     intercept = - line[2] / line[1]
     return lambda x: slope * x + intercept
+
+
+def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, points=10, report=True):
+    """
+    use greedy algorithm to match clusters across THREE views
+
+    start from view_1:
+        start from cluster_1:
+            1. find all possible correspondance according to epipolar relationship in view 2 and view 3
+            2. for all possibility in view 2, validate according to ray-tracing
+            3. for all possibility in view 3, validate according to ray-tracing
+
+    :param clusters: a collection of points in the 2D image with the format of (u, v), NOT (x, y)
+    :param cameras: a collection of Camera instances
+    :param images: multiple images in views of different cameras
+    :param depth: the maximum depth of water used to constrain the length of the epipolar relation
+    :param normal: the direction of the normal of the water. It should be [0, 0, 1]
+    :param tol_2d: tolerance on the distance between epipolar line and pixels
+    :param tol_3d: tolerance on the distance between 3D rays
+    :param points: the number of points used in 3D stereo matching for each cluster
+    :return: the matched indices across different views. The indices are for the clusters.
+    """
+    matched = []
+
+    centres_mv = [[
+            cluster.mean(0) for cluster in cluster_one_view
+        ] for cluster_one_view in clusters]
+    for i, centre in enumerate(centres_mv[0]):
+        ep12 = ray_trace.epipolar_draw(
+            centre, cameras[0], cameras[1], images[1], water_level, depth, normal
+        )
+        
+        ep13 = ray_trace.epipolar_draw(
+            centre, cameras[0], cameras[2], images[2], water_level, depth, normal
+        )
+        
+        if (len(ep12) == 0) or (len(ep13) == 0):
+            print('no epipolar valid centre')
+            continue
+        
+        candidates_12 = []
+        candidates_13 = []
+        
+        for j, cluster in enumerate(clusters[1]):
+            distances = cdist(cluster, ep12)
+            if np.min(distances[np.triu_indices_from(distances, k=1)]) < tol_2d:
+                candidates_12.append(j)
+                
+        for j, cluster in enumerate(clusters[2]):
+            distances = cdist(cluster, ep13)
+            try:
+                if np.min(distances[np.triu_indices_from(distances, k=1)]) < tol_2d:
+                    candidates_13.append(j)
+            except ValueError:
+                print(np.nan in distance)
+                print(distances)
+                
+        if report:
+            print(f'#{i}, candidates in camera #2 is {len(candidates_12)}, candidates in camera #3 is {len(candidates_13)}')
+        if not (candidates_12 and candidates_13):
+            continue
+        
+        candidates = list(itertools.product([i], candidates_12, candidates_13))
+        clouds_3d = []
+        for candidate in candidates:
+            full_cluster_1 = clusters[0][candidate[0]]
+            full_cluster_2 = clusters[1][candidate[1]]
+            full_cluster_3 = clusters[2][candidate[2]]
+
+            for_match = (
+                    full_cluster_1[::len(full_cluster_1)//points],
+                    full_cluster_2[::len(full_cluster_2)//points],
+                    full_cluster_3[::len(full_cluster_3)//points],
+            )
+            cloud = match_clusters(for_match, cameras, normal, water_level, tol_3d)
+            if len(cloud) > 3:
+                matched.append(candidate)
+    return matched
+            
+
+def match_clusters(clusters, cameras, normal, water_level, tol):
+    combinations = list(itertools.product(*clusters))
+    results = []
+    for comb in combinations:
+        xyz, err = ray_trace.ray_trace_refractive(comb, cameras, z=water_level, normal=normal)
+        if err < tol:
+            results.append(xyz)
+    return np.array(results)
+
+
+def reconstruct_clouds(cameras, matched_indices, clusters_multi_view,
+        water_level, normal, sample_size, tol):
+    clouds = []
+    for indices in matched_indices:
+        i1, i2, i3 = indices
+        cls_1 = clusters_multi_view[0][i1]
+        cls_2 = clusters_multi_view[1][i2]
+        cls_3 = clusters_multi_view[2][i3]
+        cloud = []
+        for p1 in cls_1[::len(cls_1)//sample_size]:
+            for p2 in cls_2[::len(cls_2)//sample_size]:
+                for p3 in cls_3[::len(cls_3)//sample_size]:
+                    point_3d, error = ray_trace.ray_trace_refractive(
+                            [p1, p2, p3], cameras, z=water_level, normal=normal
+                            )
+                    if error < tol:
+                        cloud.append(point_3d)
+        if len(cloud) > 0:
+            clouds.append(np.array(cloud))
+    return clouds
+
+
+def merge_clouds(clouds, min_dist, min_num):
+    """
+    close pair = two points whose distance is smaller than min_dist
+    overlapped clouds = two clouds that have more than *min_num* close paris
+    merge all overlapped clouds
+    """
+    overlapped = []
+    for i, c1 in enumerate(clouds):
+        for j, c2 in enumerate(clouds[i+1:]):
+            dist = cdist(c1, c2)
+            indices = np.triu_indices_from(dist, k=1)
+            dist = dist[indices]
+            if np.sum(dist < min_dist) > min_num:
+                overlapped.append((i, j+i+1))
+    if len(overlapped) > 0:
+        overlapped = ft.utility.join_pairs(overlapped)
+
+        to_del = []
+        for labels in overlapped:
+            new_p1 = np.concatenate([clouds[l] for l in labels], axis=0)
+            clouds[labels[0]] = new_p1
+            for l in labels[1:]:
+                to_del.append(l)
+        clouds = np.delete(clouds, to_del)
+    return clouds
