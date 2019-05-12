@@ -1,4 +1,4 @@
-if [[ ! -d result ]]
+if [ ! -d result ]
 then
     mkdir result
 fi
