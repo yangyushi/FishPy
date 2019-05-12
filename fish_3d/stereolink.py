@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import fish_track as ft
 import itertools
 import numpy as np
 from scipy.spatial.distance import cdist

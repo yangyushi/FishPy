@@ -227,7 +227,7 @@ class Camera():
                 img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
                 #img = draw(img, axes_img)
                 cv2.imshow('img', img)
-                cv2.waitKey(100)
+                cv2.waitKey(500)
             if fname == ext_image:
                 for_plot += [corner_number, corners_refined, ret]
 
