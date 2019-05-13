@@ -25,6 +25,8 @@ pos:
 traj:
 	rm -f trajectories.pkl
 	make trajectories.pkl
+epi:
+	python3 check_epipolar.py
 clean:
 	rm -f *.pkl
 	rm -f *.npy
