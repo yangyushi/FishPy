@@ -41,7 +41,7 @@ for key in config:
     )
     cameras.update({camera_name: cam})
     with open(f'{camera_name}.pkl', 'wb') as f:
-        pickle.dump(cam)
+        pickle.dump(cam, f)
 
 with open(f'cameras.pkl', 'wb') as f:
     pickle.dump(cameras, f)
