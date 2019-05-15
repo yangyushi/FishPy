@@ -49,7 +49,7 @@ class Viewer(QMainWindow):
     def __setup_canvas(self):
         image = self.model.next
 
-        window = pg.GraphicsLayoutWidget(show=True, size=np.array(image.shape)[::-1]//3, border=True)
+        window = pg.GraphicsLayoutWidget(border=True)
         window.setWindowTitle('Measuring ROI')
 
 
@@ -101,7 +101,6 @@ class Viewer(QMainWindow):
         self.roi = position.tolist() + size.tolist()
         self.close()
 
-
 def measure_roi(images, roi):
     """
     return the position and size of the ROI
@@ -110,3 +109,9 @@ def measure_roi(images, roi):
     measure = Viewer(images, roi)
     app.exec_()
     return measure.roi
+
+if __name__ == "__main__":
+    import fish_track as ft
+    path = '/media/yushi/hdd/observe_20190502/5_fish_swarm/cam-1'
+    images = ft.read.iter_image_sequence(path)
+    measure_roi(images, [0, 100, 0, 100])
