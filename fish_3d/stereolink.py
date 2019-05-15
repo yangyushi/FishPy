@@ -57,6 +57,13 @@ def line2func(line):
     return lambda x: slope * x + intercept
 
 
+def get_partial_cluster(cluster, size):
+    if len(cluster) <= size:
+        return cluster
+    else:
+        return cluster[::len(cluster) // size]
+
+
 def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, points=10, report=True):
     """
     use greedy algorithm to match clusters across THREE views
@@ -120,23 +127,18 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         candidates = list(itertools.product([i], candidates_12, candidates_13))
         clouds_3d = []
         for candidate in candidates:
-            full_cluster_1 = clusters[0][candidate[0]]
-            full_cluster_2 = clusters[1][candidate[1]]
-            full_cluster_3 = clusters[2][candidate[2]]
+            full_clusters = [
+                    clusters[0][candidate[0]],
+                    clusters[1][candidate[1]],
+                    clusters[2][candidate[2]]
+            ]
 
-            for_match = []
-            for cluster in [full_cluster_1, full_cluster_2, full_cluster_3]:
-                if len(cluster) <= points:
-                    par_cluster = cluster
-                else:
-                    par_cluster = cluster[::len(cluster)//points]
-                for_match.append(par_cluster)
-
-            cloud = match_clusters(for_match, cameras, normal, water_level, tol_3d)
+            par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
+            cloud = match_clusters(par_clusters, cameras, normal, water_level, tol_3d)
             matched.append(candidate)
 
     return matched
-            
+
 
 def match_clusters(clusters, cameras, normal, water_level, tol):
     combinations = list(itertools.product(*clusters))
@@ -153,13 +155,15 @@ def reconstruct_clouds(cameras, matched_indices, clusters_multi_view,
     clouds = []
     for indices in matched_indices:
         i1, i2, i3 = indices
-        cls_1 = clusters_multi_view[0][i1]
-        cls_2 = clusters_multi_view[1][i2]
-        cls_3 = clusters_multi_view[2][i3]
+        full_clusters = (
+            clusters_multi_view[0][i1],
+            clusters_multi_view[1][i2],
+            clusters_multi_view[2][i3])
+        cls_1, cls_2, cls_3 = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
         cloud = []
-        for p1 in cls_1[::len(cls_1)//sample_size]:
-            for p2 in cls_2[::len(cls_2)//sample_size]:
-                for p3 in cls_3[::len(cls_3)//sample_size]:
+        for p1 in cls_1:
+            for p2 in cls_2:
+                for p3 in cls_3:
                     point_3d, error = ray_trace.ray_trace_refractive(
                             [p1, p2, p3], cameras, z=water_level, normal=normal
                             )
