@@ -124,14 +124,17 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             full_cluster_2 = clusters[1][candidate[1]]
             full_cluster_3 = clusters[2][candidate[2]]
 
-            for_match = (
-                    full_cluster_1[::len(full_cluster_1)//points],
-                    full_cluster_2[::len(full_cluster_2)//points],
-                    full_cluster_3[::len(full_cluster_3)//points],
-            )
+            for_match = []
+            for cluster in [full_cluster_1, full_cluster_2, full_cluster_3]:
+                if len(cluster) <= points:
+                    par_cluster = cluster
+                else:
+                    par_cluster = cluster[::len(cluster)//points]
+                for_match.append(par_cluster)
+
             cloud = match_clusters(for_match, cameras, normal, water_level, tol_3d)
-            if len(cloud) > 3:
-                matched.append(candidate)
+            matched.append(candidate)
+
     return matched
             
 
