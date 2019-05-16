@@ -121,7 +121,7 @@ class Viewer(QMainWindow):
     def __setup_left(self):
         pannel = QWidget()
         layout = QGridLayout()
-        window = pg.GraphicsLayoutWidget(show=True, border=True)
+        window = pg.GraphicsLayoutWidget()
         view = window.addViewBox(row=0, col=0, lockAspect=True)
 
         self.btn_load_image_left = QPushButton('Load Image')
@@ -148,7 +148,7 @@ class Viewer(QMainWindow):
     def __setup_right(self):
         pannel = QWidget()
         layout = QGridLayout()
-        window = pg.GraphicsLayoutWidget(show=True, border=True)
+        window = pg.GraphicsLayoutWidget()
         view = window.addViewBox(row=0, col=0, lockAspect=True)
         plot = pg.ScatterPlotItem()
         canvas = StereoImageItem(self.model, label=2, plot=plot)
