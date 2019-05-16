@@ -51,17 +51,18 @@ def get_poi(p, z, coordinate):
                |
              fish
 
-
-    The equation: P @ [X, Y, Z, 1]' = [w * v, w * u, w]
+    The equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved for x, y, c, knowing everything else
     """
+    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = p.ravel()
+    u, v = coordinate
 
-    M = np.zeros((2, 2))
-    b = np.zeros((2, 1))
-    for i in range(2):
-        for j in range(2):
-            M[i, j] = p[i, j] - coordinate[i] * p[2, j]
-        b[i] = coordinate[i] * p[2, 2] * z + coordinate[i] * p[2, 3] - p[i, 2] * z - p[i, 3]
-    x, y = np.linalg.solve(M, b).ravel()
+    x =  (z*p12*p23 - z*p12*p33*v - z*p13*p22 + z*p13*p32*v + z*p22*p33*u - \
+          z*p23*p32*u + p12*p24 - p12*p34*v - p14*p22 + p14*p32*v + p22*p34*u - p24*p32*u) /\
+         (p11*p22 - p11*p32*v - p12*p21 + p12*p31*v + p21*p32*u - p22*p31*u)
+
+    y = -(z*p11*p23 - z*p11*p33*v - z*p13*p21 + z*p13*p31*v + z*p21*p33*u - \
+          z*p23*p31*u + p11*p24 - p11*p34*v - p14*p21 + p14*p31*v + p21*p34*u - p24*p31*u) /\
+         (p11*p22 - p11*p32*v - p12*p21 + p12*p31*v + p21*p32*u - p22*p31*u)
     return np.array([x, y, z])
 
 

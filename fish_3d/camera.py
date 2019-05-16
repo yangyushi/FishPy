@@ -143,29 +143,14 @@ class Camera():
         self.t = np.zeros(3)
         self.k = np.zeros((3, 3))
         self.calibration_files = []
+        self.update()
 
-    @property
-    def r(self):
-        """return rotational matrix of the camera"""
-        return self.rotation.as_dcm()
-
-    @property
-    def f(self):
-        """focal lengths of the camera"""
-        return [self.k[0, 0], self.k[1, 1]]
-
-    @property
-    def c(self):
-        """principal point of the camera"""
-        return [self.k[0, 2], self.k[1, 2]]
-
-    @property
-    def ext(self):
-        return np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
-
-    @property
-    def p(self):
-        return np.dot(self.k, self.ext)
+    def update(self):
+        self.r = self.rotation.as_dcm()  # rotation
+        self.f = [self.k[0, 0], self.k[1, 1]]  # focal length
+        self.c = [self.k[0, 2], self.k[1, 2]]  # principal point
+        self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
+        self.p = np.dot(self.k, self.ext)
 
     def read_calibration(self, mat_file):
         """
@@ -181,6 +166,7 @@ class Camera():
         self.distortion = [0, 0, 0, 0, 0]
         self.t = calib_result['Tc_ext'][:, 0]
         self.rotation = R.from_dcm(calib_result['Rc_ext'])
+        self.update()
 
     def project(self, position):
         """
@@ -252,6 +238,8 @@ class Camera():
         self.distortion = np.squeeze(distortion)
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
         self.t = np.ravel(tvecs[-1])
+
+        self.update()
 
         if show:
             length = 100
