@@ -179,8 +179,14 @@ class Camera():
         pos_uv /= pos_uv[-1]
         return pos_uv
 
-    def undistort(self, image):
-        return cv2.undistort(image, self.k, self.distortion, cv2.INTER_LINEAR)
+    def undistort(self, points):
+        new_points = np.expand_dims(points, 0)
+        undistorted = cv2.undistortPoints(
+                src=new_points,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion,
+                P=self.k)
+        return np.squeeze(undistorted)
 
     def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """
@@ -226,19 +232,10 @@ class Camera():
 
         self.k = camera_matrix
 
-        # get matrices for undistorted image
-        camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
-            camera_matrix, distortion, 
-            imageSize=gray.shape, 
-            alpha=1,
-            newImgSize=gray.shape
-        )
-
         #self.k = camera_matrix
         self.distortion = np.squeeze(distortion)
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
         self.t = np.ravel(tvecs[-1])
-
         self.update()
 
         if show:

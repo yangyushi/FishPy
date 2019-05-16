@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import numpy as np
+from numba import njit
 from scipy import optimize
+import cv2
 
 
 def get_intersect_of_lines(lines):
@@ -9,6 +11,7 @@ def get_intersect_of_lines(lines):
     line: a dict containing the unit vector and a base point
     return the a point in 3D whose distances sum to all lines is minimum
     (I followed this answer: https://stackoverflow.com/a/48201730/4116538)
+    todo: no solve
     """
     line_num = len(lines)
     M = np.zeros((3, 3))
@@ -28,7 +31,10 @@ def get_intersect_of_lines(lines):
 
 
 def pl_dist(point, line):
-    """distance between a point and a line"""
+    """
+    distance between a point and a line
+    todo: write cross product explicitly
+    """
     ac = point - line['point']
     ab = line['unit']
     return np.linalg.norm(np.cross(ac, ab)) / np.linalg.norm(ab)
@@ -63,6 +69,7 @@ def get_poi(p, z, coordinate):
     y = -(z*p11*p23 - z*p11*p33*v - z*p13*p21 + z*p13*p31*v + z*p21*p33*u - \
           z*p23*p31*u + p11*p24 - p11*p34*v - p14*p21 + p14*p31*v + p21*p34*u - p24*p31*u) /\
          (p11*p22 - p11*p32*v - p12*p21 + p12*p31*v + p21*p32*u - p22*p31*u)
+
     return np.array([x, y, z])
 
 
@@ -169,12 +176,12 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
-    
     """
-    
+
+    xy = camera_1.undistort(np.array([uv[::-1]]))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
-    poi_1 = get_poi(camera_1.p, interface, uv[::-1])
+    poi_1 = get_poi(camera_1.p, interface, xy)
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
     is_in_image = True
@@ -198,9 +205,16 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
-        xy_2 = camera_2.p @ np.hstack((q, 1))
-        xy_2 /= xy_2[-1]
-        xy_2 = np.floor(xy_2[:2]).astype(int)
+        xy_2, _ = cv2.projectPoints(
+                objectPoints=np.vstack(q).T,
+                rvec=camera_2.rotation.as_rotvec(),
+                tvec=camera_2.t,
+                cameraMatrix=camera_2.k,
+                distCoeffs=camera_2.distortion
+        )
+        #xy_2 = camera_2.p @ np.hstack((q, 1))
+        #xy_2 /= xy_2[-1]
+        xy_2 = np.ravel(xy_2).astype(int)
         uv_2 = xy_2[::-1]
 
         is_in_image = is_inside_image(uv_2, image_2)
