@@ -226,8 +226,16 @@ class Camera():
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
 
-        ret, camera_matrix, distortion, rvecs, tvecs = cv2.calibrateCamera(
-                obj_points, img_points, gray.shape[::-1], None, None
+        ret, camera_matrix, distortion, rvecs, tvecs, std_i, std_e, pve = cv2.calibrateCameraExtended(
+                obj_points, img_points, gray.shape[::+1], None, np.zeros(4),
+                flags=sum((
+                    cv2.CALIB_FIX_ASPECT_RATIO,
+                    cv2.CALIB_ZERO_TANGENT_DIST,
+                    #cv2.CALIB_FIX_K1,
+                    #cv2.CALIB_FIX_K2,
+                    cv2.CALIB_FIX_K3,
+                    cv2.CALIB_FIX_K4,
+                    )),
         )
 
         self.k = camera_matrix
