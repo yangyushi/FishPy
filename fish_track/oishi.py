@@ -164,9 +164,9 @@ def get_clusters(feature, image, kernels, angles, roi, threshold=0.5, kernel_thr
 
         box_in_image, box_in_kernel = get_box_for_kernel(kernel, u, v, fg)
 
-        mask = (kernel > kernel_threshold * kernel.max())[box_in_kernel]
+        mask = (kernel > (kernel_threshold * kernel.max()))[box_in_kernel]
 
-        binary = (fg > fg.max() * threshold)[box_in_image]
+        binary = (fg > (image.max() * threshold))[box_in_image]
 
         offset_1 = np.array([b.start for b in box_in_image])
         offset_2 = np.array([r.start for r in roi])

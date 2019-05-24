@@ -132,11 +132,10 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
-
             par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
             cloud = match_clusters(par_clusters, cameras, normal, water_level, tol_3d)
-            matched.append(candidate)
-
+            if len(cloud) > points:
+                matched.append(candidate)
     return matched
 
 
