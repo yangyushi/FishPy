@@ -46,8 +46,9 @@ for i, img in enumerate(images):
     if i < frame_start:
         continue
     for_tracking = bg - img
-    for_tracking = for_tracking[roi]
+    for_tracking += for_tracking.min()  # all positive now
     for_tracking = ndimage.gaussian_filter(for_tracking, blur)
+    for_tracking = for_tracking[roi]
     s, v, ar = ft.shape.get_shapes(for_tracking, fish_mvd, report=True)
     shapes += s
     volumes += v

@@ -65,10 +65,10 @@ for frame, image in enumerate(images):
         pass
 
     fg = np.abs(background - image).astype(np.float32)
-    fg[fg < 0] = 0
+    fg += fg.min()
+    fg = ndimage.gaussian_filter(fg, blur)
     fg = fg[roi]
     fg /= fg.max()
-    fg = ndimage.gaussian_filter(fg, blur)
 
     cross_correlation = ft.oishi.get_cross_correlation_nd(
             fg, angles, kernels
