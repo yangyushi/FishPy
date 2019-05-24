@@ -34,6 +34,8 @@ kernel:
 	make shape_kernels.npy 
 roi:
 	python3 get_roi.py
+threshold:
+	python3 get_threshold.py
 clean:
 	rm -f *.pkl
 	rm -f *.npy
