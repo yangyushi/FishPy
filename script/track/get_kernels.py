@@ -5,14 +5,13 @@ import numpy as np
 import fish_track as ft
 
 
-config = configparser.ConfigParser()
-config.read('configure.ini')
+config = ft.utility.Configure('configure.ini')
 
-indices = config['Kernel']['principle_axes']
+indices = config.Kernel.principle_axes
 indices = indices.split(',')
 indices = [int(i) for i in indices]
 
-cluster_num = int(config['Kernel']['cluster_number'])
+cluster_num = config.Kernel.cluster_number
 
 
 try:

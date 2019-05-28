@@ -9,27 +9,37 @@ import fish_track as ft
 import configparser
 import pickle
 
-config = configparser.ConfigParser()
-config.read('configure.ini')
+config = ft.utility.Configure('configure.ini')
 
-data_path = config['Data']['path']
-mvd_path = config['Data']['mvd']
-data_type = config['Data']['type']
+data_path = config.Data.path
+data_type = config.Data.type
 
-roi = config['Process']['roi']
-refine_otol = float(config['Refine']['otol'])
+if config.Process.gaussian_sigma != 0:
+    def denoise(x): return ndimage.gaussian_filter(x, blur)
+else:
+    def denoise(x): return x
+
+if config.Process.normalise == 'std':
+    def normalise(x): return x / x.std()
+elif config.Process.normalise == 'max':
+    def normalise(x): return x / x.max()
+elif config.Process.normalise == 'None':
+    def normalise(x): return x
+
+
+roi = config.Process.roi
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
 roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
-fish_mvd = ft.shape.MVD(mvd_path)
+refine_otol = config.Refine.otol
 
-blur  = float(config['Process']['gaussian_sigma'])
-angle_number = int(config['Locate']['orientation_number'])
+blur  = config.Process.gaussian_sigma
+angle_number = config.Locate.orientation_number
 
-frame_start = int(config['Locate']['frame_start'])
-frame_end = int(config['Locate']['frame_end'])
-cc_threshold = float(config['Locate']['cc_threshold'])
-img_threshold = float(config['Locate']['img_threshold'])
+frame_start = config.Locate.frame_start
+frame_end = config.Locate.frame_end
+cc_threshold = config.Locate.cc_threshold
+img_threshold = config.Locate.img_threshold
 
 if data_type == 'video':
     images = ft.read.iter_video(data_path)
@@ -64,31 +74,29 @@ for frame, image in enumerate(images):
     else:
         pass
 
-    fg = np.abs(background - image).astype(np.float32)
-    fg += fg.min()
-    fg = ndimage.gaussian_filter(fg, blur)
+    fg = background - normalise(denoise(image))
+    fg -= fg.min()
     fg = fg[roi]
-    fg /= fg.max()
 
     cross_correlation = ft.oishi.get_cross_correlation_nd(
             fg, angles, kernels
             )
 
     maxima = ft.oishi.oishi_locate(
-            fg, cross_correlation, fish_mvd.shape.size_min,
+            fg, cross_correlation, config.Fish.size_min,
             cc_threshold, img_threshold
             )
 
-    maxima = ft.oishi.oishi_refine(maxima, angles, fish_mvd.shape.size_max, otol=refine_otol)
+    maxima = ft.oishi.oishi_refine(maxima, angles, config.Fish.size_max, otol=refine_otol)
 
 
     pickle.dump(maxima, f_out)
 
     o, r, x, y, p = maxima
 
-    if config['Plot']['want_plot'] == 'True':
+    if config.Plot.want_plot == 'True':
         plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
-        length = int(config['Plot']['line_length'])
+        length = config.Plot.line_length
         for i, m in enumerate(maxima.T):
             angle = angles[o[i]] / 180 * np.pi
             base = m[2:].astype(np.float64)
