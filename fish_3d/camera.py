@@ -135,6 +135,15 @@ def plot_cameras(axis, cameras, water_level=0, depth=400):
     return axis
 
 
+def get_reproject_error(points_2d, points_3d, rvec, tvec, distort, camera_matrix):
+    projected, _ = cv2.projectPoints(
+            points_3d, rvec, tvec,
+            cameraMatrix=camera_matrix,
+            distCoeffs=distort
+            )
+    shift = np.squeeze(projected) - np.squeeze(points_2d)
+    return np.linalg.norm(shift, axis=1).mean()
+
 class Camera():
     def __init__(self):
         self.rotation = R.from_rotvec(np.zeros(3))
@@ -179,8 +188,35 @@ class Camera():
         pos_uv /= pos_uv[-1]
         return pos_uv
 
-    def undistort(self, points):
-        new_points = np.expand_dims(points, 0)
+    def undistort(self, point, uv=True):
+        """
+        undistort point in an image, coordinate is (u, v), NOT (x, y)
+        return: undistorted points, being uv if uv=True else xy (camera.K @ xy = uv)
+        """
+        new_point = point.astype(np.float64)
+        new_point = np.expand_dims(new_point, 0)
+        new_point = np.expand_dims(new_point, 0)
+        if uv:
+            undistorted = cv2.undistortPoints(
+                    src=new_point,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+                    P=self.k)
+        else:
+            undistorted = cv2.undistortPoints(
+                    src=new_point,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+                    )
+        return np.squeeze(undistorted)
+
+    def undistort_points(self, points):
+        """
+        undistort many points in an image, coordinate is (u, v), NOT (x, y)
+        return: undistorted version of (u', v') coordinates
+        """
+        new_points = points.astype(np.float64)
+        new_points = np.expand_dims(new_points, 1)
         undistorted = cv2.undistortPoints(
                 src=new_points,
                 cameraMatrix=self.k,
@@ -195,7 +231,7 @@ class Camera():
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
 
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space
@@ -217,9 +253,9 @@ class Camera():
                 corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
                 img_points.append(corners_refined)
                 img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
-                #img = draw(img, axes_img)
+                img = cv2.resize(img, (800, 600))
                 cv2.imshow('img', img)
-                cv2.waitKey(50)
+                cv2.waitKey(100)
             if fname == ext_image:
                 for_plot += [corner_number, corners_refined, ret]
 
@@ -227,31 +263,37 @@ class Camera():
         img_points = np.array(img_points)
 
         ret, camera_matrix, distortion, rvecs, tvecs, std_i, std_e, pve = cv2.calibrateCameraExtended(
-                obj_points, img_points, gray.shape[::+1], None, np.zeros(4),
+                obj_points, img_points, gray.shape, None, np.zeros(4),
                 flags=sum((
                     cv2.CALIB_FIX_ASPECT_RATIO,
                     cv2.CALIB_ZERO_TANGENT_DIST,
                     #cv2.CALIB_FIX_K1,
-                    cv2.CALIB_FIX_K2,
+                    #cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
                     cv2.CALIB_FIX_K4,
                     )),
         )
 
-        self.k = camera_matrix
+        for i, fname in enumerate(image_files):
+            err = get_reproject_error(
+                    img_points[i], obj_points[i],
+                    rvecs[i], tvecs[i], distortion, camera_matrix
+                    )
+            print(f"reproject error for {fname:<12} is {err:.4f}")
 
-        #self.k = camera_matrix
+        self.k = camera_matrix
         self.distortion = np.squeeze(distortion)
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
         self.t = np.ravel(tvecs[-1])
         self.update()
-
         if show:
             length = 100
             axes = np.float32([[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]])
             axes_img, _ = cv2.projectPoints(axes, rvecs[-1], tvecs[-1], self.k, self.distortion)
+            img = cv2.imread(fname)
             img = cv2.drawChessboardCorners(img, *for_plot)
             img = draw(img, axes_img)
+            img = cv2.resize(img, (800, 600))
             cv2.imshow('img', img)
             cv2.waitKey(2000)
 
