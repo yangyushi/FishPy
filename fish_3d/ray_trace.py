@@ -40,11 +40,11 @@ def pl_dist(point, line):
     return np.linalg.norm(np.cross(ac, ab)) / np.linalg.norm(ab)
 
 
-def get_poi(p, z, coordinate):
+def get_poi(camera, z, coordinate):
     """
-    - p: the projection matrix of the camera
+    - camera: a Camera instance
     - z: the hight of water level with respect to world origin
-    - corrdinate: the position (x, y) of object on the image, unit is pixel
+    - corrdinate: the position (u, v) of object on the image, unit is pixel, NOT (x, y)
     - poi, point on interface. See the sketch for its meaning
 
                    camera
@@ -59,18 +59,17 @@ def get_poi(p, z, coordinate):
 
     The equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved for x, y, c, knowing everything else
     """
-    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = p.ravel()
-    u, v = coordinate
+    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.ext.ravel()
+    x, y = camera.undistort(coordinate[::-1], uv=False)  # return (u, v) -> (x, y)
+    X =  (z*p12*p23 - z*p12*p33*y - z*p13*p22 + z*p13*p32*y + z*p22*p33*x - \
+          z*p23*p32*x + p12*p24 - p12*p34*y - p14*p22 + p14*p32*y + p22*p34*x - p24*p32*x) /\
+         (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
 
-    x =  (z*p12*p23 - z*p12*p33*v - z*p13*p22 + z*p13*p32*v + z*p22*p33*u - \
-          z*p23*p32*u + p12*p24 - p12*p34*v - p14*p22 + p14*p32*v + p22*p34*u - p24*p32*u) /\
-         (p11*p22 - p11*p32*v - p12*p21 + p12*p31*v + p21*p32*u - p22*p31*u)
+    Y = -(z*p11*p23 - z*p11*p33*y - z*p13*p21 + z*p13*p31*y + z*p21*p33*x - \
+          z*p23*p31*x + p11*p24 - p11*p34*y - p14*p21 + p14*p31*y + p21*p34*x - p24*p31*x) /\
+         (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
 
-    y = -(z*p11*p23 - z*p11*p33*v - z*p13*p21 + z*p13*p31*v + z*p21*p33*u - \
-          z*p23*p31*u + p11*p24 - p11*p34*v - p14*p21 + p14*p31*v + p21*p34*u - p24*p31*u) /\
-         (p11*p22 - p11*p32*v - p12*p21 + p12*p31*v + p21*p32*u - p22*p31*u)
-
-    return np.array([x, y, z])
+    return np.array([X, Y, z])
 
 
 def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
@@ -140,7 +139,7 @@ def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0,
     
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
-    poi_1 = get_poi(camera_1.p, interface, uv[::-1])
+    poi_1 = get_poi(camera_1, interface, uv)
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
     is_in_image = True
@@ -166,22 +165,20 @@ def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0,
     return epipolar_pixels
 
 
-def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
-    return all the pixels that contains the epipolar line in image_2
+    return all the pixels that contains the epipolar line in image_2, re-projected & distorted
 
     The meanings of variable names can be found in this paper
 
-    :param uv: (u, v) location of a pixel on image from camera_1, NOT (x, y)
+    :param vu: (v, u) location of a pixel on image from camera_1, NOT (u, v)
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
     """
-
-    xy = camera_1.undistort(np.array([uv[::-1]]))
+    poi_1 = get_poi(camera_1, interface, np.array(vu))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
-    poi_1 = get_poi(camera_1.p, interface, xy)
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
     is_in_image = True
@@ -189,7 +186,7 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
     epipolar_pixels = []
     step = 1
     count = 0
-    last_uv = None
+    last_vu = None
 
     while is_in_image:
         m += step * trans
@@ -198,40 +195,38 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
             break
         d = abs(co_2[-1] - interface)
         x = np.linalg.norm(m[:2] - co_2[:2])
-        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.5, x1=x).root
+        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.8, x1=x).root
         if (u > x) or (u < 0):
             print("root finding in refractive epipolar geometry fails")
             break
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
-        xy_2, _ = cv2.projectPoints(
+        uv_2, _ = cv2.projectPoints(
                 objectPoints=np.vstack(q).T,
                 rvec=camera_2.rotation.as_rotvec(),
                 tvec=camera_2.t,
                 cameraMatrix=camera_2.k,
                 distCoeffs=camera_2.distortion
         )
-        #xy_2 = camera_2.p @ np.hstack((q, 1))
-        #xy_2 /= xy_2[-1]
-        xy_2 = np.ravel(xy_2).astype(int)
-        uv_2 = xy_2[::-1]
+        uv_2 = np.ravel(uv_2).astype(int)
+        vu_2 = uv_2[::-1]
 
-        is_in_image = is_inside_image(uv_2, image_2)
+        is_in_image = is_inside_image(vu_2, image_2)
 
         if count == 0:
             is_connected = True
             is_different = True
         else:
-            is_connected = np.sum(np.power(uv_2 - last_uv, 2)) <= 2
-            is_different = not np.allclose(uv_2, last_uv)
+            is_connected = np.sum(np.power(vu_2 - last_vu, 2)) <= 2
+            is_different = not np.allclose(vu_2, last_vu)
 
         should_draw = is_different and is_in_image and is_connected
 
         if should_draw:
-            epipolar_pixels.append(uv_2.copy())
-            epipolar_pixels.append(uv_2.copy() + 1)
-            last_uv = uv_2.copy()
+            epipolar_pixels.append(vu_2.copy())
+            epipolar_pixels.append(vu_2.copy() + 1)
+            last_vu = vu_2.copy()
         else:
             if not is_different:
                 step *= 2
@@ -245,14 +240,14 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
 
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of centres (u, v) in different views
+    :param centres: a list of centres (v, u) in different views, they should NOT be undistorted
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
     camera_origins = [-camera.r.T @ camera.t for camera in cameras]
-    pois = [
-        get_poi(camera.p, z=z, coordinate=centre[::-1]) for camera, centre in zip(cameras, centres)
-    ]  # ::-1 changes from (u, v) to (x, y)
+    pois = []
+    for camera, centre in zip(cameras, centres):
+        pois.append(get_poi(camera, z=z, coordinate=centre))
     incid_rays = [poi - co for poi, co in zip(pois, camera_origins)]
     trans_rays = [get_trans_vec(incid, normal=normal) for incid in incid_rays]
     trans_lines = [{'unit': t, 'point': poi} for t, poi in zip(trans_rays, pois)]
@@ -294,10 +289,15 @@ def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractiv
             constraints=c_
             )
     poi_xy = result.x
-    poi = np.hstack((poi_xy, water_level, 1))
-    img_xy = camera.p @ poi
-    img_xy = (img_xy / img_xy[-1])[:2]
-    return img_xy
+    poi = np.hstack((poi_xy, water_level))
+    uv_2, _ = cv2.projectPoints(
+            objectPoints=np.vstack(poi).T,
+            rvec=camera.rotation.as_rotvec(),
+            tvec=camera.t,
+            cameraMatrix=camera.k,
+            distCoeffs=camera.distortion
+    )
+    return uv_2.ravel()
 
 if __name__ == "__main__":
     l1 = {'unit': (1.3, 1.3, -10), 'point': (-14.2, 17, -1)}
