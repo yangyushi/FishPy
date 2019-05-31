@@ -12,7 +12,7 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-setup_sections = ['Stereo', 'Calibration', 'DEFAULT']
+setup_sections = ['Stereo', 'Plot', 'Calibration', 'DEFAULT']
 
 grid_size = float(config['Calibration']['grid_size'])
 win_size = int(config['Calibration']['win_size'])

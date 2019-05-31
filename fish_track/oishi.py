@@ -198,18 +198,23 @@ def oishi_refine(features, angles, length, otol):
     o, s, x, y, p = features
     positions = np.vstack((x, y)).T
     distances = np.triu(squareform(pdist(positions)))
-    distances[np.isclose(distances, 0)] = np.nan
-    close_pairs = np.array(np.where(distances < length * 1.414)).T  # only works in 2D with sqrt(2)!
+    distances[np.isclose(distances, 0)] = length * 2 # to ensure no self-overlapping
+    close_pairs = np.array(np.where(distances < length)).T
     to_merge = []
     for (i1, i2) in close_pairs:
-        v1, v2 = o2v(o[i1], angles), o2v(o[i2], angles)
+        a1 = abs(angles[o[i1]] - 90)
+        a2 = abs(angles[o[i2]] - 90)
+        a12 = abs(a1 - a2)
         v3 = np.array((x[i1] - x[i2], y[i1] - y[i2]))
+        v1, v2 = o2v(o[i1], angles), o2v(o[i2], angles)
         v3 = v3 / np.linalg.norm(v3)
-        a12 = np.rad2deg(np.arccos(np.abs(v1 @ v2)))
-        a13 = np.rad2deg(np.arccos(np.abs(v1 @ v3)))
-        a23 = np.rad2deg(np.arccos(np.abs(v2 @ v3)))
+        a13 = np.rad2deg(np.arccos(v1 @ v3))
+        a23 = np.rad2deg(np.arccos(v2 @ v3))
+        a13 = min(a13, 180 - a13)
+        a23 = min(a23, 180 - a23)
         angle = np.array((a12, a13, a23))
-        if (angle < otol).all():
+        threshold = otol * (length - distances[i1, i2]) / length
+        if (angle < threshold).all():
             to_merge.append((i1, i2))
     to_merge = join_pairs(to_merge)
     to_delete = []
@@ -219,7 +224,6 @@ def oishi_refine(features, angles, length, otol):
 
     refined = np.delete(features, to_delete, axis=1)
     return refined
-
 
 
 if __name__ == "__main__":

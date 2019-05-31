@@ -5,6 +5,7 @@ import numpy as np
 import configparser
 import fish_3d as f3
 import fish_track as ft
+from scipy import ndimage
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
@@ -22,6 +23,8 @@ water_depth = float(config['Stereo']['water_depth'])
 sample_size = int(config['Stereo']['sample_size'])
 tol_2d = float(config['Stereo']['tol_2d'])
 tol_3d = float(config['Stereo']['tol_3d'])
+see_cluster = bool(int(config['Plot']['see_cluster']))
+see_reprojection = bool(int(config['Plot']['see_reprojection']))
 
 for frame in range(frame_start, frame_end):
     images_multi_view = []
@@ -37,6 +40,7 @@ for frame in range(frame_start, frame_end):
         x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
         roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
+        blur = float(view_config['Process']['gaussian_sigma'])
         background = np.load(config[cam_name]['background'])
 
         # the degree 180 is not included, it should be cuvered by another "upside-down" shape
@@ -59,13 +63,21 @@ for frame in range(frame_start, frame_end):
 
         img_threshold = float(view_config['Locate']['img_threshold'])
 
+        fg = background/background.std() - image/image.std()
+        fg = ndimage.gaussian_filter(fg, blur)
+        fg -= fg.mean()
         clusters = ft.oishi.get_clusters(
-            feature, background - image, shape_kernels, angles, roi,
-            threshold=img_threshold, kernel_threshold=img_threshold
+            feature, fg, shape_kernels, angles, roi,
+            threshold=0.2, kernel_threshold=0.2
         )
         cameras_ordered.append(cameras[cam_name])
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
+        if see_cluster:
+            plt.imshow(fg, cmap='gray')
+            for c in clusters:
+                plt.scatter(c.T[1], c.T[0], alpha=0.5)
+            plt.show()
         
     # stereomatcing using refractive epipolar relationships
     matched_indices = f3.stereolink.greedy_match_centre(
@@ -84,10 +96,19 @@ for frame in range(frame_start, frame_end):
     clouds = f3.stereolink.merge_clouds(clouds, min_dist=tol_3d, min_num=sample_size)
     matched_centre = np.array([np.mean(cloud, 0) for cloud in clouds])
 
-    f3.utility.plot_reproject(images_multi_view[0], matched_centre, cameras_ordered[0], filename=f'reproject_cam_1_frame_{frame:04}.pdf')
-    f3.utility.plot_reproject(images_multi_view[1], matched_centre, cameras_ordered[1], filename=f'reproject_cam_2_frame_{frame:04}.pdf')
-    f3.utility.plot_reproject(images_multi_view[2], matched_centre, cameras_ordered[2], filename=f'reproject_cam_3_frame_{frame:04}.pdf')
-
+    if see_reprojection:
+        f3.utility.plot_reproject(
+                images_multi_view[0], matched_centre, cameras_ordered[0],
+                filename=f'cam_1-reproject_frame_{frame:04}.png'
+                )
+        f3.utility.plot_reproject(
+                images_multi_view[1], matched_centre, cameras_ordered[1],
+                filename=f'cam_2-reproject_frame_{frame:04}.png'
+                )
+        f3.utility.plot_reproject(
+                images_multi_view[2], matched_centre, cameras_ordered[2],
+                filename=f'cam_3-reproject_frame_{frame:04}.png'
+                )
     print(f'frame {frame}', len(matched_centre))
     np.save(f'location_3d_frame_{frame:04}', matched_centre)
 

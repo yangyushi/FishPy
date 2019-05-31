@@ -2,8 +2,10 @@ import sys
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QGridLayout, QApplication, QHBoxLayout, QSlider, QFileDialog
 import numpy as np
 from matplotlib import cm
+from scipy import ndimage
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
+import fish_track as ft
 
 pg.setConfigOptions(imageAxisOrder='row-major')
 
@@ -19,13 +21,32 @@ def get_fg_color(fg):
 
 class Model():
     """showing images at different frames"""
-    def __init__(self, images, threshold, background=None):
+    def __init__(self, images, config_file, background=None):
         self.images = images
-        self.history = [next(images)]
         self.background = background
-        self.threshold = threshold
-        self.cursor = 0
-        self.image = None
+        config = ft.utility.Configure(config_file)
+
+        roi = config.Process.roi
+        x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
+        self.roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
+
+        if config.Process.gaussian_sigma != 0:
+            denoise = lambda x: ndimage.gaussian_filter(x, config.Process.gaussian_sigma)
+        else:
+            denoise = lambda x: x
+
+        if config.Process.normalise == 'std':
+            normalise = lambda x: x / x.std()
+        elif config.Process.normalise == 'max':
+            normalise = lambda x: x / x.max()
+        elif config.Process.normalise == 'None':
+            normalise = lambda x: x
+
+        self.process = lambda x: normalise(denoise(x))
+        self.threshold = config.Fish.threshold
+        self.cursor = -1
+        self.history = [self.process(next(images))]
+        self.image = self.history[0]
 
     @property
     def label(self):
@@ -33,20 +54,23 @@ class Model():
             fg = self.image.max() - self.image
         else:
             fg = self.background - self.image
-            fg += fg.min()
-        fg_binary = fg > (fg.max() * self.threshold)
+            fg -= fg.min()
+        fg_binary = fg > (fg[self.roi].max() * self.threshold)
         return get_fg_color(fg_binary)
 
     @property
     def next(self):
         if self.cursor == len(self.history) - 1:
-            self.image = next(self.images)
+            try:
+                self.image = self.process(next(self.images))
+            except StopIteration:
+                return self.image, self.label
             self.history.append(self.image)
             self.cursor += 1
             return self.image, self.label
         else:
-            self.image = self.history[self.cursor]
             self.cursor += 1
+            self.image = self.history[self.cursor]
             return self.image, self.label
 
     @property
@@ -58,13 +82,13 @@ class Model():
 
 
 class Viewer(QMainWindow):
-    def __init__(self, images, threshold, background):
+    def __init__(self, images, config_path, background):
         super().__init__()
-        self.result = threshold
         if isinstance(background, type(None)):
-            self.model = Model(images, threshold)
+            self.model = Model(images, config_path)
         else:
-            self.model = Model(images, threshold, np.load(background))
+            self.model = Model(images, config_path, np.load(background))
+        self.result = self.model.threshold
         self.layout = QGridLayout()
         self.window = QWidget()
         self.__setup()
@@ -163,17 +187,21 @@ class Viewer(QMainWindow):
         self.canvas.setImage(self.model.image)
         self.canvas_label.setImage(self.model.label)
 
-def get_threshold(images, threshold=0.0, background=None):
+
+def get_threshold(images, config, background=None):
     """
     get a proper threshold value by manually measurement
     """
     app = QApplication(sys.argv)
-    measure = Viewer(images, threshold, background)
+    measure = Viewer(images, config, background)
     app.exec_()
     return measure.result
 
+
 if __name__ == "__main__":
     import fish_track as ft
-    path = '/Users/yushi/OneDrive/Academic/UoB/BCFN/BCFN-Projects/Fish/data/20190502_observe_3d/fish_5/cam-1'
+    path = '../test/images/cam-1'
+    config = '../script/track/configure.ini'
+    bg = '../test/images/background-cam-1.npy'
     images = ft.read.iter_image_sequence(path)
-    get_threshold(images)
+    get_threshold(images, config, bg)

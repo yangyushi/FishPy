@@ -28,12 +28,15 @@ def iter_video(file_name, roi=None):
             yield image
 
 
-def get_background(video_iter, step=1, max_frame=1000):
+def get_background(video_iter, step=1, max_frame=1000, process=lambda x:x):
     background = next(video_iter).astype(np.float64)
     count = 1
     for i, frame in enumerate(video_iter):
         if (i % step) == 0:
-            background += frame
+            if process:
+                background += process(frame)
+            else:
+                background += frame
             count += 1
         if count > max_frame:
             break
