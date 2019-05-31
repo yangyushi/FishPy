@@ -90,20 +90,14 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             cluster.mean(0) for cluster in cluster_one_view
         ] for cluster_one_view in clusters]
     for i, centre in enumerate(centres_mv[0]):
-        ep12 = ray_trace.epipolar_draw(
-            centre, cameras[0], cameras[1], images[1], water_level, depth, normal
-        )
-        
-        ep13 = ray_trace.epipolar_draw(
-            centre, cameras[0], cameras[2], images[2], water_level, depth, normal
-        )
+        ep12 = ray_trace.epipolar_draw( centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
+        ep13 = ray_trace.epipolar_draw( centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
         
         if (len(ep12) == 0) or (len(ep13) == 0):
             print('no epipolar valid centre')
             continue
         
-        candidates_12 = []
-        candidates_13 = []
+        candidates_12, candidates_13 = [], []
         
         for j, cluster in enumerate(clusters[1]):
             distances = cdist(cluster, ep12)
