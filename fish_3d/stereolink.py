@@ -88,7 +88,8 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
-        ] for cluster_one_view in clusters]
+        ] for cluster_one_view in clusters]  # (v, u)
+
     for i, centre in enumerate(centres_mv[0]):
         ep12 = ray_trace.epipolar_draw(
             centre, cameras[0], cameras[1], images[1], water_level, depth, normal
@@ -99,7 +100,8 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         )
         
         if (len(ep12) == 0) or (len(ep13) == 0):
-            print('no epipolar valid centre')
+            if report:
+                print('no epipolar valid centre')
             continue
         
         candidates_12 = []
@@ -118,10 +120,12 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             except ValueError:
                 print(np.nan in distance)
                 print(distances)
-                
         if report:
-            print(f'#{i}, candidates in camera #2 is {len(candidates_12)}, candidates in camera #3 is {len(candidates_13)}')
+            print(f'#{i}, candidates in camera #2 is {len(candidates_12)}, candidates in camera #3 is {len(candidates_13)}',
+                    end=' --> ')
         if not (candidates_12 and candidates_13):
+            if report:
+                print("no 3D clouds")
             continue
         
         candidates = list(itertools.product([i], candidates_12, candidates_13))
@@ -134,8 +138,10 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             ]
             par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
             cloud = match_clusters(par_clusters, cameras, normal, water_level, tol_3d)
-            if len(cloud) > points:
+            if len(cloud) > 0:
                 matched.append(candidate)
+        if report:
+            print(f"{len(matched)} 3D clouds found")
     return matched
 
 

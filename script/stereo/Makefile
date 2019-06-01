@@ -8,8 +8,6 @@
 
 VPATH=result
 
-trajectories.pkl: positions.pkl
-	python3 get_trajectories.py
 positions.pkl: cameras.pkl
 	python3 get_positions.py
 cameras.pkl:
@@ -18,13 +16,12 @@ sort:
 	./sort.sh
 calib:
 	rm -f cameras.pkl
+	rm -f result/cameras.pkl
 	make cameras.pkl
 pos:
 	rm -f positions.pkl
+	rm -f result/positions.pkl
 	make positions.pkl
-traj:
-	rm -f trajectories.pkl
-	make trajectories.pkl
 epi:
 	python3 check_epipolar.py
 clean:

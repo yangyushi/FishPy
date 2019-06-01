@@ -39,6 +39,10 @@ class Model():
             normalise = lambda x: x / x.std()
         elif config.Process.normalise == 'max':
             normalise = lambda x: x / x.max()
+        elif config.Process.normalise == 'mid':
+            def normalise(x): return x / np.median(x)
+        elif config.Process.normalise == 'mean':
+            normalise = lambda x: x / x.mean()
         elif config.Process.normalise == 'None':
             normalise = lambda x: x
 

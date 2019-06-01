@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import glob
 import pickle
 import numpy as np
@@ -9,22 +10,27 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+config = ft.utility.Configure('config.ini') 
 
-with open(f'cameras.pkl', 'rb') as f:
-    cameras = pickle.load(f)
+if 'cameras.pkl' in os.listdir('.'):
+    with open(f'cameras.pkl', 'rb') as f:
+        cameras = pickle.load(f)
+elif 'cameras.pkl' in os.listdir('result'):
+    with open(f'result/cameras.pkl', 'rb') as f:
+        cameras = pickle.load(f)
+else:
+    raise FileNotFoundError("Can't locate calibrated cameras, run make calib")
 
-frame_start = int(config['Stereo']['frame_start'])
-frame_end = int(config['Stereo']['frame_end'])
-normal = (0, 0, int(config['Stereo']['normal']))
-water_level = int(config['Stereo']['water_level'])
-water_depth = float(config['Stereo']['water_depth'])
-sample_size = int(config['Stereo']['sample_size'])
-tol_2d = float(config['Stereo']['tol_2d'])
-tol_3d = float(config['Stereo']['tol_3d'])
-see_cluster = bool(int(config['Plot']['see_cluster']))
-see_reprojection = bool(int(config['Plot']['see_reprojection']))
+frame_start = config.Stereo.frame_start
+frame_end = config.Stereo.frame_end
+normal = (0, 0, config.Stereo.normal)
+water_level = config.Stereo.water_level
+water_depth = config.Stereo.water_depth
+sample_size = config.Stereo.sample_size
+tol_2d = config.Stereo.tol_2d
+tol_3d = config.Stereo.tol_3d
+see_cluster = bool(config.Plot.see_cluster)
+see_reprojection = bool(config.Plot.see_reprojection)
 
 for frame in range(frame_start, frame_end):
     images_multi_view = []
@@ -32,43 +38,54 @@ for frame in range(frame_start, frame_end):
     cameras_ordered = []
     
     for i, cam_name in enumerate(cameras):
-        view_config = configparser.ConfigParser()
-        view_config.read(config[cam_name]['config'])
+        cam_config = eval(f'config.{cam_name}')
+        view_config = ft.utility.Configure(cam_config.config)
 
-        roi = view_config['Process']['roi']
-        threshold = float(view_config['Locate']['img_threshold'])
+        roi = view_config.Process.roi
         x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
         roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
-        blur = float(view_config['Process']['gaussian_sigma'])
-        background = np.load(config[cam_name]['background'])
+        blur = view_config.Process.gaussian_sigma
+        background = np.load(cam_config.background)
 
-        # the degree 180 is not included, it should be cuvered by another "upside-down" shape
-        angle_number = int(view_config['Locate']['orientation_number'])
+        # the degree 180 is not included, it should be covered by another "upside-down" shape
+        angle_number = view_config.Locate.orientation_number
         angles = np.linspace(0, 180, angle_number)  
 
-        shape_kernels = np.load(config[cam_name]['shape'])
+        shape_kernels = np.load(cam_config.shape)
 
-        video_format = view_config['Data']['type']
+        blur  = view_config.Process.gaussian_sigma
+        if blur != 0:
+            def denoise(x): return ndimage.gaussian_filter(x, blur)
+        else:
+            def denoise(x): return x
+
+        if view_config.Process.normalise == 'std':
+            def normalise(x): return x / x.std()
+        elif view_config.Process.normalise == 'max':
+            def normalise(x): return x / x.max()
+        elif view_config.Process.normalise == 'None':
+            def normalise(x): return x
+
+        video_format = view_config.Data.type
         if video_format == 'images':
-            images = ft.read.iter_image_sequence(config[cam_name]['images'])
+            images = ft.read.iter_image_sequence(cam_config.images)
         elif video_format == 'video':
-            images = ft.read.iter_video(config[cam_name]['images'])
+            images = ft.read.iter_video(cam_config.images)
 
-        f = open(config[cam_name]['feature'], 'rb')
+        f = open(cam_config.feature, 'rb')
+
         for _ in range(frame + 1):
             image = next(images)
             feature = pickle.load(f)
         f.close()
 
-        img_threshold = float(view_config['Locate']['img_threshold'])
-
-        fg = background/background.std() - image/image.std()
-        fg = ndimage.gaussian_filter(fg, blur)
+        fg = background - normalise(denoise(image))
         fg -= fg.mean()
+        binary = fg > (fg[roi].max() * view_config.Fish.threshold * 0.8)
         clusters = ft.oishi.get_clusters(
-            feature, fg, shape_kernels, angles, roi,
-            threshold=0.2, kernel_threshold=0.2
+            feature, binary, shape_kernels, angles, roi,
+            kernel_threshold=config.Stereo.kernel_threshold
         )
         cameras_ordered.append(cameras[cam_name])
         images_multi_view.append(image)

@@ -39,7 +39,7 @@ angle_number = config.Locate.orientation_number
 frame_start = config.Locate.frame_start
 frame_end = config.Locate.frame_end
 cc_threshold = config.Locate.cc_threshold
-img_threshold = config.Locate.img_threshold
+img_threshold = config.Fish.threshold
 
 if data_type == 'video':
     images = ft.read.iter_video(data_path)

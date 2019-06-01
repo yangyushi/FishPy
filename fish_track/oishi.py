@@ -150,29 +150,30 @@ def get_box_for_kernel(kernel, u, v, image):
     return box_in_image, box_in_kernel
 
 
-def get_clusters(feature, image, kernels, angles, roi, threshold=0.5, kernel_threshold=0.0):
+def get_clusters(feature, image, kernels, angles, roi, kernel_threshold=0.0):
     """
+    image: the processed binary image
     return the pixels in the image that 'belong' to different features
     the returnned results are (u, v), the shape is (number, dimension)
     """
     clusters = []
-    fg = image[roi]
+    image_in_roi = image[roi]
 
     for o, s, u, v, p in zip(*feature.tolist()):
         kernel = kernels[s]
         kernel = rotate_kernel(kernel, angles[o])
 
-        box_in_image, box_in_kernel = get_box_for_kernel(kernel, u, v, fg)
+        box_in_image, box_in_kernel = get_box_for_kernel(kernel, u, v, image_in_roi)
 
         mask = (kernel > (kernel_threshold * kernel.max()))[box_in_kernel]
 
-        binary = (fg > (image.max() * threshold))[box_in_image]
+        sub_image = image_in_roi[box_in_image]
 
         offset_1 = np.array([b.start for b in box_in_image])
         offset_2 = np.array([r.start for r in roi])
         offset = np.hstack(offset_1 + offset_2)
 
-        cluster = np.array(np.nonzero(binary * mask)).T  # format is (u, v)
+        cluster = np.array(np.nonzero(sub_image * mask)).T  # format is (u, v)
         if len(cluster) > 0:
             clusters.append(cluster + offset)
 
