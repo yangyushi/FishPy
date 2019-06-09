@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 # Move sorted filenames into different sub-folders
+# typical usage `bash sort.sh 300 5 tiff`
 
 frame=$1    # the number of frames belonging to one folder 
 interval=$2 # the interval in minutes between two videos (two folders)
