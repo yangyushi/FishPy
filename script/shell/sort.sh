@@ -15,9 +15,9 @@ while [[ -n $files ]]; do
     for ((i=1; i<=$frame; i++)); do
         files=($(ls *.$filetype))
         mv $files $folder_name
-        cd $folder_name
-        rename
-        cd ..
     done
     files=($(ls *.$filetype 2> /dev/null)) 
+    cd $folder_name
+    rename
+    cd ..
 done
