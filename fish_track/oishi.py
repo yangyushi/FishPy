@@ -35,6 +35,7 @@ def get_diff(image: np.ndarray, kernel: np.ndarray):
                     error += np.abs(image[x - left + kx, y - top + ky] - kernel[kx, ky])
             diff[x, y] = error
     return diff
+
                     
 def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
     mse = []
@@ -46,6 +47,7 @@ def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
             diff = get_diff(image, cc_kernel) / area
             mse[-1].append(diff)
     return np.array(mse)
+
 
 def rotate_kernel(kernel, angle):
     """
