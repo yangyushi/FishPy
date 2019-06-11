@@ -1,3 +1,4 @@
+from scipy import ndimage
 import numpy as np
 import matplotlib.pyplot as plt
 from . import ray_trace
@@ -25,3 +26,27 @@ def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(
     else:
         plt.savefig(filename, bbox_inches='tight', pad_inches=0)
     plt.close()
+
+
+def get_clusters(image, threshold, min_size, roi):
+    """
+    apply threshold to image and label disconnected part
+    small labels (size < min_size) were erased
+    the coordinates of labels were returned, shape: (label_number, 3)
+    """
+    binary = image > (image[roi].max() * threshold)
+    mask = np.zeros(image.shape, dtype=int)
+    mask[roi] = 1
+    labels, _ = ndimage.label(binary)
+    labels *= mask
+    counted = np.bincount(labels.ravel())
+    noise_indice = np.where(counted < min_size)
+    mask = np.in1d(labels, noise_indice).reshape(image.shape)
+    labels[mask] = 0
+    labels, _ = ndimage.label(labels)
+    clusters = []
+    for value in np.unique(labels.ravel()):
+        if value > 0:
+            cluster = np.array(np.where(labels == value)).T
+            clusters.append(cluster)
+    return clusters
