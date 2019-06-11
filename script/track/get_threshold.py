@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import fish_track as ft 
-import gui
+import fish_gui
 import configparser
 import numpy as np
 
@@ -27,7 +27,7 @@ elif data_type == 'images':
 else:
     raise TypeError("Wrong data type", data_type, " Only [video] and [images] are supported")
 
-threshold = gui.get_threshold(images, 'configure.ini', bg)
+threshold = fish_gui.get_threshold(images, 'configure.ini', bg)
 
 config.Fish.threshold = threshold
 config.write('configure.ini')

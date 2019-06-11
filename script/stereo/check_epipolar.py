@@ -1,3 +1,3 @@
-import gui
+import fish_gui
 
-gui.epipolar_app()
+fish_gui.epipolar_app()

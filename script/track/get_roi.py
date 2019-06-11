@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import fish_track as ft 
-import gui
+import fish_gui
 import configparser
 import numpy as np
 
@@ -18,7 +18,7 @@ elif data_type == 'images':
 else:
     raise TypeError("Wrong data type", data_type, " Only [video] and [images] are supported")
 
-roi = gui.measure_roi(images, roi)
+roi = fish_gui.measure_roi(images, roi)
 roi_str = ', '.join([str(r) for r in roi])
 
 config.Process.roi = roi_str
