@@ -30,6 +30,7 @@ class SubProperty:
         for attr, val in self.__dict__.items():
             yield attr, val
 
+
 class Configure:
     def __init__(self, config_file):
         """
@@ -69,3 +70,22 @@ def join_pairs(pairs):
         joined_pair = np.unique(np.vstack(np.where(labels == val)))
         joined_pairs.append(joined_pair)
     return joined_pairs
+
+
+def validate(images, model, fail_mark=0.25, shape=(40, 40)):
+    """
+    validate shapes with trained keras model
+    good shape <- probability of being a bad < fail_mark
+    """
+    size_x, size_y = images[0].shape
+    zoom = (1, shape[0] / size_x, shape[1] / size_y)
+    images = ndimage.zoom(images, zoom)
+    norm_factor = images.max(1).max(1)
+    norm_factor = np.expand_dims(norm_factor, -1)
+    norm_factor = np.expand_dims(norm_factor, -1)
+    normed = images / norm_factor
+    normed = np.expand_dims(normed, -1)  # (n, x, y) -> (n, x, y, 1)
+    predictions = model.predict(normed)
+    bad_score = predictions[:, 1]
+    good_indices = np.where(bad_score < fail_mark)
+    return images[good_indices]

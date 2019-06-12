@@ -16,6 +16,7 @@ def warn(message):
     msg.setText(message)
     msg.exec_()
 
+
 class Model():
     def __init__(self, images, batch_size=36):
         self.images = images  # numpy.ndarray containing all shape images
@@ -47,6 +48,7 @@ class Model():
             self.batch_index -= 1
             self.batch = self.images[self.cursor : self.cursor + self.batch_size]
 
+
 class Photo(pg.ImageItem):
     def __init__(self, index, mother):
         self.index = index
@@ -73,6 +75,7 @@ class Photo(pg.ImageItem):
         index = self.model.cursor + self.index
         self.model.labels[index] = (self.label + 1) % 2
         self.update_color()
+
 
 class Viewer(QMainWindow):
     def __init__(self, images=None):
@@ -130,6 +133,16 @@ class Viewer(QMainWindow):
 
         self.layout.addWidget(pannel, 1, 0)
 
+    def keyPressEvent(self, event):
+        if event.key() in [Qt.Key_Right, Qt.Key_Down, Qt.Key_D, Qt.Key_L, Qt.Key_J]:
+            self.next()
+        elif event.key() in [Qt.Key_Left, Qt.Key_Up, Qt.Key_A, Qt.Key_H, Qt.Key_K]:
+            self.back()
+        elif event.key() in [Qt.Key_S, Qt.Key_Return, Qt.Key_Space]:
+            self.save()
+        elif event.key() == Qt.Key_Escape:
+            self.close()
+
     def dragEnterEvent(self, event):
         event.accept()
 
@@ -184,8 +197,12 @@ class Viewer(QMainWindow):
         np.save(file_name, self.model.labels)
 
 
+def shape_gallery():
+    app = QApplication(sys.argv)
+    measure = Viewer()
+    app.exec_()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     measure = Viewer()
     app.exec_()
-    run()
