@@ -2,10 +2,11 @@
 import numpy as np
 from numba import njit
 from scipy import optimize
+from itertools import product
 import cv2
 
 
-def get_intersect_of_lines(lines):
+def get_intersect_of_lines_slow(lines):
     """
     lines: a list containing many lines
     line: a dict containing the unit vector and a base point
@@ -30,6 +31,61 @@ def get_intersect_of_lines(lines):
     return np.linalg.solve(M, b).ravel()
 
 
+def assemble_tmp_mat(vecs):
+    """
+    assemble many 'tmp' matrices for function get_intersect_of_lines_batch
+    """
+    pass
+
+
+def get_intersect_of_lines_batch(lines):
+    """
+    lines = [line, ...], shape -> (n, view, 2, 3)
+    line = [points (a), unit directions (v)]
+    M(3, 3) @ x(3, n) = b(3, n)
+    """
+    M = np.zeros((3, 3), dtype=np.float64)
+    b = np.zeros((3,  ), dtype=np.float64)
+    xyz = []
+    view_num = len(lines[0])
+    for line in lines:
+        M *= 0
+        b *= 0
+        d = 0
+        for view in line:
+            a, v = view
+            v1, v2, v3 = v
+            tmp = np.array((
+                    (-v2**2 - v3**2, v1*v2, v1*v3),
+                    (v1*v2, -v1**2 - v3**2, v2*v3),
+                    (v1*v3, v2*v3, -v1**2 - v2**2)
+                    ))
+            M += tmp
+            b += tmp @ a
+        x = np.linalg.solve(M, b).ravel()
+        xyz.append(x)
+    return np.array(xyz)
+
+
+def get_intersect_of_lines(lines):
+    """
+    lines = [line, ...], shape -> (n, 2, 3)
+    line = [points (a), unit directions (v)]
+    """
+    M = np.zeros((3, 3), dtype=np.float64)
+    b = np.zeros((3,  ), dtype=np.float64)
+    for line in lines:
+        a, (v1, v2, v3) = line
+        tmp = np.array((
+                (-v2**2 - v3**2, v1*v2, v1*v3),
+                (v1*v2, -v1**2 - v3**2, v2*v3),
+                (v1*v3, v2*v3, -v1**2 - v2**2)
+                ))
+        M += tmp
+        b += tmp @ a
+    return np.linalg.solve(M, b).ravel()
+
+
 def pl_dist(point, line):
     """
     distance between a point and a line
@@ -40,12 +96,38 @@ def pl_dist(point, line):
     return np.linalg.norm(np.cross(ac, ab)) / np.linalg.norm(ab)
 
 
+def pl_dist_faster(point, lines):
+    """
+    point -> (3,)
+    line -> [point, unit_vector] (2, 3)
+    """
+    delta = np.array([point]) - lines[:, 0, :]  # (n, 3)
+    return np.linalg.norm(np.cross(delta, lines[:, 1, :]))
+
+
+def pl_dist_batch(points, lines):
+    """
+    points -> (n, 3,)
+    lines -> (n, view, 2, dim) [dim = 3]
+    """
+    view_num = lines.shape[1]
+    dists = []
+    for v in range(view_num):
+        delta = points - lines[:, v, 0, :]  # (num, 0)
+        d = np.linalg.norm(np.cross(delta, lines[:, v, 1, :]), axis=-1)
+        dists.append(d)
+    dists = np.mean(dists, 0)  # (view, n, dim) -> (n, dim)
+    return dists
+
+
 def get_poi(camera, z, coordinate):
     """
     - camera: a Camera instance
     - z: the hight of water level with respect to world origin
     - corrdinate: the position (u, v) of object on the image, unit is pixel, NOT (x, y)
+        it can be one point or many points
     - poi, point on interface. See the sketch for its meaning
+    - return [X, Y, Z], shape (3, n)
 
                    camera
                   /
@@ -60,7 +142,17 @@ def get_poi(camera, z, coordinate):
     The equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved for x, y, c, knowing everything else
     """
     p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.ext.ravel()
-    x, y = camera.undistort(coordinate[::-1], uv=False)  # return (u, v) -> (x, y)
+
+    if coordinate.ndim == 1:  # (just one point)
+        x, y = camera.undistort(coordinate[::-1])  # return (v, u) -> (x, y)
+        z = z
+    elif coordinate.ndim == 2:  # (number, dim)
+        tmp = np.flip(coordinate.copy(), 1)  # (v, u) -> (u, v)
+        x, y = camera.undistort_points(tmp)  # return (u, v) -> (x, y)
+        z = z * np.ones(x.shape)
+    else:
+        raise RuntimeError("The shape of coordinates array is not valid")
+
     X =  (z*p12*p23 - z*p12*p33*y - z*p13*p22 + z*p13*p32*y + z*p22*p33*x - \
           z*p23*p32*x + p12*p24 - p12*p34*y - p14*p22 + p14*p32*y + p22*p34*x - p24*p32*x) /\
          (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
@@ -89,12 +181,36 @@ def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
     """
     rri = 1 / refractive_index
     n = np.array(normal)
-    i = np.array(incident_vec)
-    i = i / np.linalg.norm(i)
+    i = incident_vec / np.linalg.norm(incident_vec)
     cos_i = -i @ n
     sin_t_2 = rri ** 2 * (1 - cos_i ** 2)
     t = rri * i + (rri * cos_i - np.sqrt(1 - sin_t_2)) * n
     return t / np.linalg.norm(t)
+
+
+def get_trans_vecs(incident_vecs, refractive_index=1.33, normal=(0, 0, 1)):
+    """
+    get the *unit vector* of transmitted ray from air to water
+    the refractive index of water is 1.33 @ 25°C
+    the normal vector facing up, the coordinate is looks like
+    :param incident_vecs: vectors representing many incident rays, shape (n, 3)
+
+            ^ +z
+    air     |
+            | 
+    ------------------>
+            |
+    water   |
+            |
+
+    """
+    rri = 1 / refractive_index
+    n = np.array([normal]).T  # (3, 1)
+    i = incident_vecs / np.linalg.norm(incident_vecs, axis=1, keepdims=True)  # (n, 3)
+    cos_i = -i @ n  # (n, 1)
+    sin_t_2 = rri ** 2 * (1 - cos_i ** 2)  # (n, 1)
+    t = rri * i + (rri * cos_i - np.sqrt(1 - sin_t_2)) * n.T
+    return t / np.linalg.norm(t, axis=1, keepdims=True)
 
 
 def is_inside_image(uv, image):
@@ -195,7 +311,9 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
             break
         d = abs(co_2[-1] - interface)
         x = np.linalg.norm(m[:2] - co_2[:2])
-        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x/1.8, x1=x).root
+        u = optimize.root_scalar(
+                find_u, args=(n, d, x, z), x0=x*0.8, x1=x*0.5
+                ).root
         if (u > x) or (u < 0):
             print("root finding in refractive epipolar geometry fails")
             break
@@ -238,6 +356,23 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
     return np.array(epipolar_pixels)
 
 
+def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
+    camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
+    pois_mv = []
+    for camera, cluster in zip(cameras, clusters):
+        pois = get_poi(camera, z=z, coordinate=cluster).T
+        pois_mv.append(pois)  # poi shape: (n, 3)
+    incid_rays_mv = [poi - co.T for poi, co in zip(pois_mv, camera_origins)]
+    trans_rays_mv = [get_trans_vecs(incid_rays, normal=normal) for incid_rays in incid_rays_mv]
+    trans_lines = np.array([pois_mv, trans_rays_mv]) # (2, view, n, dim)
+    trans_lines = np.moveaxis(trans_lines, 0, 1)  # (view, 2, n, dim)
+    trans_lines = np.moveaxis(trans_lines, 1, 2)  # (view, n, 2, dim)
+    combinations = np.array(list(product(*trans_lines)))  # shape: (n^view, view, 2, dim), can be HUGE!
+    points_3d = get_intersect_of_lines_batch(combinations)
+    error = pl_dist_batch(points_3d, combinations)
+    return points_3d, error
+
+
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
     :param centres: a list of centres (v, u) in different views, they should NOT be undistorted
@@ -252,11 +387,40 @@ def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_ind
     trans_rays = [get_trans_vec(incid, normal=normal) for incid in incid_rays]
     trans_lines = [{'unit': t, 'point': poi} for t, poi in zip(trans_rays, pois)]
     
-    point_3d = get_intersect_of_lines(trans_lines)
-    
+    point_3d = get_intersect_of_lines_slow(trans_lines)
+   
+    # assuming we have len(trans_lines) == 200
+    # point_3d = Matrix(3,200)
+    # trans_line_points = Matrix(3,200)
+    # trans_line_dirs = Matrix(3,200) == normalised vectors
+
+    # Matrix(3,200) delta = trans_line_points - point3d
+    # Matrix(3,200) cross_prod = normalise(cross(delta, trans_line_dirs))
+    # (you may find there is a cross product function that returns normalised vectors)
+
+    # ask-rse@bristol.ac.uk
+
     error = 0
     for line in trans_lines:
         error += pl_dist(point_3d, line)
+    return point_3d, error / len(cameras)
+
+
+def ray_trace_refractive_faster(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
+    """
+    :param centres: a list of centres (v, u) in different views, they should NOT be undistorted
+    :param cameras: a list of *calibrated* Camera objects
+    :param z: the z-value of the refractive interface
+    """
+    camera_origins = [-camera.r.T @ camera.t for camera in cameras]
+    pois = []
+    for camera, centre in zip(cameras, centres):
+        pois.append(get_poi(camera, z=z, coordinate=centre))
+    incid_rays = np.array([poi - co for poi, co in zip(pois, camera_origins)])
+    trans_rays = get_trans_vecs(incid_rays, normal=normal)
+    trans_lines = np.array([[p, t] for p, t in zip(pois, trans_rays)])
+    point_3d = get_intersect_of_lines(trans_lines)
+    error = pl_dist_faster(point_3d, trans_lines)
     return point_3d, error / len(cameras)
 
 

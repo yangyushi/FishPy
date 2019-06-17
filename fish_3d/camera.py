@@ -188,26 +188,19 @@ class Camera():
         pos_uv /= pos_uv[-1]
         return pos_uv
 
-    def undistort(self, point, uv=True):
+    def undistort(self, point):
         """
         undistort point in an image, coordinate is (u, v), NOT (x, y)
-        return: undistorted points, being uv if uv=True else xy (camera.K @ xy = uv)
+        return: undistorted points, being xy, not uv (camera.K @ xy = uv)
         """
         new_point = point.astype(np.float64)
         new_point = np.expand_dims(new_point, 0)
         new_point = np.expand_dims(new_point, 0)
-        if uv:
-            undistorted = cv2.undistortPoints(
-                    src=new_point,
-                    cameraMatrix=self.k,
-                    distCoeffs=self.distortion,
-                    P=self.k)
-        else:
-            undistorted = cv2.undistortPoints(
-                    src=new_point,
-                    cameraMatrix=self.k,
-                    distCoeffs=self.distortion,
-                    )
+        undistorted = cv2.undistortPoints(
+                src=new_point,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion,
+                )
         return np.squeeze(undistorted)
 
     def undistort_points(self, points):
@@ -216,13 +209,13 @@ class Camera():
         return: undistorted version of (u', v') coordinates
         """
         new_points = points.astype(np.float64)
-        new_points = np.expand_dims(new_points, 1)
+        new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
         undistorted = cv2.undistortPoints(
                 src=new_points,
                 cameraMatrix=self.k,
                 distCoeffs=self.distortion,
-                P=self.k)
-        return np.squeeze(undistorted)
+        )
+        return np.squeeze(undistorted).T
 
     def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """

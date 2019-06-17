@@ -58,10 +58,13 @@ def line2func(line):
 
 
 def get_partial_cluster(cluster, size):
-    if len(cluster) <= size:
+    l = len(cluster)
+    if l <= size:
         return cluster
+    elif l % size == 0:
+        return cluster[::l // size]
     else:
-        return cluster[::len(cluster) // size]
+        return cluster[:-(l % size):l // size]
 
 
 def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, points=10, report=True):
@@ -89,7 +92,6 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
         ] for cluster_one_view in clusters]  # (v, u)
-
     for i, centre in enumerate(centres_mv[0]):
         ep12 = ray_trace.epipolar_draw( centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
         ep13 = ray_trace.epipolar_draw( centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
@@ -131,7 +133,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[2][candidate[2]]
             ]
             par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
-            cloud = match_clusters(par_clusters, cameras, normal, water_level, tol_3d)
+            cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
             if len(cloud) > 0:
                 matched.append(candidate)
         if report:
@@ -139,13 +141,28 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     return matched
 
 
+def match_clusters_batch(clusters, cameras, normal, water_level, tol):
+    results = []
+    xyz, err = ray_trace.ray_trace_refractive_cluster(
+            clusters, cameras, z=water_level, normal=normal
+            )
+    return xyz[err < tol]
+
+
 def match_clusters(clusters, cameras, normal, water_level, tol):
     combinations = list(itertools.product(*clusters))
     results = []
+    # todo: write a batch version for this
     for comb in combinations:
-        xyz, err = ray_trace.ray_trace_refractive(comb, cameras, z=water_level, normal=normal)
+        xyz, err = ray_trace.ray_trace_refractive_faster(comb, cameras, z=water_level, normal=normal)
         if err < tol:
             results.append(xyz)
+    return np.array(results)
+
+
+def match_clusters_faster(clusters, cameras, normal, water_level, tol):
+    xyz, err = ray_trace.ray_trace_refractive_faster(clusters, cameras, z=water_level, normal=normal)
+    xyz = xyz[np.where(err < tol)]
     return np.array(results)
 
 
@@ -158,16 +175,13 @@ def reconstruct_clouds(cameras, matched_indices, clusters_multi_view,
             clusters_multi_view[0][i1],
             clusters_multi_view[1][i2],
             clusters_multi_view[2][i3])
-        cls_1, cls_2, cls_3 = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
-        cloud = []
-        for p1 in cls_1:
-            for p2 in cls_2:
-                for p3 in cls_3:
-                    point_3d, error = ray_trace.ray_trace_refractive(
-                            [p1, p2, p3], cameras, z=water_level, normal=normal
-                            )
-                    if error < tol:
-                        cloud.append(point_3d)
+
+        par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
+        xyz, err = ray_trace.ray_trace_refractive_cluster(
+                par_clusters, cameras, z=water_level, normal=normal
+        )
+
+        cloud = xyz[err < tol]
         if len(cloud) > 0:
             clouds.append(np.array(cloud))
     return clouds
