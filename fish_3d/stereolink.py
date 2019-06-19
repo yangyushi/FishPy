@@ -132,9 +132,9 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
-            min_num = np.min([len(f) for f in full_clusters])
-            min_num = np.min([min_num, points])
-            par_clusters = map(lambda x: get_partial_cluster(x, min_num), full_clusters)
+            #min_num = np.min([len(f) for f in full_clusters])
+            #min_num = np.min([min_num, points])
+            par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
             cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
             if len(cloud) > 0:
                 matched.append(candidate)
