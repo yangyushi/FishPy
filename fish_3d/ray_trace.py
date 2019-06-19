@@ -365,8 +365,12 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
     incid_rays_mv = [poi - co.T for poi, co in zip(pois_mv, camera_origins)]
     trans_rays_mv = [get_trans_vecs(incid_rays, normal=normal) for incid_rays in incid_rays_mv]
     trans_lines = np.array([pois_mv, trans_rays_mv]) # (2, view, n, dim)
-    trans_lines = np.moveaxis(trans_lines, 0, 1)  # (view, 2, n, dim)
-    trans_lines = np.moveaxis(trans_lines, 1, 2)  # (view, n, 2, dim)
+    try:
+        trans_lines = np.moveaxis(trans_lines, 0, 1)  # (view, 2, n, dim)
+        trans_lines = np.moveaxis(trans_lines, 1, 2)  # (view, n, 2, dim)
+    except:
+        print("\nthe shape of pois", [p.shape for p in pois_mv])
+        raise RuntimeError
     combinations = np.array(list(product(*trans_lines)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)

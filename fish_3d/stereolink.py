@@ -62,9 +62,9 @@ def get_partial_cluster(cluster, size):
     if l <= size:
         return cluster
     elif l % size == 0:
-        return cluster[::l // size]
+        return cluster[::(l // size)]
     else:
-        return cluster[:-(l % size):l // size]
+        return cluster[:-(l % size):(l // size)]
 
 
 def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, points=10, report=True):
@@ -132,7 +132,9 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
-            par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
+            min_num = np.min([len(f) for f in full_clusters])
+            min_num = np.min([min_num, points])
+            par_clusters = map(lambda x: get_partial_cluster(x, min_num), full_clusters)
             cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
             if len(cloud) > 0:
                 matched.append(candidate)
