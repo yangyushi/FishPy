@@ -255,10 +255,22 @@ class Camera():
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
 
+        # this initial guess is for basler AC2040 120um camera with a 6mm focal length lens
+        camera_matrix = np.array([
+            [1739.13, 0, 1024],
+            [0, 1739.13, 768],
+            [0, 0, 1]
+            ])
+
         ret, camera_matrix, distortion, rvecs, tvecs, std_i, std_e, pve = cv2.calibrateCameraExtended(
-                obj_points, img_points, gray.shape, None, np.zeros(4),
+                objectPoints=obj_points, imagePoints=img_points,
+                imageSize=gray.shape,
+                cameraMatrix = camera_matrix,
+                distCoeffs = np.zeros(4),
                 flags=sum((
+                    cv2.CALIB_USE_INTRINSIC_GUESS,
                     cv2.CALIB_FIX_ASPECT_RATIO,
+                    cv2.CALIB_FIX_PRINCIPAL_POINT,
                     cv2.CALIB_ZERO_TANGENT_DIST,
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
@@ -274,6 +286,7 @@ class Camera():
                     )
             print(f"reproject error for {fname:<12} is {err:.4f}")
 
+        print(camera_matrix)
         self.k = camera_matrix
         self.distortion = np.squeeze(distortion)
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
