@@ -224,7 +224,7 @@ class Camera():
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
 
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space
@@ -266,16 +266,18 @@ class Camera():
                 objectPoints=obj_points, imagePoints=img_points,
                 imageSize=gray.shape,
                 cameraMatrix = camera_matrix,
-                distCoeffs = np.zeros(4),
+                distCoeffs = np.zeros(6),
                 flags=sum((
-                    cv2.CALIB_USE_INTRINSIC_GUESS,
+                    #cv2.CALIB_USE_INTRINSIC_GUESS,
                     cv2.CALIB_FIX_ASPECT_RATIO,
-                    cv2.CALIB_FIX_PRINCIPAL_POINT,
                     cv2.CALIB_ZERO_TANGENT_DIST,
+                    #cv2.CALIB_FIX_PRINCIPAL_POINT,
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
                     cv2.CALIB_FIX_K4,
+                    cv2.CALIB_FIX_K5,
+                    cv2.CALIB_FIX_K6,
                     )),
         )
 
