@@ -31,13 +31,6 @@ def get_intersect_of_lines_slow(lines):
     return np.linalg.solve(M, b).ravel()
 
 
-def assemble_tmp_mat(vecs):
-    """
-    assemble many 'tmp' matrices for function get_intersect_of_lines_batch
-    """
-    pass
-
-
 def get_intersect_of_lines_batch(lines):
     """
     lines = [line, ...], shape -> (n, view, 2, 3)
@@ -368,13 +361,7 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
                 pois,
                 get_trans_vecs(incid_rays, normal=normal)
                 ], axis=1) for incid_rays, pois in zip(incid_rays_mv, pois_mv)
-            ]  # (view, n, 2, dim)
-    #try:
-    #    trans_lines = np.moveaxis(trans_lines, 0, 1)  # (view, 2, n, dim)
-    #    trans_lines = np.moveaxis(trans_lines, 1, 2)  # (view, n, 2, dim)
-    #except:
-    #    print("\nthe shape of pois", [p.shape for p in pois_mv])
-    #    raise RuntimeError
+    ]  # (view, n, 2, dim)
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)

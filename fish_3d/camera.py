@@ -172,7 +172,7 @@ class Camera():
         self.k[1][1] = calib_result['fc'][1, 0]
         self.k[0][2] = calib_result['cc'][0, 0]
         self.k[1][2] = calib_result['cc'][1, 0]
-        self.distortion = [0, 0, 0, 0, 0]
+        self.distortion = np.zeros(5)
         self.t = calib_result['Tc_ext'][:, 0]
         self.rotation = R.from_dcm(calib_result['Rc_ext'])
         self.update()
@@ -203,18 +203,26 @@ class Camera():
                 )
         return np.squeeze(undistorted)
 
-    def undistort_points(self, points):
+    def undistort_points(self, points, want_uv=False):
         """
         undistort many points in an image, coordinate is (u, v), NOT (x, y)
-        return: undistorted version of (u', v') coordinates
+        return: undistorted version of (x', y') or (u', v'); x' * fx + cx -> u'
         """
         new_points = points.astype(np.float64)
         new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
-        undistorted = cv2.undistortPoints(
-                src=new_points,
-                cameraMatrix=self.k,
-                distCoeffs=self.distortion,
-        )
+        if want_uv:
+            undistorted = cv2.undistortPoints(
+                    src=new_points,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+                    P=self.k,
+            )
+        else:
+            undistorted = cv2.undistortPoints(
+                    src=new_points,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+            )
         return np.squeeze(undistorted).T
 
     def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
@@ -266,18 +274,18 @@ class Camera():
                 objectPoints=obj_points, imagePoints=img_points,
                 imageSize=gray.shape,
                 cameraMatrix = camera_matrix,
-                distCoeffs = np.zeros(4),
+                distCoeffs = np.zeros(5),
                 flags=sum((
                     cv2.CALIB_USE_INTRINSIC_GUESS,
-                    cv2.CALIB_FIX_ASPECT_RATIO,
-                    cv2.CALIB_FIX_PRINCIPAL_POINT,
-                    cv2.CALIB_ZERO_TANGENT_DIST,
-                    #cv2.CALIB_FIX_K1,
-                    #cv2.CALIB_FIX_K2,
+                    #cv2.CALIB_FIX_ASPECT_RATIO,
+                    #cv2.CALIB_FIX_PRINCIPAL_POINT,
+                    #cv2.CALIB_ZERO_TANGENT_DIST,
+                    cv2.CALIB_FIX_K1,
+                    cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
-                    cv2.CALIB_FIX_K4,
                     )),
         )
+        print(distortion)
 
         for i, fname in enumerate(image_files):
             err = get_reproject_error(
@@ -288,7 +296,7 @@ class Camera():
 
         print(camera_matrix)
         self.k = camera_matrix
-        self.distortion = np.squeeze(distortion)
+        self.distortion = distortion
         self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
         self.t = np.ravel(tvecs[-1])
         self.update()
