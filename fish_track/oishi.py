@@ -176,7 +176,7 @@ def get_clusters(feature, image, kernels, angles, roi, kernel_threshold=0.0):
         offset = np.hstack(offset_1 + offset_2)
 
         cluster = np.array(np.nonzero(sub_image * mask)).T  # format is (u, v)
-        if len(cluster) > 0:
+        if len(cluster) > 1:
             clusters.append(cluster + offset)
 
     return clusters

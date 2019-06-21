@@ -232,7 +232,7 @@ class Camera():
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
 
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space

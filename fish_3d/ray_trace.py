@@ -361,7 +361,11 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
                 pois,
                 get_trans_vecs(incid_rays, normal=normal)
                 ], axis=1) for incid_rays, pois in zip(incid_rays_mv, pois_mv)
+<<<<<<< HEAD
     ]  # (view, n, 2, dim)
+=======
+            ]  # (view, n, 2, dim)
+>>>>>>> 8b672e352955419e5ba125cda5b7c223c092fb1c
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)
@@ -383,17 +387,6 @@ def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_ind
     trans_lines = [{'unit': t, 'point': poi} for t, poi in zip(trans_rays, pois)]
     
     point_3d = get_intersect_of_lines_slow(trans_lines)
-   
-    # assuming we have len(trans_lines) == 200
-    # point_3d = Matrix(3,200)
-    # trans_line_points = Matrix(3,200)
-    # trans_line_dirs = Matrix(3,200) == normalised vectors
-
-    # Matrix(3,200) delta = trans_line_points - point3d
-    # Matrix(3,200) cross_prod = normalise(cross(delta, trans_line_dirs))
-    # (you may find there is a cross product function that returns normalised vectors)
-
-    # ask-rse@bristol.ac.uk
 
     error = 0
     for line in trans_lines:
