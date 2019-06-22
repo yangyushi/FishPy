@@ -361,11 +361,7 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
                 pois,
                 get_trans_vecs(incid_rays, normal=normal)
                 ], axis=1) for incid_rays, pois in zip(incid_rays_mv, pois_mv)
-<<<<<<< HEAD
     ]  # (view, n, 2, dim)
-=======
-            ]  # (view, n, 2, dim)
->>>>>>> 8b672e352955419e5ba125cda5b7c223c092fb1c
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)
