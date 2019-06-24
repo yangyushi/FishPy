@@ -182,13 +182,16 @@ class Camera():
         project a 3D position onto the image plane
         """
         assert position.shape == (3,), "Please input an [x, y, z] array"
-        pos_homo = np.hstack([position, 1])
-        pos_homo = np.expand_dims(pos_homo, 1)
-        pos_uv = np.squeeze(self.p @ pos_homo)
-        pos_uv /= pos_uv[-1]
-        return pos_uv
+        uv, _ = cv2.projectPoints(
+                objectPoints=np.vstack(position).T,
+                rvec=self.rotation.as_rotvec(),
+                tvec=self.t,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion
+        )
+        return uv.ravel()[:2]
 
-    def undistort(self, point):
+    def undistort(self, point, want_uv=False):
         """
         undistort point in an image, coordinate is (u, v), NOT (x, y)
         return: undistorted points, being xy, not uv (camera.K @ xy = uv)
@@ -196,11 +199,19 @@ class Camera():
         new_point = point.astype(np.float64)
         new_point = np.expand_dims(new_point, 0)
         new_point = np.expand_dims(new_point, 0)
-        undistorted = cv2.undistortPoints(
-                src=new_point,
-                cameraMatrix=self.k,
-                distCoeffs=self.distortion,
-                )
+        if want_uv:
+            undistorted = cv2.undistortPoints(
+                    src=new_point,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+                    P=self.k,
+            )
+        else:
+            undistorted = cv2.undistortPoints(
+                    src=new_point,
+                    cameraMatrix=self.k,
+                    distCoeffs=self.distortion,
+                    )
         return np.squeeze(undistorted)
 
     def undistort_points(self, points, want_uv=False):
