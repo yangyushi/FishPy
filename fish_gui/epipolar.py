@@ -44,7 +44,7 @@ class Model():
 
     def get_ep12(self, uv):
         if self.is_valid:
-            return f3.ray_trace.epipolar_draw(
+            return f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_1, self.camera_2, self.image_2, self.water_level, self.depth, self.normal
                     )
         else:
@@ -52,7 +52,7 @@ class Model():
 
     def get_ep21(self, uv):
         if self.is_valid:
-            return f3.ray_trace.epipolar_draw(
+            return f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_2, self.camera_1, self.image_1, self.water_level, self.depth, self.normal
                     )
         else:
