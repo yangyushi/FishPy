@@ -349,6 +349,40 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
     return np.array(epipolar_pixels)
 
 
+def epipolar_la(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+    """
+    linear approximation for epipolar line under water
+    use 3 epipolar points under water and do a linear fit
+    """
+    poi_1 = get_poi(camera_1, interface, np.array(vu))
+    co_1 = -camera_1.r.T @ camera_1.t  # camera origin
+    co_2 = -camera_2.r.T @ camera_2.t  # camera origin
+    incid = poi_1 - co_1
+    trans = get_trans_vec(incid, normal=normal)
+    X = np.zeros((3, 2))
+    Y = np.zeros((3, 1))
+    for i, step in enumerate([0, depth/2, depth]):
+        m = poi_1 + step * trans
+        z = abs(m[-1])
+        d = abs(co_2[-1] - interface)
+        x = np.linalg.norm(m[:2] - co_2[:2])
+        u = optimize.root_scalar(
+                find_u, args=(n, d, x, z), x0=x*0.8, x1=x*0.5
+                ).root
+        if (u > x) or (u < 0):
+            print("root finding in refractive epipolar geometry fails")
+            break
+        o = np.hstack((co_2[:2], interface))
+        oq_vec = np.hstack((m[:2], interface)) - o
+        q = o + u * (oq_vec / np.linalg.norm(oq_vec))
+        uv_2 = camera_2.project(q)
+        X[i, :] = uv_2[1], 1  # uv -> vu
+        Y[i, 0] = uv_2[0]
+    a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
+    return a, b
+
+
+
 def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
     pois_mv = []

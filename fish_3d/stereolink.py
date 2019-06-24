@@ -92,30 +92,24 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
         ] for cluster_one_view in clusters]  # (v, u)
+
     for i, centre in enumerate(centres_mv[0]):
-        ep12 = ray_trace.epipolar_draw( centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
-        ep13 = ray_trace.epipolar_draw( centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
-        
-        if (len(ep12) == 0) or (len(ep13) == 0):
-            if report:
-                print('no epipolar valid centre')
-            continue
+
+        a12, b12 = ray_trace.epipolar_la(centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
+        a13, b13 = ray_trace.epipolar_la(centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
         
         candidates_12, candidates_13 = [], []
         
         for j, cluster in enumerate(clusters[1]):
-            distances = cdist(cluster, ep12)
-            if np.min(distances[np.triu_indices_from(distances, k=1)]) < tol_2d:
+            distances = np.abs(cluster.T[0] * a12 - cluster.T[1] + b12) / np.sqrt(a12**2 + 1)
+            if np.min(distances) < tol_2d:
                 candidates_12.append(j)
-                
+
         for j, cluster in enumerate(clusters[2]):
-            distances = cdist(cluster, ep13)
-            try:
-                if np.min(distances[np.triu_indices_from(distances, k=1)]) < tol_2d:
-                    candidates_13.append(j)
-            except ValueError:
-                print(np.nan in distance)
-                print(distances)
+            distances = np.abs(cluster.T[0] * a13 - cluster.T[1] + b13) / np.sqrt(a13**2 + 1)
+            if np.min(distances) < tol_2d:
+                candidates_13.append(j)
+
         if report:
             print(f'#{i}, candidates in camera #2 is {len(candidates_12)}, candidates in camera #3 is {len(candidates_13)}',
                     end=' --> ')
