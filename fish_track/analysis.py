@@ -73,19 +73,17 @@ class Analyser():
         for i, frame in enumerate(self.frame_nums[:-1]):
             next_frame = self.frame_nums[i+1]
             origin = self.origin[i]
+
+            existing_trajs = [traj for traj in self.trajs if (frame in traj.time) and ((frame + 1) in traj.time)]
+            current_points = np.array([t.positions[i] for t in existing_trajs if t.time[i] == frame])
+            future_points = np.array([t.positions[i] for t in existing_trajs if t.time[i] == frame + 1])
+
+            print(current_points.shape, future_points.shape)
+
+            assert len(current_points == future_points), "points not matching"
             
-            current_points = [[
-                p - self.origin[i] for j, p in enumerate(t.positions) if t.time[j] == frame
-            ] for t in self.trajs if (frame in t.time)]
-            current_points = np.squeeze(np.array(current_points))
-            
-            next_points = [[
-                p - self.origin[i] for j, p in enumerate(t.positions) if t.time[j] == next_frame
-            ] for t in self.trajs if (next_frame in t.time)]
-            next_points = np.squeeze(np.array(next_points))
-            
-            matched_pair = self.get_matched_points(current_points, next_points)
-            rot_mat = self.get_best_rotation(*matched_pair)
+            rot_mat = self.get_best_rotation(current_points, future_points)
+
             matrices.append(rot_mat)
         return matrices
             
@@ -94,44 +92,23 @@ class Analyser():
         for i, frame in enumerate(self.frame_nums[:-1]):
             next_frame = self.frame_nums[i+1]
             origin = self.origin[i]
+
+            existing_trajs = [traj for traj in self.trajs if (frame in traj.time) and ((frame + 1) in traj.time)]
+            current_points, future_points = [], []
+            for traj in existing_trajs:
+                current_time_index = np.where(traj.time == frame)
+                future_time_index = np.where(traj.time == frame + 1)
+                current_points.append(traj.positions[current_time_index])
+                future_points.append(traj.positions[future_time_index])
+            current_points = np.squeeze(current_points)
+            future_points = np.squeeze(future_points)
             
-            current_points = [[
-                p - self.origin[i] for j, p in enumerate(t.positions) if t.time[j] == frame
-            ] for t in self.trajs if (frame in t.time)]
-            current_points = np.squeeze(np.array(current_points))
-            
-            next_points = [[
-                p - self.origin[i] for j, p in enumerate(t.positions) if t.time[j] == next_frame
-            ] for t in self.trajs if (next_frame in t.time)]
-            next_points = np.squeeze(np.array(next_points))
-            
-            matched_pair = self.get_matched_points(current_points, next_points)
-            dila_mat, rot_mat = self.get_best_dilatation_rotation(*matched_pair)
+            dila_mat, rot_mat = self.get_best_dilatation_rotation(current_points, future_points)
+
             rot_matrices.append(rot_mat)
             dila_matrices.append(dila_mat)
         return rot_matrices, dila_matrices
         
-    @staticmethod
-    def get_matched_points(current, future):
-        """
-        make sure two successive frames have the same number of particles
-        so that we could calculate interesting stuff like rotational matrix
-        shape of current and future: (Number, Dimension)
-        """
-        matched_current, matched_future = [], []
-        particle_num = min(len(current), len(future))
-        
-        points_1 = current
-        points_2 = future
-        
-        for i in range(particle_num):
-            p1 = points_1[i]
-            matching_index = np.argmin([np.linalg.norm(p2 - p1) for p2 in points_2])
-            p2 = points_2[matching_index]
-            matched_current.append(p1)
-            matched_future.append(p2)
-            
-        return np.array(matched_current), np.array(matched_future)
             
     def get_best_dilatation_rotation(self, r1, r2, init_guess=None):
         """
@@ -277,55 +254,6 @@ class Analyser():
                     vf[tii] = vf[tii] / scale
         return vfs_dimless
     
-    def get_correlation(self, r_bins, time_point, velocity_fluctuations=None):
-        """
-        calculating the correlation of individuals at one time point
-        bins is something like np.arange(0, 50, 1), it includes both bin width and max value
-        it is assumed that the bins were uniform
-        """
-        if isinstance(velocity_fluctuations, type(None)):
-            vfs = self.get_dimless_velocity_fluctuations()
-        else:
-            vfs = velocity_fluctuations
-        dr = r_bins[1] - r_bins[0]
-        result = []
-        for r in r_bins[:-1]:
-            corr = []
-            for i, vf1 in enumerate(vfs):  # for each individual
-                if time_point in self.trajs[i].time[:-1]:
-                    tii = np.where(self.trajs[i].time == time_point)[0][0]
-                    #tii = np.argmin(np.abs(self.trajs[i].time - time_point))  # time index i
-                    for j, vf2 in enumerate(vfs[i + 1:]):
-                        if time_point in self.trajs[i+j+1].time[:-1]:
-                            tij = np.where(self.trajs[i + j + 1].time == time_point)[0][0]
-                            #tij = np.argmin(np.abs(self.trajs[i+j+1].time - time_point))
-                            dist = np.linalg.norm(
-                                self.trajs[i].positions[tii] - self.trajs[i+j+1].positions[tij]
-                            )
-                            if (dist < (r + dr)) and (dist >= r):
-                                corr.append(vf1[tii] @ vf2[tij])
-            if not corr:
-                #print(f"no velocity fluctuation from {r} to {r + dr} at frame {time_point}")
-                result.append([])
-            else:
-                result.append(corr)   # this reduces std, is it proper??
-        return result
-        
-    def get_mean_correlation(self, r_bins):
-        """get average correlation for all frames"""
-        vfs = self.get_dimless_velocity_fluctuations()
-        correlations = [[] for _ in r_bins[:-1]]
-        max_frame = np.max(self.frame_nums)
-        for i in range(max_frame):
-            corr = self.get_correlation(r_bins, i, vfs)
-            for j, c in enumerate(correlations):
-                if corr[j]:
-                    c += corr[j]
-        mean = []
-        for corr in correlations:
-            mean.append(np.mean(corr))
-        return mean
-            
     @staticmethod
     def get_velocities(traj):
         velocities = np.diff(traj.positions, axis=0) / np.expand_dims(np.diff(traj.time), 1)

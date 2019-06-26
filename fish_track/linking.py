@@ -6,6 +6,7 @@ import pickle
 import matplotlib.pyplot as plt
 from numba import jit
 
+
 def get_trajectory_from_labels(results, centres):
     """
     trajectory = [time_points, positions]
