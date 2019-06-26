@@ -293,7 +293,7 @@ class Camera():
                     #cv2.CALIB_ZERO_TANGENT_DIST,
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
-                    #cv2.CALIB_FIX_K3,
+                    cv2.CALIB_FIX_K3,
                     )),
         )
         print("Dist coeff is ", distortion)
