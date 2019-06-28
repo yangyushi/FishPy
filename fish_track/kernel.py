@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+from scipy import ndimage
 from scipy.cluster import vq
 import matplotlib.pyplot as plt
 
@@ -44,7 +45,18 @@ def plot_pca(dim, mean, pcs, name='pca'):
     plt.close()
 
 
-def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=True) -> list:
+def add_shadow(x, sigma):
+    """
+    effectively add a negative zone around image x where x > x.mean
+    """
+    mask = (ndimage.grey_dilation(x, 3) > 0) * (x < x.max() * 0.1)
+    diff = ndimage.gaussian_filter(x, sigma)
+    diff *= mask
+    result = x - diff
+    return result / result.max()
+
+
+def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=True, sigma=2) -> list:
     """
     1. calculate the principle component of different images
     2. project images on some principles
@@ -52,9 +64,9 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
     4. calculate average for each cluster
     5. return the averaged images
 
-    :param shapes: different images obtained from measure_shape.get_shapes
-    :param indices: indices of the principle components
+    :param shapes: different images obtained from measure_shape.get_shapes :param indices: indices of the principle components
     :param cluster_num  : the number of clusters (k)
+    :parame sigma: the sigma of the "shadow" add around the kernel
     """
     number, dim, dim = images.shape
 
@@ -79,9 +91,12 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
         indices = np.where(code == k)[0]
         shape_images = images[indices]
         average = shape_images.mean(0)
+        kernel = average.reshape(dim, dim)  # - np.mean(average)
+        if sigma > 0:
+            kernel = add_shadow(kernel, sigma)
+        kernel = kernel / np.sum(kernel > kernel.max() * 0.1)  # compensate for smaller kernels
         if plot:
-            ax[k].imshow(average.reshape(dim, dim), vmin=0, vmax=images.max())
-        kernel = average.reshape(dim, dim)# - np.mean(average)
+            ax[k].imshow(kernel)
         shape_kernels.append(kernel)
 
     if plot:
