@@ -290,7 +290,7 @@ class Camera():
                     cv2.CALIB_USE_INTRINSIC_GUESS,
                     #cv2.CALIB_FIX_ASPECT_RATIO,
                     #cv2.CALIB_FIX_PRINCIPAL_POINT,
-                    #cv2.CALIB_ZERO_TANGENT_DIST,
+                    cv2.CALIB_ZERO_TANGENT_DIST,
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
@@ -320,7 +320,7 @@ class Camera():
             img = draw(img, axes_img)
             img = cv2.resize(img, (800, 600))
             cv2.imshow('img', img)
-            cv2.waitKey(2000)
+            cv2.waitKey(5000)
 
     @property
     def o(self):
