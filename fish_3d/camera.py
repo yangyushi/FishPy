@@ -236,40 +236,37 @@ class Camera():
             )
         return np.squeeze(undistorted).T
 
-    def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
+    def calibrate_int(self, int_images: list, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update intrinsic and extrinsic camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.01)
 
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space
         img_points = [] # 2d points in image plane.
 
-        image_files = int_images + [ext_image]
-
         for_plot = []
-        for i, fname in enumerate(image_files):
+
+        for i, fname in enumerate(int_images):
             img = cv2.imread(fname)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
             # Find the chess board corners
             ret, corners = cv2.findChessboardCorners(gray, corner_number, None)
-
             if ret == True:
-                obj_points_single = get_points_from_order(corner_number, order=order) * grid_size
+                obj_points_single = get_points_from_order(corner_number, order='x123') * grid_size
                 obj_points.append(obj_points_single)
                 corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
                 img_points.append(corners_refined)
                 img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
                 img = cv2.resize(img, (800, 600))
-                cv2.imshow('img', img)
-                cv2.waitKey(100)
-            if fname == ext_image:
-                for_plot += [corner_number, corners_refined, ret]
+                if show:
+                    cv2.imshow('img', img)
+                    cv2.waitKey(100)
 
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
@@ -296,31 +293,86 @@ class Camera():
                     cv2.CALIB_FIX_K3,
                     )),
         )
-        print("Dist coeff is ", distortion)
 
-        for i, fname in enumerate(image_files):
+        for i, fname in enumerate(int_images):
             err = get_reproject_error(
                     img_points[i], obj_points[i],
                     rvecs[i], tvecs[i], distortion, camera_matrix
                     )
             print(f"reproject error for {fname:<12} is {err:.4f}")
 
-        print(camera_matrix)
         self.k = camera_matrix
+        print("==== Intrinsic Matrix ====")
+        print(self.k)
+        print("==== Dist coefficients ====\n", distortion)
         self.distortion = distortion
-        self.rotation = R.from_rotvec(np.squeeze(rvecs[-1]))
-        self.t = np.ravel(tvecs[-1])
         self.update()
+
+    def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
+        """
+        update intrinsic and extrinsic camera matrix using opencv's chessboard detector
+        the distortion coefficients are also being detected
+        the corner number should be in the format of (row, column)
+        """
+
+        self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
+
+        # termination criteria
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.01)
+
+        # Arrays to store object points and image points from all the images.
+
+        for_plot = []
+        img = cv2.imread(ext_image)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Find the chess board corners
+        ret, corners = cv2.findChessboardCorners(gray, corner_number, None)
+
+        if ret == True:
+            obj_points = get_points_from_order(corner_number, order=order) * grid_size
+            img_points = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
+            for_plot += [corner_number, img_points, ret]
+
+        ret, rvec, tvec = cv2.solvePnP(
+                objectPoints=obj_points,
+                imagePoints=img_points,
+                cameraMatrix = self.k,
+                distCoeffs = self.distortion,
+        )
+
+        err = get_reproject_error(
+                img_points, obj_points,
+                rvec, tvec, self.distortion, self.k
+                )
+
+        print(f"==== reproject error for Extrinsic is {err:.4f} ====")
+
+        self.rotation = R.from_rotvec(rvec.ravel())
+        self.t = np.ravel(tvec)
+        self.update()
+
         if show:
             length = 100
             axes = np.float32([[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]])
-            axes_img, _ = cv2.projectPoints(axes, rvecs[-1], tvecs[-1], self.k, self.distortion)
-            img = cv2.imread(fname)
+            axes_img, _ = cv2.projectPoints(axes, rvec, tvec, self.k, self.distortion)
+            img = cv2.imread(ext_image)
             img = cv2.drawChessboardCorners(img, *for_plot)
             img = draw(img, axes_img)
             img = cv2.resize(img, (800, 600))
             cv2.imshow('img', img)
             cv2.waitKey(5000)
+
+    @property
+    def o(self):
+        return self.r.T @ np.array([0, 0, 1])
+
+
+if __name__ == "__main__":
+    points = get_points_from_order((8, 6), 'x123')
+    points = get_points_from_order((8, 6), '13x2')
+    points = get_points_from_order((8, 6), '321x')
+    points = get_points_from_order((8, 6), '2x31')
 
     @property
     def o(self):
