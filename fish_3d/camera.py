@@ -243,7 +243,7 @@ class Camera():
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.01)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1)
 
         # Arrays to store object points and image points from all the images.
         obj_points = [] # 3d point in real world space
@@ -267,6 +267,8 @@ class Camera():
                 if show:
                     cv2.imshow('img', img)
                     cv2.waitKey(100)
+            else:
+                print(f"corner detection failed: {fname}")
 
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
@@ -291,6 +293,7 @@ class Camera():
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
+                    #cv2.CALIB_RATIONAL_MODEL
                     )),
         )
 
@@ -318,7 +321,7 @@ class Camera():
         self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
 
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.01)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1)
 
         # Arrays to store object points and image points from all the images.
 
@@ -327,12 +330,19 @@ class Camera():
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners
-        ret, corners = cv2.findChessboardCorners(gray, corner_number, None)
-
+        ret, corners = cv2.findChessboardCorners(
+                gray, corner_number,
+                flags=sum((
+                    cv2.CALIB_CB_FAST_CHECK,
+                    cv2.CALIB_CB_ADAPTIVE_THRESH,
+                    ))
+                )
         if ret == True:
             obj_points = get_points_from_order(corner_number, order=order) * grid_size
             img_points = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
             for_plot += [corner_number, img_points, ret]
+        else:
+            raise RuntimeError("Corner detection failed!")
 
         ret, rvec, tvec = cv2.solvePnP(
                 objectPoints=obj_points,
@@ -362,17 +372,6 @@ class Camera():
             img = cv2.resize(img, (800, 600))
             cv2.imshow('img', img)
             cv2.waitKey(5000)
-
-    @property
-    def o(self):
-        return self.r.T @ np.array([0, 0, 1])
-
-
-if __name__ == "__main__":
-    points = get_points_from_order((8, 6), 'x123')
-    points = get_points_from_order((8, 6), '13x2')
-    points = get_points_from_order((8, 6), '321x')
-    points = get_points_from_order((8, 6), '2x31')
 
     @property
     def o(self):
