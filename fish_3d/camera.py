@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 import glob
+import pickle
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
@@ -144,6 +145,7 @@ def get_reproject_error(points_2d, points_3d, rvec, tvec, distort, camera_matrix
     shift = np.squeeze(projected) - np.squeeze(points_2d)
     return np.linalg.norm(shift, axis=1).mean()
 
+
 class Camera():
     def __init__(self):
         self.rotation = R.from_rotvec(np.zeros(3))
@@ -175,6 +177,13 @@ class Camera():
         self.distortion = np.zeros(5)
         self.t = calib_result['Tc_ext'][:, 0]
         self.rotation = R.from_dcm(calib_result['Rc_ext'])
+        self.update()
+
+    def read_int(self, pkl_file):
+        with open(pkl_file, 'rb') as f:
+            cam = pickle.load(f)
+        self.k = cam.k
+        self.distortion = cam.distortion
         self.update()
 
     def project(self, position):
@@ -238,7 +247,7 @@ class Camera():
 
     def calibrate_int(self, int_images: list, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
         """
-        update intrinsic and extrinsic camera matrix using opencv's chessboard detector
+        update INTERINSIC camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
         the corner number should be in the format of (row, column)
         """
@@ -311,32 +320,25 @@ class Camera():
         self.distortion = distortion
         self.update()
 
-    def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
+    def calibrate_ext(self, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """
-        update intrinsic and extrinsic camera matrix using opencv's chessboard detector
+        update EXTRINSIC camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
         the corner number should be in the format of (row, column)
         """
-
-        self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
-
         # termination criteria
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1)
-
-        # Arrays to store object points and image points from all the images.
 
         for_plot = []
         img = cv2.imread(ext_image)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners
-        ret, corners = cv2.findChessboardCorners(
-                gray, corner_number,
+        ret, corners = cv2.findChessboardCorners(gray, corner_number,
                 flags=sum((
                     cv2.CALIB_CB_FAST_CHECK,
-                    cv2.CALIB_CB_ADAPTIVE_THRESH,
-                    ))
-                )
+                    cv2.CALIB_CB_ADAPTIVE_THRESH
+                    )))
         if ret == True:
             obj_points = get_points_from_order(corner_number, order=order) * grid_size
             img_points = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
@@ -356,13 +358,13 @@ class Camera():
                 rvec, tvec, self.distortion, self.k
                 )
 
-        print(f"==== reproject error for Extrinsic is {err:.4f} ====")
 
         self.rotation = R.from_rotvec(rvec.ravel())
         self.t = np.ravel(tvec)
         self.update()
 
         if show:
+            print(f"==== reproject error for Extrinsic is {err:.4f} ====")
             length = 100
             axes = np.float32([[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]])
             axes_img, _ = cv2.projectPoints(axes, rvec, tvec, self.k, self.distortion)
@@ -372,6 +374,16 @@ class Camera():
             img = cv2.resize(img, (800, 600))
             cv2.imshow('img', img)
             cv2.waitKey(5000)
+
+    def calibrate(self, int_images: list, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
+        """
+        update intrinsic and extrinsic camera matrix using opencv's chessboard detector
+        the distortion coefficients are also being detected
+        the corner number should be in the format of (row, column)
+        """
+        self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
+        self.calibrate_ext(ext_image, grid_size, order, corner_number, win_size, show)
+
 
     @property
     def o(self):
