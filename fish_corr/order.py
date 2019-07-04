@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-from tqdm import tqdm
+from numba import jit
 import numpy as np
 import pickle
 from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
-from numba import njit, jit
 
-class Analyser():
+
+class Dynamical():
     def __init__(self, trajs, origin=None):
         """np.diff --> x(i+1) - x(i)"""
         self.trajs = trajs
@@ -43,29 +43,6 @@ class Analyser():
                 time_indices.append(time_index)
             relative_positions.append(t.positions - self.origin[time_indices])
         return relative_positions
-    
-    def get_velocities_r(self):
-        """get velocities relative to the centre of mass of while group"""
-        positions = self.get_positions_r()
-        spds = []
-        for i, t in enumerate(self.trajs):
-            spd = np.diff(positions[i], axis=0) / np.expand_dims(np.diff(t.time), 1)
-            spds.append(spd)
-        return spd
-    
-    def get_simple_velocity_fluctuations(self):
-        """
-        get the velocity fluctions relative to the velocity of centre of mass
-        velocity = x(t+1) - x(t)  [in normal frame, not com frame]
-        fluctuations = velocity - velocity_com
-        """
-        fluctuations = []
-        for i, t in enumerate(self.trajs):
-            time_index = np.where(t.time == self.frame_nums)[0]
-            velocity_com = np.diff(self.origin[time_index], axis=0) / np.expand_dims(np.diff(time_index), 1)
-            velocities = np.diff(t.positions, axis=0) / np.expand_dims(np.diff(time_index), 1)
-            fluctuations.append(velocities - velocity_com)
-        return fluctuations
     
     def _get_rot_matrices(self):
         matrices = []
@@ -257,18 +234,3 @@ class Analyser():
     def get_velocities(traj):
         velocities = np.diff(traj.positions, axis=0) / np.expand_dims(np.diff(traj.time), 1)
         return velocities
-
-
-def plot_dila_orders(analyser):
-    d_orders = analyser.get_dila_orders()
-    plt.subplot(121).plot(d_orders, label='group centre', color='tomato')
-    plt.legend(fontsize=12, loc='lower right')
-    #plt.ylim(-1.5, 1.5)
-    plt.xlabel('time / frame', fontsize=18)
-    plt.ylabel('$\Lambda$', fontsize=18)
-    plt.subplot(122).hist(d_orders, bins=np.linspace(-1, 1, 50), color='tomato', edgecolor='k')
-    plt.xlabel('$\Lambda$', fontsize=18)
-    plt.ylabel('PDF', fontsize=18)
-    #plt.gcf().set_size_inches(8, 2.5)
-    plt.tight_layout()
-    plt.show()
