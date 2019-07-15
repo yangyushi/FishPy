@@ -18,7 +18,7 @@ class SubProperty:
         for key, value in dictionary.items():
             if value.isdigit():  # e.g. 12
                 setattr(self, key, int(value))
-            elif value[1:].isdigit():  # e.g. -12
+            elif value[1:].isdigit() and value[0] == '-':  # e.g. -12
                     setattr(self, key, int(value))
             else:
                 try:  # e.g. 12.3
@@ -85,7 +85,6 @@ def validate(images, model, fail_mark=0.25, shape=(40, 40)):
     norm_factor = np.expand_dims(norm_factor, -1)
     normed = images / norm_factor
     normed = np.expand_dims(normed, -1)  # (n, x, y) -> (n, x, y, 1)
-    predictions = model.predict(normed)
-    bad_score = predictions[:, 1]
-    good_indices = np.where(bad_score < fail_mark)
+    score = model.predict(normed).ravel()
+    good_indices = np.where(score > fail_mark)
     return images[good_indices]

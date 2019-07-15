@@ -36,7 +36,7 @@ def get_diff(image: np.ndarray, kernel: np.ndarray):
             diff[x, y] = error
     return diff
 
-                    
+
 def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
     mse = []
     for angle in angles:
@@ -67,19 +67,18 @@ def get_cross_correlation_nd(image: np.ndarray, angles: list, kernels: list) -> 
     rotate different kernels at different angles
     and calculate the correlations
     """
-    corr = []
+    corr = np.zeros((len(angles), len(kernels), image.shape[0], image.shape[1]), dtype=np.float64)
     cc_image = image
-    for angle in angles:
-        corr.append([])
-        for kernel in kernels:
+    for i, angle in enumerate(angles):
+        for j, kernel in enumerate(kernels):
             cc_kernel = rotate_kernel(kernel, angle)
             centre = np.array(cc_kernel.shape) // 2
             roi = ( slice(centre[0] - kernel.shape[0] // 2, centre[0] + kernel.shape[0] // 2),
                     slice(centre[1] - kernel.shape[1] // 2, centre[1] + kernel.shape[1] // 2))
             cc_kernel = cc_kernel[roi]  # make sure all kernels have the same size
             cross_correlation = signal.correlate(cc_image, cc_kernel, mode='same')
-            corr[-1].append(cross_correlation)
-    return np.array(corr)
+            corr[i, j] += cross_correlation
+    return corr
 
 
 def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, img_threshold=0.2):
@@ -91,7 +90,7 @@ def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, im
     :param image: 2D numpy array for locating features
     :param cc:    cross-correlation of image with different kernels with different rotation
                   4D numpy array with shape (orientation )
-    :param size:  Spatial region where 
+    :param size:  Spatial region where
     """
     num_angle, num_shape, num_x, num_y = cc.shape
 
