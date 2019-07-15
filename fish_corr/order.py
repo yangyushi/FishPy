@@ -52,11 +52,16 @@ class Dynamical():
         fluctuations = velocity - velocity_centres
         """
         fluctuations = []
+        velocities_com = np.diff(self.centres, axis=0)
         for i, t in enumerate(self.trajs):
-            time_index = np.where(t.time == self.frame_nums)[0]
-            velocity_centres = np.diff(self.origin[time_index], axis=0) / np.expand_dims(np.diff(time_index), 1)
-            velocities = np.diff(t.positions, axis=0) / np.expand_dims(np.diff(time_index), 1)
-            fluctuations.append(velocities - velocity_centres)
+            time_indices, frames_in_traj = [], []
+            for frame in self.frame_nums:
+                if frame in t.time:
+                    time_indices.append(np.where(t.time == frame)[0])
+                    frames_in_traj.append(self.frame_nums.index(frame))
+            centres = self.centres[np.array(frames_in_traj)]
+            vf = np.diff(t.positions - centres, axis=0) / np.diff(np.array(time_indices), axis=0)
+            fluctuations.append(vf)
         return fluctuations
 
     def _get_rot_matrices(self):
@@ -253,4 +258,10 @@ class Dynamical():
         velocities = np.diff(traj.positions, axis=0) / np.expand_dims(np.diff(traj.time), 1)
         return velocities
 
-
+    def mean_fluctuations(self, fluctuations, frame):
+        results = []
+        for t, f  in zip(self.trajs, fluctuations):
+            if frame in t.time[:-1]:
+                ti = np.where(t.time == frame)[0][0]
+                results.append(f[ti])
+        return np.mean(results, axis=0)
