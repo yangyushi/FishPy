@@ -56,7 +56,7 @@ def add_shadow(x, sigma):
     return result / result.max()
 
 
-def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=True, sigma=2) -> list:
+def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=True, sigma=0) -> list:
     """
     1. calculate the principle component of different images
     2. project images on some principles
