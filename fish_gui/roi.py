@@ -13,6 +13,14 @@ class Model():
         self.cursor = 0
 
     @property
+    def max(self):
+        return np.max(list(self.images), axis=0)
+
+    @property
+    def min(self):
+        return np.min(list(self.images), axis=0)
+
+    @property
     def next(self):
         if self.cursor == len(self.history) - 1:
             img = next(self.images)
@@ -88,11 +96,11 @@ class Viewer(QMainWindow):
         self.layout.addWidget(pannel, 1, 0)
 
     def next(self):
-        image = self.model.next
+        image = self.model.max
         self.canvas.setImage(image)
 
     def back(self):
-        image = self.model.back
+        image = self.model.min
         self.canvas.setImage(image)
 
     def save(self):
