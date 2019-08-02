@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import ndimage 
+from scipy import ndimage
 from scipy import signal
-from scipy.spatial.distance import pdist, squareform
-import numba
+from scipy.spatial.distance import pdist, squareform, cdist
+
 
 def join_pairs(pairs) -> list:
     if len(pairs) == 0:
@@ -20,36 +20,8 @@ def join_pairs(pairs) -> list:
         joined_pairs.append(joined_pair)
     return joined_pairs
 
-@numba.jit(nopython=True, parallel=True)
-def get_diff(image: np.ndarray, kernel: np.ndarray):
-    lx, ly = image.shape
-    lkx, lky = kernel.shape
-    left = int(lkx // 2)
-    top  = int(lky // 2)
-    diff = np.zeros(image.shape)
-    for x in range(left, lx - lkx + left):
-        for y in range(top, ly - lky + top):
-            error = 0
-            for kx in range(lkx):
-                for ky in range(lky):
-                    error += np.abs(image[x - left + kx, y - top + ky] - kernel[kx, ky])
-            diff[x, y] = error
-    return diff
 
-
-def get_mse_nd(image: np.ndarray, angles: list, kernels:list) -> np.ndarray:
-    mse = []
-    for angle in angles:
-        mse.append([])
-        for kernel in kernels:
-            area = kernel.shape[0] * kernel.shape[1]
-            cc_kernel = ndimage.rotate(kernel, angle)
-            diff = get_diff(image, cc_kernel) / area
-            mse[-1].append(diff)
-    return np.array(mse)
-
-
-def rotate_kernel(kernel, angle):
+def rotate_kernel(kernel, angle) -> np.ndarray:
     """
     rotate the kernel with given angle
     and shift the highest value to the centre
@@ -59,7 +31,15 @@ def rotate_kernel(kernel, angle):
     maximum = np.array(np.unravel_index(np.argmax(after_rot), after_rot.shape))
     shift = centre - maximum
     shifted = ndimage.shift(after_rot, shift, mode='constant', cval=kernel.min())
-    return shifted
+    return get_sub_image(shifted, centre, kernel.shape)
+
+
+def get_sub_image(image, centre, window):
+    win_x, win_y = window
+    region_x = slice(centre[0] - win_x//2, centre[0] + win_x//2 + win_x%2)
+    region_y = slice(centre[1] - win_y//2, centre[1] + win_y//2 + win_y%2)
+    sub_image = image[region_x, region_y]
+    return sub_image
 
 
 def get_cross_correlation_nd(image: np.ndarray, angles: list, kernels: list) -> np.ndarray:
@@ -67,21 +47,21 @@ def get_cross_correlation_nd(image: np.ndarray, angles: list, kernels: list) -> 
     rotate different kernels at different angles
     and calculate the correlations
     """
-    corr = np.zeros((len(angles), len(kernels), image.shape[0], image.shape[1]), dtype=np.float64)
+    corr = np.empty((len(angles), len(kernels), image.shape[0], image.shape[1]), dtype=np.float64)
     cc_image = image
     for i, angle in enumerate(angles):
         for j, kernel in enumerate(kernels):
             cc_kernel = rotate_kernel(kernel, angle)
             centre = np.array(cc_kernel.shape) // 2
-            roi = ( slice(centre[0] - kernel.shape[0] // 2, centre[0] + kernel.shape[0] // 2),
-                    slice(centre[1] - kernel.shape[1] // 2, centre[1] + kernel.shape[1] // 2))
+            roi = ( slice(centre[0] - kernel.shape[0] // 2, centre[0] + kernel.shape[0] // 2 + kernel.shape[0] % 2),
+                    slice(centre[1] - kernel.shape[1] // 2, centre[1] + kernel.shape[1] // 2 + kernel.shape[1] % 2) )
             cc_kernel = cc_kernel[roi]  # make sure all kernels have the same size
             cross_correlation = signal.correlate(cc_image, cc_kernel, mode='same')
-            corr[i, j] += cross_correlation
+            corr[i, j] = cross_correlation
     return corr
 
 
-def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, img_threshold=0.2):
+def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, img_threshold=0.2) -> np.ndarray:
     """
     orientation invariance and shape invariance location
     currently very computational inefficient
@@ -106,24 +86,7 @@ def oishi_locate(image: np.ndarray, cc: np.ndarray, size=5, cc_threshold=0.2, im
     return np.vstack([maxima, probabilities])
 
 
-def oishi_locate_mse(image: np.ndarray, mse: np.ndarray, size=5, mse_threshold=20, img_threshold=0.2):
-    """
-    todo: write a MUCH faster version
-    """
-    num_angle, num_shape, num_x, num_y = mse.shape
-
-    mmap = ndimage.minimum_filter(
-            mse, size=[2 * num_angle, 2 * num_shape, 2 * size, 2 * size],
-            ) == mse
-
-    mmap *= mse < (mse.max() * mse_threshold)
-    mmap *= image > (image.max() * img_threshold)
-    maxima = np.array(mmap.nonzero())
-
-    return maxima
-
-
-def get_box_for_kernel(kernel, u, v, image):
+def get_box_for_kernel(kernel, u, v, image) -> tuple:
     """
     get a boundary of the kernel in a bigger image
     the kernel is located at (u, v) in the image
@@ -151,7 +114,7 @@ def get_box_for_kernel(kernel, u, v, image):
     return box_in_image, box_in_kernel
 
 
-def get_clusters(feature, image, kernels, angles, roi, kernel_threshold=0.0):
+def get_clusters(feature, image, kernels, angles, roi, kernel_threshold=0.0) -> list:
     """
     image: the processed binary image
     return the pixels in the image that 'belong' to different features
@@ -181,7 +144,7 @@ def get_clusters(feature, image, kernels, angles, roi, kernel_threshold=0.0):
     return clusters
 
 
-def o2v(orientation, angles):
+def o2v(orientation, angles) -> np.ndarray:
     """
     convert orientation to a unit vector
     the angles were in the unit of degree
@@ -193,7 +156,7 @@ def o2v(orientation, angles):
     return np.array((x, y))
 
 
-def oishi_refine(features, angles, length, otol):
+def oishi_refine(features, angles, length, otol) -> np.ndarray:
     """
     otol: tolerance on orientations (angle between two orientations), the unit is degree
     """
@@ -227,6 +190,71 @@ def oishi_refine(features, angles, length, otol):
     refined = np.delete(features, to_delete, axis=1)
     return refined
 
+def get_oishi_kernels(kernels, rot_num=35):
+    oishi_kernels = np.empty((len(kernels), rot_num, kernels[0].shape[0], kernels[0].shape[1]))
+    for i, k in enumerate(kernels):
+        for r in range(rot_num):
+            oishi_kernels[i, r] = rotate_kernel(k/k.std(), angle=r*180/rot_num)
+    return oishi_kernels
+
+
+def get_oishi_features(image, oishi_kernels, threshold=0.5, local_size=4):
+    """
+    :return : oishi features, (6, n) array with [x, y, orientation, shape, brightness, likelihood]
+    """
+    local_max = (ndimage.grey_dilation(image, local_size) == image) * (image > image.max() * threshold)
+    raw_features = np.array(local_max.nonzero()).T
+
+    window = oishi_kernels[0][0].shape
+    orientations = np.empty(len(raw_features))
+    shapes = np.empty(len(raw_features))
+    brightness = np.empty(len(raw_features))
+    likelihood = np.empty(len(raw_features))
+
+    for i, feature in enumerate(raw_features):
+        sub_im = get_sub_image(image, feature, window)
+        if sub_im.shape != window:
+            likelihood[i] = 0
+            shapes[i], orientations[i] = 0, 0
+            continue
+        diff = np.abs(oishi_kernels - sub_im/sub_im.std())
+        diff = diff.sum(-1).sum(-1)
+        likelihood[i] = 1 / np.min(diff)
+        brightness[i] = image[tuple(feature)]
+        shapes[i], orientations[i] = np.unravel_index(np.argmin(diff), diff.shape)
+
+    oishi_features = np.vstack(
+        (raw_features.T, orientations, shapes, brightness, likelihood/likelihood.std())
+    )
+    return oishi_features
+
+
+def refine_oishi_features(features, dist_threshold, orient_threshold, likelihood_threshold, intensity_threshold):
+    rot_num = np.max(features[2])
+    dist_o0 = cdist(np.vstack(features[2]), np.vstack(features[2]))
+    dist_o1 = cdist(np.vstack(features[2]), np.vstack(features[2]-rot_num))
+    dist_o2 = cdist(np.vstack(features[2]), np.vstack(features[2]+rot_num))
+    dist_o = np.min((dist_o0, dist_o1, dist_o2), 0)  # deal with the "PBC"
+    dist_xy = cdist(features[:2].T, features[:2].T)
+    is_close = dist_xy < dist_threshold
+    is_aligned = dist_o < orient_threshold
+    is_same = np.triu(is_close * is_aligned, k=1)
+    pairs_to_join = np.array(is_same.nonzero()).T
+    pairs = join_pairs(pairs_to_join)
+    to_del = []
+
+    for p in pairs:
+        to_keep = np.argmax(features[-1][p])
+        to_del += np.concatenate((p[:to_keep], p[to_keep + 1:])).tolist()
+    to_del = np.array(to_del)
+
+    mask = np.ones(features.shape[1], dtype=bool)
+    mask[to_del] = False
+
+    mask[features[-1] < likelihood_threshold] = False
+    mask[features[-2] < (intensity_threshold * features[-2].max())] = False
+    refined = features[:, mask]
+    return refined
 
 if __name__ == "__main__":
     import read

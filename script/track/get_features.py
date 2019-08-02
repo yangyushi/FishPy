@@ -59,7 +59,7 @@ except FileNotFoundError:
     kernels = np.load('result/shape_kernels.npy')
 
 # the degree 180 is not included, it should be cuvered by another "upside-down" shape
-angles = np.linspace(0, 180, angle_number)  
+angles = np.linspace(0, 180, angle_number)
 
 f_out = open('features.pkl', 'wb')
 
