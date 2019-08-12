@@ -235,8 +235,8 @@ def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0,
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
-    
-    Here the goal is: 
+
+    Here the goal is:
         1.  For given pixel (u, v) in image taken by camera #1, calculated
             it's projection on air-water interface (poi_1), and the
             direction of the refractted ray (trans_vec)
@@ -245,7 +245,7 @@ def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0,
                 ii.  Project M onto camera #2
                 iii. Collect the projection points
     """
-    
+
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     poi_1 = get_poi(camera_1, interface, uv)
@@ -445,7 +445,7 @@ def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_ind
     incid_rays = [poi - co for poi, co in zip(pois, camera_origins)]
     trans_rays = [get_trans_vec(incid, normal=normal) for incid in incid_rays]
     trans_lines = [{'unit': t, 'point': poi} for t, poi in zip(trans_rays, pois)]
-    
+
     point_3d = get_intersect_of_lines_slow(trans_lines)
 
     error = 0
@@ -510,6 +510,7 @@ def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractiv
             distCoeffs=camera.distortion
     )
     return uv_2.ravel()
+
 
 if __name__ == "__main__":
     l1 = {'unit': (1.3, 1.3, -10), 'point': (-14.2, 17, -1)}

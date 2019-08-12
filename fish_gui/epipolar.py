@@ -14,10 +14,10 @@ pg.setConfigOptions(imageAxisOrder='row-major')
 
 class Model():
     def __init__(self, environment):
-        self.image_1 = None 
-        self.image_2 = None 
-        self.camera_1 = None 
-        self.camera_2 = None 
+        self.image_1 = None
+        self.image_2 = None
+        self.camera_1 = None
+        self.camera_2 = None
         self.env = environment
 
     @property
@@ -44,17 +44,19 @@ class Model():
 
     def get_ep12(self, uv):
         if self.is_valid:
-            return f3.ray_trace.epipolar_la_draw(
+            ep12 = f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_1, self.camera_2, self.image_2, self.water_level, self.depth, self.normal
                     )
+            return ep12
         else:
             return []
 
     def get_ep21(self, uv):
         if self.is_valid:
-            return f3.ray_trace.epipolar_la_draw(
+            ep21 = f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_2, self.camera_1, self.image_1, self.water_level, self.depth, self.normal
                     )
+            return ep21
         else:
             return []
 

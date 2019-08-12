@@ -159,7 +159,7 @@ class Camera():
     def update(self):
         self.r = self.rotation.as_dcm()  # rotation
         self.f = [self.k[0, 0], self.k[1, 1]]  # focal length
-        self.c = [self.k[0, 2], self.k[1, 2]]  # principal point
+        self.c = self.r.T @ (-self.t) # camera centre in world coordinate system
         self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
         self.p = np.dot(self.k, self.ext)
 
@@ -363,8 +363,8 @@ class Camera():
         self.t = np.ravel(tvec)
         self.update()
 
+        print(f"==== reproject error for Extrinsic is {err:.4f} ====")
         if show:
-            print(f"==== reproject error for Extrinsic is {err:.4f} ====")
             length = 100
             axes = np.float32([[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]])
             axes_img, _ = cv2.projectPoints(axes, rvec, tvec, self.k, self.distortion)
@@ -383,11 +383,6 @@ class Camera():
         """
         self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
         self.calibrate_ext(ext_image, grid_size, order, corner_number, win_size, show)
-
-
-    @property
-    def o(self):
-        return self.r.T @ np.array([0, 0, 1])
 
 
 if __name__ == "__main__":
