@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from typing import List, Tuple
 from matplotlib import cm
 
 def draw(img, axes):
@@ -42,9 +43,9 @@ def get_points_from_order(corner_number, order='x123'):
         │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
         │◜◜◜◜◜◜◜│       │◜◜◜◜◜◜◜│
         ├───────┼───────┼───────┤
-        │  ╶─╮  │◜◜◜◜◜◜◜│   ──┐ │   
-        │  ╭─╯  │◜◜◜◜◜◜◜│   ╶─┤ │   
-        │  ╰──  │◜◜◜◜◜◜◜│   ──┘ │   
+        │  ╶─╮  │◜◜◜◜◜◜◜│   ──┐ │
+        │  ╭─╯  │◜◜◜◜◜◜◜│   ╶─┤ │
+        │  ╰──  │◜◜◜◜◜◜◜│   ──┘ │
         └───────┴───────┴───────┘
     and the corresponding order is x123 (row, colume)
     """
@@ -383,6 +384,94 @@ class Camera():
         """
         self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
         self.calibrate_ext(ext_image, grid_size, order, corner_number, win_size, show)
+
+
+def calib_mult_ext(cam_1: Camera, cam_2: Camera, cam_3: Camera,
+                   images_v1: List[str], images_v2: List[str], images_v3: List[str],
+                   orders_v1: List[str], orders_v2: List[str], orders_v3: List[str],
+                   grid_size: float, corner_number: Tuple[int], win_size=(10, 10)) -> None:
+    """
+    Do extrinsic calibrations multiple times, calculate average *relative displacement & angle*
+    Then use the last calibration image as world coordinate
+
+    :param cam_1: Camera instance for the 1st camera. The internal parameters should be correct
+    :param cam_2: Camera instance for the 2nd camera. The internal parameters should be correct
+    :param cam_3: Camera instance for the 3rd camera. The internal parameters should be correct
+    :param images_v1: calibrations image filenames for camera 1
+    :param images_v2: calibrations image filenames for camera 2
+    :param images_v3: calibrations image filenames for camera 3
+    :param orders_v1: The order of 'x123' or '321x' for each calibration imags for camera 1
+    :param orders_v2: The order of 'x123' or '321x' for each calibration imags for camera 2
+    :param orders_v3: The order of 'x123' or '321x' for each calibration imags for camera 3
+
+    Equations (@ is dot product)
+        x1 = r1  @ xw + t1   (world to camera 1, r1 & t1 obtained from Camera.calibrate_ext)
+        x2 = r2  @ xw + t2   (world to camera 2, r2 & t2 obtained from Camera.calibrate_ext)
+        x2 = r12 @ x1 + t12  (camera 1 to camera 2)
+
+    --> r12 = r2 @ r1'
+    --> t12 = t2 - r2 @ r1' @ t1
+    --> t2  = t12 + r12 @ t1
+    --> r2  = r12 @ r1
+    """
+    cam_1_rotations, cam_1_translations = [], []
+    cam_2_rotations, cam_2_translations = [], []
+    cam_3_rotations, cam_3_translations = [], []
+
+    for fn, order in zip(images_v1, orders_v1):
+        cam_1.calibrate_ext(fn, grid_size, order, corner_number, show=False)
+        cam_1_rotations.append(cam_1.r)
+        cam_1_translations.append(cam_1.t)
+
+    for fn, order in zip(images_v2, orders_v2):
+        cam_2.calibrate_ext(fn, grid_size, order, corner_number, show=False)
+        cam_2_rotations.append(cam_2.r)
+        cam_2_translations.append(cam_2.t)
+
+    for fn, order in zip(images_v3, orders_v3):
+        cam_3.calibrate_ext(fn, grid_size, order, corner_number, show=False)
+        cam_3_rotations.append(cam_3.r)
+        cam_3_translations.append(cam_3.t)
+
+    rotations_12, translations_12 = [], []
+    rotations_13, translations_13 = [], []
+
+    for r1, t1, r2, t2 in zip(cam_1_rotations, cam_1_translations, cam_2_rotations, cam_2_translations):
+        rotations_12.append(r2 @ r1.T)
+        translations_12.append(t2 - r2 @ r1.T @ t1)
+
+    for r1, t1, r3, t3 in zip(cam_1_rotations, cam_1_translations, cam_3_rotations, cam_3_translations):
+        rotations_13.append(r3 @ r1.T)
+        translations_13.append(t3 - r3 @ r1.T @ t1)
+
+    r12 = np.mean(rotations_12, axis=0)
+    r12_std = np.std(rotations_12, axis=0)
+    t12 = np.mean(translations_12, axis=0)
+    t12_std = np.std(translations_12, axis=0)
+    r13 = np.mean(rotations_13, axis=0)
+    r13_std = np.std(rotations_13, axis=0)
+    t13 = np.mean(translations_13, axis=0)
+    t13_std = np.std(translations_13, axis=0)
+
+    r12_xyz = R.from_dcm(r12).as_rotvec() / np.pi * 180
+    r12_xyz_std = R.from_dcm(r12_std).as_rotvec() / np.pi * 180
+
+    print(f'Rotation between view#1 and view#2 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(r12_xyz, r12_xyz_std)]}')
+    print(f'Translation between view#1 and view#2 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(t12, t12_std)]}')
+
+    r13_xyz = R.from_dcm(r13).as_rotvec() / np.pi * 180
+    r13_xyz_std = R.from_dcm(r13_std).as_rotvec() / np.pi * 180
+
+    print(f'Rotation between view#1 and view#3 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(r13_xyz, r13_xyz_std)]}')
+    print(f'Translation between view#1 and view#3 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(t13, t13_std)]}')
+
+    cam_2.rotation = R.from_dcm(r12 @ cam_1.r)
+    cam_2.t = r12 @ cam_1.t + t12
+    cam_2.update()
+
+    cam_3.rotation = R.from_dcm(r13 @ cam_1.r)
+    cam_3.t = r13 @ cam_1.t + t13
+    cam_3.update()
 
 
 if __name__ == "__main__":

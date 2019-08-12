@@ -5,6 +5,24 @@ from . import ray_trace
 
 dpi = 150
 
+
+def see_corners(image_file, corner_number=(23, 15)):
+    img = cv2.imread(image_file)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, corners = cv2.findChessboardCorners(gray, corner_number,
+            flags=sum((
+                cv2.CALIB_CB_FAST_CHECK,
+                cv2.CALIB_CB_ADAPTIVE_THRESH
+                )))
+    corners = np.squeeze(corners)
+    plt.imshow(np.array(gray), cmap='gray')
+    plt.plot(*corners.T[:2], color='tomato')
+    plt.xlim(corners[:, 0].min() - 100, corners[:, 0].max() + 100)
+    plt.ylim(corners[:, 1].min() - 100, corners[:, 1].max() + 100)
+    plt.scatter(*corners[0].T, color='tomato')
+    plt.axis('off')
+    plt.show()
+
 def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(0, 0, 1)):
     fig = plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
     ax = fig.add_subplot(111)
