@@ -260,6 +260,7 @@ class Camera():
         img_points = [] # 2d points in image plane.
 
         for_plot = []
+        detected_indices = []  # indice of images whoes corners were detected successfully
 
         for i, fname in enumerate(int_images):
             img = cv2.imread(fname)
@@ -274,6 +275,7 @@ class Camera():
                 img_points.append(corners_refined)
                 img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
                 img = cv2.resize(img, (800, 600))
+                detected_indices.append(i)
                 if show:
                     cv2.imshow('img', img)
                     cv2.waitKey(100)
@@ -299,7 +301,7 @@ class Camera():
                     cv2.CALIB_USE_INTRINSIC_GUESS,
                     #cv2.CALIB_FIX_ASPECT_RATIO,
                     #cv2.CALIB_FIX_PRINCIPAL_POINT,
-                    cv2.CALIB_ZERO_TANGENT_DIST,
+                    #cv2.CALIB_ZERO_TANGENT_DIST,
                     #cv2.CALIB_FIX_K1,
                     #cv2.CALIB_FIX_K2,
                     cv2.CALIB_FIX_K3,
@@ -308,11 +310,13 @@ class Camera():
         )
 
         for i, fname in enumerate(int_images):
-            err = get_reproject_error(
-                    img_points[i], obj_points[i],
-                    rvecs[i], tvecs[i], distortion, camera_matrix
-                    )
-            print(f"reproject error for {fname:<12} is {err:.4f}")
+            if i in detected_indices:
+                j = detected_indices.index(i)
+                err = get_reproject_error(
+                        img_points[j], obj_points[j],
+                        rvecs[j], tvecs[j], distortion, camera_matrix
+                        )
+                print(f"reproject error for {fname:<12} is {err:.4f}")
 
         self.k = camera_matrix
         print("==== Intrinsic Matrix ====")
@@ -358,7 +362,6 @@ class Camera():
                 img_points, obj_points,
                 rvec, tvec, self.distortion, self.k
                 )
-
 
         self.rotation = R.from_rotvec(rvec.ravel())
         self.t = np.ravel(tvec)
