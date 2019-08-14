@@ -246,6 +246,23 @@ class Camera():
             )
         return np.squeeze(undistorted).T
 
+    def redistort_points(self, points):
+        """
+        :param points: undistorted image coordinates (u, v) in pixels, shape (2, n)
+        """
+        k1, k2, p1, p2, k3 = self.distortion
+        fx, fy = self.k[0, 0], self.k[1, 1]
+        cx, cy = self.k[:2, 2]
+        xy = points - np.vstack((cx, cy))  # shift to centre
+        x, y = xy / np.vstack((fx, fy))  # mm --> unitless
+        r2 = x ** 2 + y ** 2
+        k = 1 + k1 * r2 + k2 * r2**2 + k3 * r2 ** 3
+        dist_x = x * k + 2 * p1 * x*y + p2 * (r2 + 2 * x**2)
+        dist_y = y * k + p1 * (r2 + 2 * y**2) + 2 * p2 * x*y
+        dist_x = dist_x * fx + cx
+        dist_y = dist_y * fy + cy
+        return np.vstack((dist_x, dist_y))
+
     def calibrate_int(self, int_images: list, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update INTERINSIC camera matrix using opencv's chessboard detector
