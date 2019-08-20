@@ -1,6 +1,7 @@
 from scipy import ndimage
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import List
 from . import ray_trace
 
 dpi = 150
@@ -22,6 +23,7 @@ def see_corners(image_file, corner_number=(23, 15)):
     plt.scatter(*corners[0].T, color='tomato')
     plt.axis('off')
     plt.show()
+
 
 def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(0, 0, 1)):
     fig = plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
@@ -68,3 +70,24 @@ def get_clusters(image, threshold, min_size, roi):
             cluster = np.array(np.where(labels == value)).T
             clusters.append(cluster)
     return clusters
+
+
+def plot_epl(line: List[float], image: np.ndarray):
+    """
+    Get the scatters of an epipolar line *inside* an image
+    The images is considered as being stored in the (row [y], column [x]) manner
+    """
+    u = np.linspace(0, image.shape[1], 1000)
+    v = -(line[2] + line[0] * u) / line[1]
+    mask = np.ones(len(u), dtype=bool)
+    mask[v < 0] = False
+    mask[v >= image.shape[0]] = False
+    uv = np.vstack([u, v]).T[mask]
+    uv_dst = uv
+    mask = np.ones(len(uv_dst), dtype=bool)
+    mask[uv_dst[:, 0] < 0] = False
+    mask[uv_dst[:, 0] >= image.shape[1]] = False
+    mask[uv_dst[:, 1] < 0] = False
+    mask[uv_dst[:, 1] >= image.shape[0]] = False
+    epl = uv_dst[mask]
+    return epl.T
