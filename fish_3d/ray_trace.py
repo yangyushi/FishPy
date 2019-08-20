@@ -3,6 +3,7 @@ import numpy as np
 from numba import njit
 from scipy import optimize
 from itertools import product
+from typing import List, Tuple, Dict
 import cv2
 
 
@@ -113,7 +114,7 @@ def pl_dist_batch(points, lines):
     return dists
 
 
-def get_poi(camera, z, coordinate):
+def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     """
     - camera: a Camera instance
     - z: the hight of water level with respect to world origin
@@ -429,6 +430,33 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)
+    return points_3d, error
+
+
+def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: List['Camera'], z=0, normal=(0, 0, 1), refractive_index=1.33):
+    """
+    reconstruct a trajectory from many views
+    :param trajectories: list of positions belonging to the same individual at different time points, shape (time_points, dim)
+    """
+    n_view, (n_time, n_dim) = len(trajectories), trajectories[0].shape
+    camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
+    pois_mv = np.empty((n_view, n_time, 3))
+
+    for i, (camera, traj) in enumerate(zip(cameras, trajectories)):
+        poi = get_poi(camera, z=z, coordinate=traj).T 
+        pois_mv[i] = get_poi(camera, z=z, coordinate=traj).T # poi shape: (n_time, n_dim)
+
+    incid_rays_mv = [poi - co.T for poi, co in zip(pois_mv, camera_origins)]
+
+    trans_rays_mv = np.array([
+            np.stack([
+                pois,
+                get_trans_vecs(incid_rays, normal=normal)
+                ], axis=1) for incid_rays, pois in zip(incid_rays_mv, pois_mv)
+    ])  # (n_view, n_time, 2, n_dim)
+    trans_rays_mv = np.moveaxis(trans_rays_mv, 0, 1)
+    points_3d = get_intersect_of_lines_batch(trans_rays_mv)
+    error = pl_dist_batch(points_3d, trans_rays_mv)
     return points_3d, error
 
 
