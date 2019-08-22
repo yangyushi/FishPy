@@ -92,9 +92,9 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
         shape_images = images[indices]
         average = shape_images.mean(0)
         kernel = average.reshape(dim, dim)  # - np.mean(average)
-        if sigma > 0:
-            kernel = add_shadow(kernel, sigma)
-        kernel = kernel / np.sum(kernel > kernel.max() * 0.1)  # compensate for smaller kernels
+        #if sigma > 0:
+        #    kernel = add_shadow(kernel, sigma)
+        #kernel = kernel / np.sum(kernel > kernel.max() * 0.1)  # compensate for smaller kernels
         if plot:
             ax[k].imshow(kernel)
         shape_kernels.append(kernel)
