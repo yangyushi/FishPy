@@ -87,6 +87,8 @@ class Viewer(QMainWindow):
         filename = event.mimeData().text()  # get the filename
         if os.name == 'nt':
             filename = filename[8:]
+        elif os.name == 'posix':
+            filename = filename[7:-2]
         else:
             filename = filename[7:]
         if '\n' in filename:

@@ -31,7 +31,7 @@ def rotate_kernel(kernel, angle) -> np.ndarray:
     maximum = np.array(np.unravel_index(np.argmax(after_rot), after_rot.shape))
     shift = centre - maximum
     shifted = ndimage.shift(after_rot, shift, mode='constant', cval=kernel.min())
-    return get_sub_image(shifted, centre, kernel.shape)
+    return get_sub_image(after_rot, centre, kernel.shape)
 
 
 def get_sub_image(image, centre, window):
@@ -194,7 +194,8 @@ def get_oishi_kernels(kernels, rot_num=35):
     oishi_kernels = np.empty((len(kernels), rot_num, kernels[0].shape[0], kernels[0].shape[1]))
     for i, k in enumerate(kernels):
         for r in range(rot_num):
-            oishi_kernels[i, r] = rotate_kernel(k/k.std(), angle=r*180/rot_num)
+            kernel = rotate_kernel(k, angle=r*180/rot_num)
+            oishi_kernels[i, r] = (kernel - kernel.mean()) / kernel.std()
     return oishi_kernels
 
 
@@ -217,11 +218,12 @@ def get_oishi_features(image, oishi_kernels, threshold=0.5, local_size=4):
             likelihood[i] = 0
             shapes[i], orientations[i] = 0, 0
             continue
-        diff = np.abs(oishi_kernels - sub_im/sub_im.std())
-        diff = diff.sum(-1).sum(-1)
-        likelihood[i] = 1 / np.min(diff)
+        sub_im = (sub_im - sub_im.mean()) / sub_im.std()
+        corr = np.abs(oishi_kernels * sub_im)
+        corr = corr.sum(-1).sum(-1)
+        likelihood[i] = np.max(corr)
         brightness[i] = image[tuple(feature)]
-        shapes[i], orientations[i] = np.unravel_index(np.argmin(diff), diff.shape)
+        shapes[i], orientations[i] = np.unravel_index(np.argmax(corr), corr.shape)
 
     oishi_features = np.vstack(
         (raw_features.T, orientations, shapes, brightness, likelihood/likelihood.std())
