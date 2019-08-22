@@ -38,8 +38,11 @@ def get_background(video_iter, step=1, max_frame=1000, process=lambda x:x):
             else:
                 background += frame
             count += 1
+            if count % (max_frame / 10) == 0:
+                print("X", end="")
         if count > max_frame:
             break
+    print("")
     return background / count
 
 
