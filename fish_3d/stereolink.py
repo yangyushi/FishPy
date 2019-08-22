@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import fish_track as ft
 import itertools
 import numpy as np
 from scipy.spatial.distance import cdist
 from . import ray_trace
+from typing import List
 
 
 def get_fundamental_from_projections(p1, p2):
@@ -97,9 +97,9 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
         a12, b12 = ray_trace.epipolar_la(centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
         a13, b13 = ray_trace.epipolar_la(centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
-        
+
         candidates_12, candidates_13 = [], []
-        
+
         for j, cluster in enumerate(clusters[1]):
             distances = np.abs(cluster.T[0] * a12 - cluster.T[1] + b12) / np.sqrt(a12**2 + 1)
             if np.min(distances) < tol_2d:
@@ -117,7 +117,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             if report:
                 print("no 3D clouds")
             continue
-        
+
         candidates = list(itertools.product([i], candidates_12, candidates_13))
         clouds_3d = []
         for candidate in candidates:
@@ -198,7 +198,7 @@ def merge_clouds(clouds, min_dist, min_num):
             if np.sum(dist < min_dist) > min_num:
                 overlapped.append((i, j+i+1))
     if len(overlapped) > 0:
-        overlapped = ft.utility.join_pairs(overlapped)
+        overlapped = join_pairs(overlapped)
 
         to_del = []
         for labels in overlapped:
@@ -208,3 +208,35 @@ def merge_clouds(clouds, min_dist, min_num):
                 to_del.append(l)
         clouds = np.delete(clouds, to_del)
     return clouds
+
+
+def triangulation_v3(positions: np.ndarray, cameras: List['Camera']):
+    """
+    the positions in different views should be undistorted
+    """
+    M = np.ones((9, 7), dtype=np.float64)
+    M[:3, :4] = cameras[0].p
+    M[3:6, :4] = cameras[1].p
+    M[6:9, :4] = cameras[2].p
+    M[:3, 4] = - positions[0]
+    M[3:6, 5] = - positions[1]
+    M[6:9, 6] = - positions[2]
+    U, S, V = np.linalg.svd(M)
+    X = V[-1, :4]
+    X = X / X[-1]
+    return X[:3]
+
+
+def join_pairs(pairs):
+    if len(pairs) == 0:
+        return []
+    max_val = np.max(np.hstack(pairs)) + 1
+    canvas = np.zeros((max_val, max_val), dtype=int)
+    p = np.array(pairs)
+    canvas[tuple(p.T)] = 1
+    labels, _ = ndimage.label(canvas)
+    joined_pairs = []
+    for val in set(labels[labels > 0]):
+        joined_pair = np.unique(np.vstack(np.where(labels == val)))
+        joined_pairs.append(joined_pair)
+    return joined_pairs

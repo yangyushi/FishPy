@@ -3,3 +3,4 @@ from . import camera
 from . import stereolink
 from . import ray_trace
 from . import utility
+from . import ellipse

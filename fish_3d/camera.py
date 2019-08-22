@@ -203,7 +203,7 @@ class Camera():
 
     def undistort(self, point, want_uv=False):
         """
-        undistort point in an image, coordinate is (u, v), NOT (x, y)
+        undistort point in an image, coordinate is (u, v)
         return: undistorted points, being xy, not uv (camera.K @ xy = uv)
         """
         new_point = point.astype(np.float64)
@@ -492,6 +492,28 @@ def calib_mult_ext(cam_1: Camera, cam_2: Camera, cam_3: Camera,
     cam_3.rotation = R.from_dcm(r13 @ cam_1.r)
     cam_3.t = r13 @ cam_1.t + t13
     cam_3.update()
+
+
+def get_fundamental(cam_1: 'Camera', cam_2: 'Camera'):
+    """
+    :param cam_1, cam_2: two cameras whose P, K, R, t, C are all known
+    :return : the fundamental matrix F, where
+        1. x2.T @ F @ x1 = 0
+        2. F @ x1 = l2  (epipolar line)
+    in the actually calculation, rotate axes of camera 2
+    so that external of camera 1 is [E|0]
+    ref: https://sourishghosh.com/2016/fundamental-matrix-from-camera-matrices/
+    """
+    r12 = cam_2.r @ cam_1.r.T
+    t12 = cam_2.r @ (cam_2.c - cam_1.c)
+    A = cam_1.k @ r12.T @ t12
+    cross = np.array([
+        [0, -A[2], A[1]],
+        [A[2], 0, -A[0]],
+        [-A[1], A[0], 0]
+    ])
+    F = np.linalg.inv(cam_2.k).T @ r12 @ cam_1.k.T @ cross
+    return F
 
 
 if __name__ == "__main__":
