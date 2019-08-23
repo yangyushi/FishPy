@@ -29,7 +29,10 @@ elif config.Process.normalise == 'None':
 
 roi = config.Process.roi
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
-roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
+roi = (
+        slice(y0, y0 + size_y),
+        slice(x0, x0 + size_x),
+        )
 
 refine_otol = config.Refine.otol
 
@@ -65,6 +68,9 @@ f_out = open('features.pkl', 'wb')
 
 dpi = 150
 
+oishi_kernels = ft.get_oishi_kernels(kernels, rot_num=angle_number)
+np.save('oishi_kernels', oishi_kernels)
+
 for frame, image in enumerate(images):
 
     if frame < frame_start:
@@ -75,31 +81,34 @@ for frame, image in enumerate(images):
         pass
 
     fg = background - normalise(denoise(image))
-    fg -= fg.min()
     fg = fg[roi]
 
-    cross_correlation = ft.oishi.get_cross_correlation_nd(
-            fg, angles, kernels
+    maxima = ft.oishi.get_oishi_features(
+            fg, oishi_kernels, img_threshold, config.Fish.size_min,
             )
 
-    maxima = ft.oishi.oishi_locate(
-            fg, cross_correlation, config.Fish.size_min,
-            cc_threshold, img_threshold
+    print(f'frame {frame: ^10} feature number ', maxima.shape[1], end=' --refine--> ')
+
+    maxima = ft.refine_oishi_features(
+            features=maxima,
+            dist_threshold=config.Fish.size_max / 2,
+            orient_threshold=refine_otol,
+            likelihood_threshold=cc_threshold,
+            intensity_threshold=0
             )
 
-    maxima = ft.oishi.oishi_refine(maxima, angles, config.Fish.size_max, otol=refine_otol)
-
+    print(maxima.shape[1])
 
     pickle.dump(maxima, f_out)
 
-    o, r, x, y, p = maxima
+    x, y, o, s, b, p = maxima
 
     if config.Plot.want_plot == 'True':
         plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
         length = config.Plot.line_length
         for i, m in enumerate(maxima.T):
-            angle = angles[o[i]] / 180 * np.pi
-            base = m[2:].astype(np.float64)
+            angle = angles[int(o[i])] / 180 * np.pi
+            base = m[:2].astype(np.float64)
             plt.plot(
                 [base[1] - length/2 * np.sin(angle), base[1] + length/2 * np.sin(angle)],
                 [base[0] - length/2 * np.cos(angle), base[0] + length/2 * np.cos(angle)],
@@ -113,7 +122,7 @@ for frame, image in enumerate(images):
         plt.axis('off')
         plt.gcf().axes[0].get_xaxis().set_visible(False)
         plt.gcf().axes[0].get_yaxis().set_visible(False)
-        plt.savefig(f'oishi_locate_frame_{frame + frame_start:04}.png', bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'oishi_locate_frame_{frame:04}.png', bbox_inches='tight', pad_inches=0)
         plt.close()
 
 f_out.close()

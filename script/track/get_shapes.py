@@ -20,6 +20,8 @@ roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 blur  = config.Process.gaussian_sigma
 frame_start = config.Process.shape_frame_start
 frame_end = config.Process.shape_frame_end
+step = config.Process.shape_step
+
 
 if config.Process.gaussian_sigma != 0:
     def denoise(x): return ndimage.gaussian_filter(x, blur)
@@ -50,8 +52,11 @@ shapes = []
 volumes = []
 aspect_ratios = []
 
+count = 0
 for i, img in enumerate(images):
     if i < frame_start:
+        continue
+    if i % step != 0:
         continue
     fg = bg - normalise(denoise(img))
     fg -= fg.min()  # all positive now

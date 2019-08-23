@@ -29,5 +29,5 @@ if use_model:
     model = load_model('shape_model.h5')
     shapes = ft.utility.validate(shapes, model, fail_mark)
 
-kernels = ft.kernel.get_kernels(shapes, indices, cluster_num)
+kernels = ft.kernel.get_kernels(shapes, indices, cluster_num, sigma=0)
 np.save('shape_kernels', kernels)
