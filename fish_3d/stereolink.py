@@ -129,7 +129,9 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             ]
             par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
             cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
-            if len(cloud) > 0:
+            z = np.mean(cloud.T[-1])
+            in_tank = (z < water_level) and (z > -depth)
+            if len(cloud) > 0 and in_tank:
                 matched.append(candidate)
         if report:
             print(f"{len(matched)} 3D clouds found")
