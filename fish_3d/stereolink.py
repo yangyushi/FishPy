@@ -4,6 +4,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from . import ray_trace
 from typing import List
+from scipy import ndimage
 
 
 def get_fundamental_from_projections(p1, p2):
