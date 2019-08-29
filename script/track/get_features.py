@@ -106,16 +106,20 @@ for frame, image in enumerate(images):
     if config.Plot.want_plot == 'True':
         plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
         length = config.Plot.line_length
+
         for i, m in enumerate(maxima.T):
             angle = angles[int(o[i])] / 180 * np.pi
             base = m[:2].astype(np.float64)
+
             plt.plot(
-                [base[1] - length/2 * np.sin(angle), base[1] + length/2 * np.sin(angle)],
-                [base[0] - length/2 * np.cos(angle), base[0] + length/2 * np.cos(angle)],
+                [base[0] - length/2 * np.sin(angle), base[0] + length/2 * np.sin(angle)],
+                [base[1] - length/2 * np.cos(angle), base[1] + length/2 * np.cos(angle)],
                 color='tomato', linewidth=1,
+
             )
+
         plt.imshow(image[roi], cmap='gray')
-        plt.scatter(y, x, color='w', edgecolor='tomato', marker='o', linewidth=1, s=12)
+        plt.scatter(x, y, color='w', edgecolor='tomato', marker='o', linewidth=1, s=12)
         plt.xlim(0, fg.shape[1])
         plt.ylim(fg.shape[0], 0)
         plt.gcf().set_frameon(False)
