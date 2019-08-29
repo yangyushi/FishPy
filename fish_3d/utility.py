@@ -33,7 +33,7 @@ def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(
     for point in pos_3d:
         color = (np.random.random(3) + 1) / 2
         xy = ray_trace.reproject_refractive(point, camera)
-        ax.scatter(*xy, color='tomato', edgecolor='tomato', facecolor='none', marker='o', lw=2, s=100)
+        ax.scatter(*xy, color='tomato', marker='+', lw=1, s=100)
 
     plt.xlim(0, image.shape[1])
     plt.ylim(image.shape[0], 0)

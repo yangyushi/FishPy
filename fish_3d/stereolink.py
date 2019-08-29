@@ -68,7 +68,7 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(l % size):(l // size)]
 
 
-def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, points=10, report=True):
+def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, sample_size=10, report=True):
     """
     use greedy algorithm to match clusters across THREE views
 
@@ -127,9 +127,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
-            #min_num = np.min([len(f) for f in full_clusters])
-            #min_num = np.min([min_num, points])
-            par_clusters = map(lambda x: get_partial_cluster(x, points), full_clusters)
+            par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
             cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
             if len(cloud) > 0:
                 matched.append(candidate)
@@ -163,8 +161,7 @@ def match_clusters_faster(clusters, cameras, normal, water_level, tol):
     return np.array(results)
 
 
-def reconstruct_clouds(cameras, matched_indices, clusters_multi_view,
-        water_level, normal, sample_size, tol):
+def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_level, normal, sample_size, tol):
     clouds = []
     for indices in matched_indices:
         i1, i2, i3 = indices

@@ -118,7 +118,7 @@ def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     """
     - camera: a Camera instance
     - z: the hight of water level with respect to world origin
-    - corrdinate: the position (u, v) of object on the image, unit is pixel, NOT (x, y)
+    - corrdinate: the position (u, v) of object on the image, unit is pixel
         it can be one point or many points
     - poi, point on interface. See the sketch for its meaning
     - return [X, Y, Z], shape (3, n)
@@ -138,11 +138,10 @@ def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.ext.ravel()
 
     if coordinate.ndim == 1:  # (just one point)
-        x, y = camera.undistort(coordinate[::-1])  # return (v, u) -> (x, y)
+        x, y = camera.undistort(coordinate)
         z = z
     elif coordinate.ndim == 2:  # (number, dim)
-        tmp = np.flip(coordinate.copy(), 1)  # (v, u) -> (u, v)
-        x, y = camera.undistort_points(tmp)  # return (u, v) -> (x, y)
+        x, y = camera.undistort_points(coordinate).T
         z = z * np.ones(x.shape)
     else:
         raise RuntimeError("The shape of coordinates array is not valid")
@@ -166,7 +165,7 @@ def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
 
             ^ +z
     air     |
-            | 
+            |
     ------------------>
             |
     water   |
@@ -191,7 +190,7 @@ def get_trans_vecs(incident_vecs, refractive_index=1.33, normal=(0, 0, 1)):
 
             ^ +z
     air     |
-            | 
+            |
     ------------------>
             |
     water   |
@@ -208,14 +207,14 @@ def get_trans_vecs(incident_vecs, refractive_index=1.33, normal=(0, 0, 1)):
 
 
 def is_inside_image(uv, image):
-    u0, u1 = 0, image.shape[0]
-    v0, v1 = 0, image.shape[1]
-    u, v = uv
+    row_0, row_1 = 0, image.shape[0]
+    col_0, col_1 = 0, image.shape[1]
+    col, row = uv
     is_inside = True
-    is_inside *= u > u0
-    is_inside *= u < u1
-    is_inside *= v > v0
-    is_inside *= v < v1
+    is_inside *= row > row_0
+    is_inside *= row < row_1
+    is_inside *= col > col_0
+    is_inside *= col < col_1
     return is_inside
 
 
@@ -275,18 +274,18 @@ def epipolar_refractive(uv, camera_1, camera_2, image_2, interface=0, normal=(0,
     return epipolar_pixels
 
 
-def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     return all the pixels that contains the epipolar line in image_2, re-projected & distorted
 
     The meanings of variable names can be found in this paper
 
-    :param vu: (v, u) location of a pixel on image from camera_1, NOT (u, v)
+    :param uv: (u, v) location of a pixel on image from camera_1
     :param interface: height of water level in WORLD coordinate system
     :param normal: normal of the air-water interface, from water to air
     :param n: refractive index of water (or some other media)
     """
-    poi_1 = get_poi(camera_1, interface, np.array(vu))
+    poi_1 = get_poi(camera_1, interface, np.array(uv))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
@@ -296,7 +295,7 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
     epipolar_pixels = []
     step = 1
     count = 0
-    last_vu = None
+    last_uv = None
 
     while is_in_image:
         m += step * trans
@@ -320,23 +319,22 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
                 distCoeffs=camera_2.distortion
         )
         uv_2 = np.ravel(uv_2).astype(int)
-        vu_2 = uv_2[::-1]
 
-        is_in_image = is_inside_image(vu_2, image_2)
+        is_in_image = is_inside_image(uv_2, image_2)
 
         if count == 0:
             is_connected = True
             is_different = True
         else:
-            is_connected = np.sum(np.power(vu_2 - last_vu, 2)) <= 2
-            is_different = not np.allclose(vu_2, last_vu)
+            is_connected = np.sum(np.power(uv_2 - last_uv, 2)) <= 2
+            is_different = not np.allclose(uv_2, last_uv)
 
         should_draw = is_different and is_in_image and is_connected
 
         if should_draw:
-            epipolar_pixels.append(vu_2.copy())
-            epipolar_pixels.append(vu_2.copy() + 1)
-            last_vu = vu_2.copy()
+            epipolar_pixels.append(uv_2.copy())
+            epipolar_pixels.append(uv_2.copy() + 1)
+            last_uv = uv_2.copy()
         else:
             if not is_different:
                 step *= 2
@@ -348,12 +346,13 @@ def epipolar_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, norma
     return np.array(epipolar_pixels)
 
 
-def epipolar_la(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     linear approximation for epipolar line under water
+    the line path through two DISTORTED projection points, one at the interface on below water
     use 3 epipolar points under water and do a linear fit
     """
-    poi_1 = get_poi(camera_1, interface, np.array(vu))
+    poi_1 = get_poi(camera_1, interface, np.array(uv))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
@@ -374,18 +373,18 @@ def epipolar_la(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
         uv_2 = camera_2.project(q)
-        X[i, :] = uv_2[1], 1  # uv -> vu
-        Y[i, 0] = uv_2[0]
+        X[i, :] = uv_2[0], 1
+        Y[i, 0] = uv_2[1]
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
     return a, b
 
 
-def epipolar_la_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     linear approximation for epipolar line under water
     use 3 epipolar points under water and do a linear fit
     """
-    poi_1 = get_poi(camera_1, interface, np.array(vu))
+    poi_1 = get_poi(camera_1, interface, np.array(uv))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
@@ -406,8 +405,8 @@ def epipolar_la_draw(vu, camera_1, camera_2, image_2, interface=0, depth=400, no
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
         uv_2 = camera_2.project(q)
-        X[i, :] = uv_2[1], 1  # uv -> vu
-        Y[i, 0] = uv_2[0]
+        X[i, :] = uv_2[0], 1
+        Y[i, 0] = uv_2[1]
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
     x = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
     y = a * x + b

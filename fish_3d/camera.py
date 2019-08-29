@@ -227,7 +227,7 @@ class Camera():
     def undistort_points(self, points, want_uv=False):
         """
         undistort many points in an image, coordinate is (u, v), NOT (x, y)
-        return: undistorted version of (x', y') or (u', v'); x' * fx + cx -> u'
+        return: undistorted version of (x', y') or (u', v'); x' * fx + cx -> u', shape (n, 2)
         """
         new_points = points.astype(np.float64)
         new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
@@ -244,7 +244,7 @@ class Camera():
                     cameraMatrix=self.k,
                     distCoeffs=self.distortion,
             )
-        return np.squeeze(undistorted).T
+        return np.squeeze(undistorted)
 
     def redistort_points(self, points):
         """
