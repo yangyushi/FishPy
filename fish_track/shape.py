@@ -11,13 +11,20 @@ def is_inside(position, radius, boundary):
         result *= (position[dim] + np.ceil(radius) < boundary[dim])
     return result
 
-def get_maxima(image, threshold, window_size):
+
+def get_maxima(image: np.ndarray, threshold: float, window_size):
+    """
+    return the location of features in the image
+    the result is (u, v), not (row, column)
+    :return maxima: shape is (n, 2)
+    """
     mmap = ndimage.grey_dilation(image, window_size) == image
     mmap *= image > threshold
     labels, _ = ndimage.label(mmap)
     maxima = ndimage.center_of_mass(image, labels=labels, index=range(1, labels.max()))
-    maxima = np.array(maxima)
+    maxima = np.flip(np.array(maxima), axis=1)
     return maxima
+
 
 def get_sub_image_box(position, radius, image_shape=None):
     for dim in range((len(position))):
@@ -27,11 +34,14 @@ def get_sub_image_box(position, radius, image_shape=None):
             lower_boundary = max(lower_boundary, 0)
             upper_boundary = min(upper_boundary, image_shape[dim])
         yield slice(lower_boundary, upper_boundary, None)
-        
+
+
 def get_sub_images(image, centres, max_radius):
-    """only works for 2d image"""
+    """
+    only works for 2d image
+    """
     int_maps = []
-    for centre in centres:
+    for centre in np.flip(centres, axis=1):  # flip: using (row, colume) for the matrix
         if not is_inside(centre, max_radius, image.shape):
             continue
         int_map = np.zeros((int(2 * np.ceil(max_radius)), int(2 * np.ceil(max_radius))))
@@ -40,9 +50,10 @@ def get_sub_images(image, centres, max_radius):
         int_maps.append(int_map)
     return int_maps
 
+
 def align_sub_image(sub_image, want_ar=False):
     """
-    Align the image 
+    Align the image
     Everything is in 2d
     """
     points = np.array(sub_image.nonzero(), dtype=np.float64)
@@ -51,7 +62,7 @@ def align_sub_image(sub_image, want_ar=False):
     u, s, vh = np.linalg.svd(covar)
     after_rotation = (vh.T @ (points - centre)) + np.vstack(np.array(sub_image.shape) / 2)
     result = np.zeros(sub_image.shape)
-    
+
     for p, pr in zip(points.T, after_rotation.T):
         ip = tuple(p.astype(int))    # indices of points before rotation
         ipr = tuple(pr.astype(int))  # indices of points after rotation
@@ -68,6 +79,7 @@ def align_sub_image(sub_image, want_ar=False):
         return result, (s.max() / s.min())
     else:
         return result
+
 
 def get_shapes(image, fish, report=False):
     """
