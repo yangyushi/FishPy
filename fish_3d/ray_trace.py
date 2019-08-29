@@ -442,7 +442,7 @@ def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: Lis
     pois_mv = np.empty((n_view, n_time, 3))
 
     for i, (camera, traj) in enumerate(zip(cameras, trajectories)):
-        poi = get_poi(camera, z=z, coordinate=traj).T 
+        poi = get_poi(camera, z=z, coordinate=traj).T
         pois_mv[i] = get_poi(camera, z=z, coordinate=traj).T # poi shape: (n_time, n_dim)
 
     incid_rays_mv = [poi - co.T for poi, co in zip(pois_mv, camera_origins)]
@@ -461,7 +461,7 @@ def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: Lis
 
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of centres (v, u) in different views, they should NOT be undistorted
+    :param centres: a list of centres (u, v) in different views, they should NOT be undistorted
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
@@ -483,7 +483,7 @@ def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_ind
 
 def ray_trace_refractive_faster(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of centres (v, u) in different views, they should NOT be undistorted
+    :param centres: a list of centres (u, v) in different views, they should NOT be undistorted
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
