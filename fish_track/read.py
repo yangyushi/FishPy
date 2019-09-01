@@ -38,11 +38,8 @@ def get_background(video_iter, step=1, max_frame=1000, process=lambda x:x):
             else:
                 background += frame
             count += 1
-            if count % (max_frame / 10) == 0:
-                print("X", end="")
         if count > max_frame:
             break
-    print("")
     return background / count
 
 
@@ -52,3 +49,69 @@ def iter_image_sequence(folder, prefix='frame_'):
     image_names.sort()
     for name in image_names:
         yield np.array(Image.open(name))
+
+
+def get_background_movie(file_name, length=300, output='background.avi', fps=15):
+    """
+    Get a movie of background, being a box-average along time series with length of `length`
+    Save bg every segment (25 frames), and save difference otherwise
+    """
+    vidcap = cv2.VideoCapture(file_name)
+
+    width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
+
+    history = deque()
+    dtype = choose_dtype(file_name, length, process)
+    bg_sum = np.zeros((height, width), dtype=dtype)
+
+    for frame in range(frame_count):
+        success, image = vidcap.read()
+        image = process(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
+        history.append(image)
+        frame += 1
+        bg_sum += image
+        if frame == length:
+            bg = (bg_sum / length).astype(np.uint8)
+            for _ in range(length):
+                out.write(bg)
+        elif frame > length:
+            bg_sum -= history.popleft()
+            bg = (bg_sum / length).astype(np.uint8)
+            out.write(bg)
+    out.release()
+    vidcap.release()
+
+
+def get_foreground_movie(video, background, process=lambda x: x, output='foreground.avi', fps=15):
+    im_cap = cv2.VideoCapture(video)
+    bg_cap = cv2.VideoCapture(background)
+
+    width = int(im_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(im_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_count = int(im_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
+
+    for frame in range(frame_count):
+        success, image = im_cap.read()
+        assert success, "reading video failed"
+        image = process(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.int32))
+        success, bg = bg_cap.read()
+        assert success, "reading background failed"
+        bg = process(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY).astype(np.int32))
+        fg = bg - image
+        fg = fg - fg.min()
+        binary = cv2.adaptiveThreshold(fg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY, 21, 0)
+        fg[binary < 255] = 0
+        out.write(fg)
+
+    im_cap.release()
+    bg_cap.release()
+    out.release()
