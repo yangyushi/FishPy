@@ -159,17 +159,40 @@ def get_oishi_features(image, oishi_kernels, threshold=0.5, local_size=4):
     return oishi_features
 
 
-def refine_oishi_features(features, dist_threshold, orient_threshold, likelihood_threshold, intensity_threshold):
-    rot_num = np.max(features[2])
+def get_align_map(features, rot_num):
     dist_o0 = cdist(np.vstack(features[2]), np.vstack(features[2]))
     dist_o1 = cdist(np.vstack(features[2]), np.vstack(features[2]-rot_num))
     dist_o2 = cdist(np.vstack(features[2]), np.vstack(features[2]+rot_num))
-    dist_o = np.min((dist_o0, dist_o1, dist_o2), 0)  # deal with the "PBC" of orientation, 0 = 2 pi
+    align_map = np.min((dist_o0, dist_o1, dist_o2), 0)  # deal with the "PBC" of orientation, 0 = 2 pi
+    align_map = align_map / rot_num * 180
+    return align_map
+
+
+def verify_pair(features, pair, rot_num, orient_threshold):
+    p1, p2 = features.T[pair]
+    o1, o2 = p1[2] / rot_num * 180, p2[2] / rot_num * 180
+    oi = np.argmin([abs(o1-o2), abs(o1-o2-180), abs(o1-o2+180)])
+    o2 = (o2, o2+180, o2-180)[oi]
+    o_mean = (o1 + o2) / 2
+    shift = p1[:2] - p2[:2]
+    shift_orient = np.arctan(shift[1] / shift[0]) / np.pi * 180
+    if shift_orient < 0:
+        shift_orient += 180
+    if abs(shift_orient - o_mean) < orient_threshold * 2:
+        return True
+    else:
+        return False
+
+
+
+def refine_oishi_features(features, rot_num, dist_threshold, orient_threshold, likelihood_threshold, intensity_threshold):
     dist_xy = cdist(features[:2].T, features[:2].T)
+    align_map = get_align_map(features, rot_num)
     is_close = dist_xy < dist_threshold
-    is_aligned = dist_o < orient_threshold
+    is_aligned = align_map < orient_threshold
     is_same = np.triu(is_close * is_aligned, k=1)
     pairs_to_join = np.array(is_same.nonzero()).T
+    #pairs_to_join = [pair for pair in pairs_to_join if verify_pair(features, pair, rot_num, orient_threshold)]
     pairs = join_pairs(pairs_to_join)
     to_del = []
 
