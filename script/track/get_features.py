@@ -3,7 +3,7 @@
 import sys
 sys.path.append('result')
 import numpy as np
-from scipy import ndimage 
+from scipy import ndimage
 import matplotlib.pyplot as plt
 import fish_track as ft
 import configparser
@@ -14,19 +14,6 @@ config = ft.utility.Configure('configure.ini')
 data_path = config.Data.path
 data_type = config.Data.type
 
-if config.Process.gaussian_sigma != 0:
-    def denoise(x): return ndimage.gaussian_filter(x, blur)
-else:
-    def denoise(x): return x
-
-if config.Process.normalise == 'std':
-    def normalise(x): return x / x.std()
-elif config.Process.normalise == 'max':
-    def normalise(x): return x / x.max()
-elif config.Process.normalise == 'None':
-    def normalise(x): return x
-
-
 roi = config.Process.roi
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
 roi = (
@@ -36,7 +23,6 @@ roi = (
 
 refine_otol = config.Refine.otol
 
-blur  = config.Process.gaussian_sigma
 angle_number = config.Locate.orientation_number
 
 frame_start = config.Locate.frame_start
@@ -50,11 +36,6 @@ elif data_type == 'images':
     images = ft.read.iter_image_sequence(data_path)
 else:
     raise TypeError("Wrong data type", data_type)
-
-try:
-    background = np.load('background.npy')
-except FileNotFoundError:
-    background = np.load('result/background.npy')
 
 try:
     kernels = np.load('shape_kernels.npy')
@@ -80,8 +61,7 @@ for frame, image in enumerate(images):
     else:
         pass
 
-    fg = background - normalise(denoise(image))
-    fg = fg[roi]
+    fg = image[roi]
 
     maxima = ft.oishi.get_oishi_features(
             fg, oishi_kernels, img_threshold, config.Fish.size_min,
@@ -90,12 +70,13 @@ for frame, image in enumerate(images):
     print(f'frame {frame: ^10} feature number ', maxima.shape[1], end=' --refine--> ')
 
     maxima = ft.refine_oishi_features(
-            features=maxima,
-            dist_threshold=config.Fish.size_max / 2,
-            orient_threshold=refine_otol,
-            likelihood_threshold=cc_threshold,
-            intensity_threshold=0
-            )
+        features=maxima,
+        rot_num=angle_number,
+        dist_threshold=config.Fish.size_max / 2,
+        orient_threshold=refine_otol,
+        likelihood_threshold=cc_threshold,
+        intensity_threshold=0
+    )
 
     print(maxima.shape[1])
 

@@ -2,7 +2,7 @@
 import sys
 sys.path.append('result')
 import numpy as np
-from scipy import ndimage 
+from scipy import ndimage
 import matplotlib.pyplot as plt
 import fish_track as ft
 import configparser
@@ -17,23 +17,9 @@ roi = config.Process.roi
 x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
 roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
-blur  = config.Process.gaussian_sigma
 frame_start = config.Process.shape_frame_start
 frame_end = config.Process.shape_frame_end
 step = config.Process.shape_step
-
-
-if config.Process.gaussian_sigma != 0:
-    def denoise(x): return ndimage.gaussian_filter(x, blur)
-else:
-    def denoise(x): return x
-
-if config.Process.normalise == 'std':
-    def normalise(x): return x / x.std()
-elif config.Process.normalise == 'max':
-    def normalise(x): return x / x.max()
-elif config.Process.normalise == 'None':
-    def normalise(x): return x
 
 if data_type == 'video':
     images = ft.read.iter_video(data_path)
@@ -42,11 +28,6 @@ elif data_type == 'images':
 else:
     raise TypeError("Wrong data type", data_type)
 
-
-try:
-    bg = np.load('background.npy')
-except FileNotFoundError:
-    bg = np.load('result/background.npy')
 
 shapes = []
 volumes = []
@@ -58,9 +39,7 @@ for i, img in enumerate(images):
         continue
     if i % step != 0:
         continue
-    fg = bg - normalise(denoise(img))
-    fg -= fg.min()  # all positive now
-    fg = fg[roi]
+    fg = img[roi]
     s, v, ar = ft.shape.get_shapes(fg, config.Fish, report=True)
     shapes += s
     volumes += v

@@ -10,14 +10,12 @@
 
 VPATH=result
 
-features.pkl: shape_kernels.npy background.npy
+features.pkl: shape_kernels.npy
 	python3 get_features.py
 shape_kernels.npy: fish_shape_collection.npy
 	python3 get_kernels.py
 fish_shape_collection.npy:
 	python3 get_shapes.py
-background.npy:
-	python3 get_background.py
 sort:
 	./sort.sh
 feature:
@@ -32,10 +30,6 @@ kernel:
 	rm -f shape_kernels.npy
 	rm -f result/shape_kernels.npy
 	make shape_kernels.npy 
-bg:
-	rm -f background.npy
-	rm -f result/background.npy
-	make background.npy
 roi:
 	python3 get_roi.py
 threshold:
