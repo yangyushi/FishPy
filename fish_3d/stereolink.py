@@ -120,7 +120,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             continue
 
         candidates = list(itertools.product([i], candidates_12, candidates_13))
-        clouds_3d = []
+        allowed, errors = [], []
         for candidate in candidates:
             full_clusters = [
                     clusters[0][candidate[0]],
@@ -128,14 +128,18 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[2][candidate[2]]
             ]
             par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
-            cloud = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
+            cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
             z = np.mean(cloud.T[-1])
             in_tank = (z < water_level) and (z > -depth)
             if len(cloud) > 0 and in_tank:
-                matched.append(candidate)
+                allowed.append(candidate)
+                errors.append(error)
+        if len(allowed) > 0:
+            matched.append(allowed[np.argmin(errors)])
         if report:
             print(f"{len(matched)} 3D clouds found")
     return matched
+
 
 
 def match_clusters_batch(clusters, cameras, normal, water_level, tol):
@@ -143,7 +147,7 @@ def match_clusters_batch(clusters, cameras, normal, water_level, tol):
     xyz, err = ray_trace.ray_trace_refractive_cluster(
             clusters, cameras, z=water_level, normal=normal
             )
-    return xyz[err < tol]
+    return xyz[err < tol], np.mean(err[err < tol])
 
 
 def match_clusters(clusters, cameras, normal, water_level, tol):
