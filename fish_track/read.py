@@ -88,17 +88,14 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     out.release()
     vidcap.release()
 
-def get_foreground_movie(video, background, process=lambda x: x, output='foreground.avi', fps=15):
+def get_foreground_movie(video, background, output='foreground.avi', process=lambda x: x, fps=15):
     im_cap = cv2.VideoCapture(video)
     bg_cap = cv2.VideoCapture(background)
-    
     width = int(im_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(im_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_count = int(im_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
-    
     for frame in range(frame_count):
         success, image = im_cap.read()
         assert success, "reading video failed"
