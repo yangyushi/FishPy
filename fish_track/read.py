@@ -2,7 +2,10 @@
 import numpy as np
 import cv2
 import os
+from collections import deque
 from PIL import Image
+from scipy import ndimage
+
 
 def get_frame(file_name, frame):
     """
@@ -66,12 +69,11 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
 
     history = deque()
-    dtype = choose_dtype(file_name, length, process)
-    bg_sum = np.zeros((height, width), dtype=dtype)
+    bg_sum = np.zeros((height, width), dtype=np.uint64)
 
     for frame in range(frame_count):
         success, image = vidcap.read()
-        image = process(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         history.append(image)
         frame += 1
         bg_sum += image
@@ -86,30 +88,32 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     out.release()
     vidcap.release()
 
-
 def get_foreground_movie(video, background, process=lambda x: x, output='foreground.avi', fps=15):
     im_cap = cv2.VideoCapture(video)
     bg_cap = cv2.VideoCapture(background)
-
+    
     width = int(im_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(im_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_count = int(im_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
+    
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
-
+    
     for frame in range(frame_count):
         success, image = im_cap.read()
         assert success, "reading video failed"
-        image = process(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.int32))
+        image = process(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float64))
         success, bg = bg_cap.read()
         assert success, "reading background failed"
-        bg = process(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY).astype(np.int32))
+        bg = process(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY).astype(np.float64))
         fg = bg - image
         fg = fg - fg.min()
-        binary = cv2.adaptiveThreshold(fg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY, 21, 0)
-        fg[binary < 255] = 0
+        fg = (fg/fg.max()*255).astype(np.uint8)
+        _, binary_otsu = cv2.threshold(fg, 0, 255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        fg[binary_otsu == 0] = 0
+        binary_adpt = cv2.adaptiveThreshold(fg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY, 5, 0)
+        fg[binary_adpt == 0] = 0
         out.write(fg)
 
     im_cap.release()
