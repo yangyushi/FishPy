@@ -10,7 +10,7 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
-config = ft.utility.Configure('config.ini') 
+config = ft.utility.Configure('config.ini')
 
 if 'cameras.pkl' in os.listdir('.'):
     with open(f'cameras.pkl', 'rb') as f:
@@ -36,7 +36,7 @@ for frame in range(frame_start, frame_end):
     images_multi_view = []
     clusters_multi_view = []
     cameras_ordered = []
-    
+
     for i, cam_name in enumerate(cameras):
         cam_config = eval(f'config.{cam_name}')
         view_config = ft.utility.Configure(cam_config.config)
@@ -45,27 +45,11 @@ for frame in range(frame_start, frame_end):
         x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
         roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
-        blur = view_config.Process.gaussian_sigma
-        background = np.load(cam_config.background)
-
         # the degree 180 is not included, it should be covered by another "upside-down" shape
         angle_number = view_config.Locate.orientation_number
-        angles = np.linspace(0, 180, angle_number)  
+        angles = np.linspace(0, 180, angle_number)
 
         shape_kernels = np.load(cam_config.shape)
-
-        blur  = view_config.Process.gaussian_sigma
-        if blur != 0:
-            def denoise(x): return ndimage.gaussian_filter(x, blur)
-        else:
-            def denoise(x): return x
-
-        if view_config.Process.normalise == 'std':
-            def normalise(x): return x / x.std()
-        elif view_config.Process.normalise == 'max':
-            def normalise(x): return x / x.max()
-        elif view_config.Process.normalise == 'None':
-            def normalise(x): return x
 
         video_format = view_config.Data.type
         if video_format == 'images':
@@ -80,29 +64,30 @@ for frame in range(frame_start, frame_end):
             feature = pickle.load(f)
         f.close()
 
-        fg = background - normalise(denoise(image))
-        fg -= fg.mean()
-        binary = fg > (fg[roi].max() * view_config.Fish.threshold * 0.8)
+        binary = image > (image[roi].max() * view_config.Fish.threshold * 0.5)
+
         clusters = ft.oishi.get_clusters(
             feature, binary, shape_kernels, angles, roi,
             kernel_threshold=config.Stereo.kernel_threshold
         )
+
         cameras_ordered.append(cameras[cam_name])
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
+
         if see_cluster:
-            plt.imshow(fg, cmap='gray')
+            plt.imshow(image, cmap='gray')
             for c in clusters:
-                plt.scatter(c.T[1], c.T[0], alpha=0.5)
+                plt.scatter(*c.T, alpha=0.5)
             plt.show()
-        
+
     # stereomatcing using refractive epipolar relationships
     matched_indices = f3.stereolink.greedy_match_centre(
         clusters_multi_view, cameras_ordered, images_multi_view,
         depth=water_depth, normal=normal, water_level=water_level,
         tol_2d=tol_2d, tol_3d=tol_3d, report=True
     )
-    
+
     # from 2D clusters to 3D clouds
     clouds = f3.stereolink.reconstruct_clouds(
             cameras_ordered, matched_indices, clusters_multi_view,

@@ -8,16 +8,12 @@
 
 VPATH=result
 
-positions.pkl: cameras.pkl
+positions.pkl:
 	python3 get_positions.py
-cameras.pkl:
+calib:
 	python3 calibration.py
 sort:
 	./sort.sh
-calib:
-	rm -f cameras.pkl
-	rm -f result/cameras.pkl
-	make cameras.pkl
 pos:
 	rm -f positions.pkl
 	rm -f result/positions.pkl
