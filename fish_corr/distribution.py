@@ -50,6 +50,9 @@ class Tank:
         u, s, vh = np.linalg.svd(covar)
         return vh
 
+    def get_xyz(self, points):
+        return (self.rot @ (points.T - self.base)).T
+
     def get_cylinder(self, points):
         XYZ = self.rot @ (points.T - self.base)
         X, Y, Z = XYZ
