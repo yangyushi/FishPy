@@ -88,3 +88,46 @@ def validate(images, model, fail_mark=0.25, shape=(40, 40)):
     score = model.predict(normed).ravel()
     good_indices = np.where(score > fail_mark)
     return images[good_indices]
+
+
+class Movie:
+    def __init__(self, trajs):
+        self.trajs = trajs
+        self.__sniff()
+        self.movie = {}
+        self.labels = {}
+
+    def __sniff(self):
+        self.max_frame = max([t['time'].max() for t in self.trajs])
+        self.size = len(self.trajs)
+
+    def __getitem__(self, frame):
+        if frame > self.max_frame:
+            return None
+        elif frame in self.movie.keys():
+            return self.movie[frame]
+        else:
+            positions = []
+            labels = []
+            for i, t in enumerate(self.trajs):
+                if frame in t['time']:
+                    time_index = np.where(t['time'] == frame)[0][0]
+                    positions.append(t['position'][time_index])
+                    labels.append(i)
+            positions = np.array(positions)
+            labels = np.array(labels)
+            self.movie.update({frame: positions})
+            self.labels.update({frame: labels})
+            return positions
+
+    def get_labels(self, frame):
+        if frame > self.max_frame:
+            return None
+        elif frame in self.movie.keys():
+            return self.labels[frame]
+        else:
+            self[frame]
+            return self.labels[frame]
+
+    def __len__(self):
+        return self.max_frame
