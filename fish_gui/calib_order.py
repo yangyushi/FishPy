@@ -109,6 +109,10 @@ class Viewer(QMainWindow):
             return
         self.model = Model(image, corner_number)
         self.canvas.setImage(image)
+        try:
+            len(self.model.corners)
+        except TypeError:
+            return
         self.plot.setData(self.model.corners)
         init_pos = np.vstack(self.model.corners[0])
         self.scatter.setData(*init_pos)
