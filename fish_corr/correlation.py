@@ -25,8 +25,9 @@ def collect_dynamic_cavagna_style(trajectories, frame, com, next_com, spd_cutoff
             dp = future - current
             dt = t.time[next_index] - t.time[index]
             positions.append(t.positions[index])
-            velocities.append(dp/dt)
+            velocities.append(dp / dt)
     return np.array(positions), np.array(velocities)
+
 
 def collect_dynamic(trajectories, frame, spd_cutoff):
     """return the positions and UNIT speed vectors"""
@@ -48,6 +49,7 @@ def collect_dynamic(trajectories, frame, spd_cutoff):
 
     return np.array(positions), np.array(velocities)
 
+
 def collect_my_dynamic(trajectories, frame, com, next_com, spd_cutoff):
     positions, velocities = [], []
     for t in trajectories:
@@ -66,6 +68,7 @@ def collect_my_dynamic(trajectories, frame, com, next_com, spd_cutoff):
                 velocities.append(np.zeros(2))
             positions.append(t.positions[index])
     return np.array(positions), np.array(velocities)
+
 
 def vanilla_cvv(trajectories, bins, frame_range, spd_cutoff=1e-10):
     """
@@ -96,7 +99,25 @@ def vanilla_cvv(trajectories, bins, frame_range, spd_cutoff=1e-10):
             cvvs[i].append(corr)
     return cvvs
 
-def my_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e-10):
+
+def get_com_pairs(trajectories, frame_range):
+    com_pairs = []
+    for frame in frame_range[:-1]:
+        current, future = [], []
+        for t in trajectories:
+            if (frame in t.time) and (frame+1 in t.time):
+                index = np.where(t.time == frame)[0][0]
+                next_index = np.where(t.time == frame+1)[0][0]
+                current.append(t.positions[index])
+                future.append(t.positions[next_index])
+        com_pairs.append(
+            (np.mean(current, axis=0),
+            np.mean(future, axis=0))
+        )
+    return com_pairs
+
+
+def my_cvv(trajectories, bins, frame_range, spd_cutoff=1e-10):
     """
     vanilla velocity correlation function
     Cvv = sum (vi·vj / |vi||vj|)
@@ -104,11 +125,9 @@ def my_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e-10):
     if speed is smaller than spd_cutoff, the individual is considered as not moving
     """
     cvvs = [[] for _ in bins[:-1]]
-    gce = utility.GCE(trajectories, good_frames)
-    coms = gce.centres
+    com_pairs = get_com_pairs(trajectories, frame_range)
     for j, frame in enumerate(frame_range[:-1]):
-        com = coms[frame]
-        next_com = coms[frame+1]
+        com, next_com = com_pairs[j]
         if isinstance(com, type(None)) or isinstance(next_com, type(None)):
             continue
         cvv = []
@@ -129,6 +148,7 @@ def my_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e-10):
             cvvs[i].append(corr)
     return cvvs
 
+
 def cavagna_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e-10):
     """
     vanilla velocity correlation function
@@ -137,11 +157,10 @@ def cavagna_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e
     if speed is smaller than spd_cutoff, the individual is considered as not moving
     """
     cvvs = [[] for _ in bins[:-1]]
-    gce = utility.GCE(trajectories, good_frames)
-    coms = gce.centres
-    for frame in frame_range[:-1]:
-        com = coms[frame]
-        next_com = coms[frame+1]
+    com_pairs = get_com_pairs(trajectories, frame_range)
+
+    for j, frame in enumerate(frame_range[:-1]):
+        com, next_com = com_pairs[j]
 
         if isinstance(com, type(None)) or isinstance(next_com, type(None)):
             continue
@@ -164,6 +183,7 @@ def cavagna_cvv(trajectories, bins, frame_range, good_frames=None, spd_cutoff=1e
         #cvvs.append(cvv)
     return cvvs
 
+
 def vanilla_vs(trajectories, bins, frame_range, spd_cutoff=1e-10):
     """get the mean of orientational vector"""
     v2s = [[] for _ in bins[:-1]]
@@ -182,6 +202,7 @@ def vanilla_vs(trajectories, bins, frame_range, spd_cutoff=1e-10):
                 v = np.nan
             v2s[i].append(v)
     return v2s
+
 
 def cavagna_vs(trajectories, bins, frame_range, spd_cutoff=1e-10):
     """get the mean of orientational vector"""
