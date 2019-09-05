@@ -153,7 +153,7 @@ def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N
             )
         chosen = np.argmin(costs)
         costs.sort()
-        if costs[1] - costs[0] < 250:
+        if costs[1] - costs[0] < min_diff:
             continue
         p2h, p3h = pairs_homo[chosen]
         points.append(triangulation_v3((p1h, p2h, p3h), cameras))
