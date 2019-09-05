@@ -116,7 +116,7 @@ def get_intersection(ellipse, line):
         return np.array([[x1, x2], [y1, y2]])
 
 
-def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N: int, min_diff=250):
+def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N: int, min_diff=250, max_cost=10):
     """
     1. Randomly choose N points in view 1
     3. For every chosen point (P1)
@@ -155,6 +155,7 @@ def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N
         costs.sort()
         if costs[1] - costs[0] < min_diff:
             continue
-        p2h, p3h = pairs_homo[chosen]
-        points.append(triangulation_v3((p1h, p2h, p3h), cameras))
+        if costs[0] < max_cost:
+            p2h, p3h = pairs_homo[chosen]
+            points.append(triangulation_v3((p1h, p2h, p3h), cameras))
     return np.array(points)
