@@ -88,7 +88,8 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     out.release()
     vidcap.release()
 
-def get_foreground_movie(video, background, output='foreground.avi', process=lambda x: x, fps=15):
+
+def get_foreground_movie(video, background, output='foreground.avi', process=lambda x: x, fps=15, local=5, thresh_flag=0):
     im_cap = cv2.VideoCapture(video)
     bg_cap = cv2.VideoCapture(background)
     width = int(im_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -106,10 +107,15 @@ def get_foreground_movie(video, background, output='foreground.avi', process=lam
         fg = bg - image
         fg = fg - fg.min()
         fg = (fg/fg.max()*255).astype(np.uint8)
-        _, binary_otsu = cv2.threshold(fg, 0, 255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        fg[binary_otsu == 0] = 0
+        if thresh_flag == 0:
+            _, binary = cv2.threshold(fg, 0, 255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        elif thresh_flag == 1:
+            _, binary = cv2.threshold(fg, 0, 255,cv2.THRESH_BINARY+cv2.THRESH_TRIANGLE)
+        elif thresh_flag > 1:
+            _, binary = cv2.threshold(fg, thresh_flag, 255,cv2.THRESH_BINARY)
+        fg[binary == 0] = 0
         binary_adpt = cv2.adaptiveThreshold(fg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY, 5, 0)
+            cv2.THRESH_BINARY, local, 0)
         fg[binary_adpt == 0] = 0
         out.write(fg)
 
