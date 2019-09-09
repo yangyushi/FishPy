@@ -51,7 +51,10 @@ class Tank:
         return vh
 
     def get_xyz(self, points):
-        return (self.rot @ (points.T - self.base)).T
+        """
+        return shape: (3, n)
+        """
+        return self.rot @ (points.T - self.base)
 
     def get_cylinder(self, points):
         XYZ = self.rot @ (points.T - self.base)
