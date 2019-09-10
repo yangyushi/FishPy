@@ -51,14 +51,17 @@ class Tank:
         return vh
 
     def get_xyz(self, points):
-        return (self.rot @ (points.T - self.base)).T
+        """
+        return shape: (3, n)
+        """
+        return self.rot @ (points.T - self.base)
 
     def get_cylinder(self, points):
         XYZ = self.rot @ (points.T - self.base)
         X, Y, Z = XYZ
         theta = np.arctan(Y / X)
-        theta[(X<0) & (Y>0)] += np.pi
-        theta[(X<0) & (Y<0)] -= np.pi
+        theta[X<0] += np.pi
+        #theta[(X<0) & (Y<0)] += np.pi
         theta[theta < 0] += np.pi * 2
         radii = np.sqrt(X**2 + Y**2)
         return np.array([radii, theta, Z])

@@ -8,6 +8,78 @@ import matplotlib.pyplot as plt
 from . import utility
 
 
+class DynamicalOrder():
+    def __init__(self, trajs, end=None, begin=0):
+        self.trajs = trajs
+        self.begin = begin
+        if isinstance(end, type(None)):
+            self.end = self.__sniff()
+        else:
+            self.end = end
+        self.positions, self.labels = self.__preprocess()
+
+    def __sniff(self):
+        """
+        find the maximum frame number
+        """
+        max_frame = 0
+        for t in self.trajs:
+            tmp = np.max(t.time)
+            if tmp > max_frame:
+                max_frame = tmp
+        return max_frame
+
+    def __preprocess(self):
+        positions_movie, labels_movie = [], []
+        for frame in range(self.begin, self.end):
+            positions, labels = [], []
+            for i, t in enumerate(self.trajs):
+                if frame in t.time:
+                    idx = np.where(t.time == frame)[0][0]
+                    positions.append(t.positions[idx])
+                    labels.append(i)
+            positions_movie.append(np.array(positions))
+            labels_movie.append(np.array(labels, dtype=int))
+        return positions_movie, labels_movie
+
+    def get_orders(self):
+        t_orders, r_orders, d_orders = [], [], []
+        for i in range(self.end - self.begin - 1):
+            idx_0 = np.nonzero(np.in1d(self.labels[i], self.labels[i+1], assume_unique=True))
+            idx_1 = np.nonzero(np.in1d(self.labels[i+1], self.labels[i], assume_unique=True))
+            pos_0 = self.positions[i+0][idx_0]
+            pos_1 = self.positions[i+1][idx_1]
+            r0 = pos_0 - np.mean(pos_0, axis=0)
+            r1 = pos_1 - np.mean(pos_1, axis=0)
+            velocities = pos_1 - pos_0
+
+            # calculate translational order
+            directions = velocities.T / np.linalg.norm(velocities, axis=1)
+            t_orders.append(np.linalg.norm(np.mean(directions, axis=1)))
+
+
+            # Kabsch algorithm
+            G, R = utility.get_best_dilatation_rotation(r0, r1)
+
+            # calculate rotational order
+            K = Rotation.from_dcm(R).as_rotvec()
+            K = K / np.linalg.norm(K)
+
+            y_pp = r0 - K * (r0 @ np.vstack(K))  # r0 projected to plane ⊥ K, (n, 3)
+
+            ang_mom = np.cross(y_pp, velocities)  # angular momentum, shape (n, 3)
+            ang_unit = ang_mom / np.vstack(np.linalg.norm(ang_mom, axis=1))
+
+            r_orders.append(np.mean(ang_unit @ np.vstack(K)))
+
+            # calculate dilational order
+            D = (r0 @ R) * (r1 - r0 @ R)
+            D = D / np.vstack(np.linalg.norm(D, axis=1))
+            d_orders.append(np.mean(D))
+
+        return t_orders, r_orders, d_orders
+
+
 class Dynamical():
     def __init__(self, trajs, origin=None, good_frames=None):
         """np.diff --> x(i+1) - x(i)"""
@@ -184,7 +256,6 @@ class Dynamical():
             orders.append(np.nanmean(rot_directions))
         return orders
 
-    @jit
     def get_dila_orders(self):
         orders = []
         positions = self.get_positions_r()
@@ -200,7 +271,7 @@ class Dynamical():
                         dilations_abs.append(np.linalg.norm(p) * np.linalg.norm(p_1 - p))
             dila_directions = np.array(dilations) / np.array(dilations_abs)
             orders.append(np.nanmean(dila_directions))
-        return orders   
+        return orders
 
     def get_vf_scale(self, time_index):
         """get the scale factor to make velocity fluctuation dimensionless"""
