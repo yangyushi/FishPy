@@ -41,7 +41,6 @@ def get_intersect_of_lines_batch(lines):
     M = np.zeros((3, 3), dtype=np.float64)
     b = np.zeros((3,  ), dtype=np.float64)
     xyz = []
-    view_num = len(lines[0])
     for line in lines:
         M *= 0
         b *= 0

@@ -101,9 +101,12 @@ class Movie:
         self.max_frame = max([t['time'].max() for t in self.trajs])
         self.size = len(self.trajs)
 
+    def __len__(self):
+        return self.max_frame
+
     def __getitem__(self, frame):
         if frame > self.max_frame:
-            return None
+            raise StopIteration
         elif frame in self.movie.keys():
             return self.movie[frame]
         else:
@@ -120,7 +123,7 @@ class Movie:
             self.labels.update({frame: labels})
             return positions
 
-    def get_labels(self, frame):
+    def label(self, frame):
         if frame > self.max_frame:
             return None
         elif frame in self.movie.keys():
@@ -128,6 +131,3 @@ class Movie:
         else:
             self[frame]
             return self.labels[frame]
-
-    def __len__(self):
-        return self.max_frame
