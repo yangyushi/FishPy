@@ -5,7 +5,7 @@ from scipy import ndimage
 import numpy as np
 import fish_track as ft
 try:
-    from keras.models import load_model
+    from tensorflow import keras
     use_model = True
 except ImportError:
     use_model = False
@@ -26,7 +26,7 @@ except FileNotFoundError:
 
 if use_model:
     fail_mark = float(config.Kernel.fail_mark)
-    model = load_model('shape_model.h5')
+    model = keras.models.load_model('shape_model.h5')
     shapes = ft.utility.validate(shapes, model, fail_mark)
 
 kernels = ft.kernel.get_kernels(shapes, indices, cluster_num, sigma=0)
