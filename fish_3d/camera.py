@@ -284,7 +284,13 @@ class Camera():
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
             # Find the chess board corners
-            ret, corners = cv2.findChessboardCorners(gray, corner_number, None)
+            ret, corners = cv2.findChessboardCorners(
+                gray, corner_number,
+                flags=sum((
+                    cv2.CALIB_CB_FAST_CHECK,
+                    cv2.CALIB_CB_ADAPTIVE_THRESH
+                    ))
+            )
             if ret == True:
                 obj_points_single = get_points_from_order(corner_number, order='x123') * grid_size
                 obj_points.append(obj_points_single)
@@ -305,6 +311,7 @@ class Camera():
         # this initial guess is for basler AC2040 120um camera with a 6mm focal length lens
         camera_matrix = np.array([
             [1739.13, 0, 1024],
+
             [0, 1739.13, 768],
             [0, 0, 1]
             ])
