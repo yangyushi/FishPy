@@ -60,7 +60,7 @@ Fish_tank::Fish_tank(double z, double c):
 bool Fish_tank::is_inside(double x, double y, double z){
     bool in_water = (z <= this->z_max) and (z > 0);
     bool in_wall = z > (this->coef * (x*x + y*y));
-    return (in_wall * in_water);
+    return (in_wall && in_water);
 }
 
 void Fish_tank::put(int index, double x, double y, double z) {
