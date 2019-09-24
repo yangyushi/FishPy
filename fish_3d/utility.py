@@ -25,7 +25,7 @@ def see_corners(image_file, corner_number=(23, 15)):
     plt.show()
 
 
-def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(0, 0, 1)):
+def plot_reproject(image, roi, features, pos_3d, camera, filename=None, water_level=0, normal=(0, 0, 1)):
     fig = plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
     ax = fig.add_subplot(111)
     ax.imshow(image, cmap='gray')
@@ -34,6 +34,8 @@ def plot_reproject(image, pos_3d, camera, filename=None, water_level=0, normal=(
         color = (np.random.random(3) + 1) / 2
         xy = ray_trace.reproject_refractive(point, camera)
         ax.scatter(*xy, color='tomato', marker='+', lw=1, s=100)
+
+    ax.scatter(features[0] + roi[1].start, features[1] + roi[0].start, color='tomato', facecolor='none')
 
     plt.xlim(0, image.shape[1])
     plt.ylim(image.shape[0], 0)

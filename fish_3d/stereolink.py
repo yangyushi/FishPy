@@ -2,9 +2,9 @@
 import itertools
 import numpy as np
 from scipy.spatial.distance import cdist
-from . import ray_trace
 from typing import List
 from scipy import ndimage
+from . import ray_trace
 
 
 def get_fundamental_from_projections(p1, p2):
@@ -90,9 +90,11 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     """
     matched = []
 
+    clusters = [[cam.undistort_points(cc, want_uv=True) for cc in c] for (cam, c) in zip(cameras, clusters)]
+
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
-        ] for cluster_one_view in clusters]  # (v, u)
+        ] for cam, cluster_one_view in zip(cameras, clusters)]
 
     for i, centre in enumerate(centres_mv[0]):
 
@@ -114,13 +116,49 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         if report:
             print(f'#{i}, candidates in camera #2 is {len(candidates_12)}, candidates in camera #3 is {len(candidates_13)}',
                     end=' --> ')
-        if not (candidates_12 and candidates_13):
+
+        # remove points in view 2 that can't match anything in view 3
+        to_delete = np.ones(len(candidates_12), dtype=bool)
+        for j, c2 in enumerate(candidates_12):
+            centre_2 = centres_mv[1][c2]
+            a23, b23 = ray_trace.epipolar_la(
+                    centre_2, cameras[1], cameras[2], images[1], water_level, depth, normal
+                    )
+            for c3 in candidates_13:
+                cluster = clusters[2][c3]
+                distances = np.abs(cluster.T[0] * a23 - cluster.T[1] + b23) / np.sqrt(a23**2 + 1)
+                if np.min(distances) < tol_2d:
+                    to_delete[j] = False
+                    break
+        if to_delete.all():
             if report:
                 print("no 3D clouds")
             continue
+        candidates_12 = np.array(candidates_12)[~to_delete]
 
+        # remove points in view 3 that can't match anything in view 2
+        to_delete = np.ones(len(candidates_13), dtype=bool)
+        for j, c3 in enumerate(candidates_13):
+            centre_3 = centres_mv[2][c3]
+            a32, b32 = ray_trace.epipolar_la(
+                    centre_3, cameras[2], cameras[1], images[2], water_level, depth, normal
+                    )
+            for c2 in candidates_12:
+                cluster = clusters[1][c2]
+                distances = np.abs(cluster.T[0] * a32 - cluster.T[1] + b32) / np.sqrt(a32**2 + 1)
+                if np.min(distances) < tol_2d:
+                    to_delete[j] = False
+                    break
+        if to_delete.all():
+            if report:
+                print("no 3D clouds")
+            continue
+        candidates_13 = np.array(candidates_13)[~to_delete]
+
+        # get xyz coordinates from 3 views
         candidates = list(itertools.product([i], candidates_12, candidates_13))
         allowed, errors = [], []
+
         for candidate in candidates:
             full_clusters = [
                     clusters[0][candidate[0]],
@@ -129,11 +167,11 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             ]
             par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
             cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
-            z = np.mean(cloud.T[-1])
+            z = np.sum(cloud.T[-1] / error) / np.sum(1/error)  # weighted by inverse error
             in_tank = (z < water_level) and (z > -depth)
             if len(cloud) > 0 and in_tank:
                 allowed.append(candidate)
-                errors.append(error)
+                errors.append(np.mean(error))
         if len(allowed) > 0:
             matched.append(allowed[np.argmin(errors)])
         if report:
@@ -141,13 +179,12 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     return matched
 
 
-
 def match_clusters_batch(clusters, cameras, normal, water_level, tol):
     results = []
     xyz, err = ray_trace.ray_trace_refractive_cluster(
             clusters, cameras, z=water_level, normal=normal
             )
-    return xyz[err < tol], np.mean(err[err < tol])
+    return xyz[err < tol], err[err < tol]
 
 
 def match_clusters(clusters, cameras, normal, water_level, tol):
@@ -168,7 +205,7 @@ def match_clusters_faster(clusters, cameras, normal, water_level, tol):
 
 
 def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_level, normal, sample_size, tol):
-    clouds = []
+    clouds, errors = [], []
     for indices in matched_indices:
         i1, i2, i3 = indices
         full_clusters = (
@@ -182,9 +219,11 @@ def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_leve
         )
 
         cloud = xyz[err < tol]
+        error = err[err < tol]
         if len(cloud) > 0:
-            clouds.append(np.array(cloud))
-    return clouds
+            clouds.append(cloud)
+            errors.append(error)
+    return clouds, errors
 
 
 def merge_clouds(clouds, min_dist, min_num):
@@ -244,3 +283,17 @@ def join_pairs(pairs):
         joined_pair = np.unique(np.vstack(np.where(labels == val)))
         joined_pairs.append(joined_pair)
     return joined_pairs
+
+
+def rematch(points_3d, points_2d, camera):
+    for p3 in points_3d:
+        proj = reproject_refractive(p3, camera)
+        dists = np.linalg.norm(points_2d - proj.reshape((1, 2)), axis=1)
+
+
+def post_process(points_3d, points_2d_mv, cameras, tol_2d):
+    links_v1, count_v1 = rematch(points_3d, points_2d_mv[0], cameras[0], tol_2d)
+    links_v2, count_v2 = rematch(points_3d, points_2d_mv[1], cameras[1], tol_2d)
+    links_v3, count_v3 = rematch(points_3d, points_2d_mv[2], cameras[2], tol_2d)
+    # remove suspecious links, where one 2d feature is "shared" by many 3d points
+    pass

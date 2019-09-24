@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
+import matplotlib.pyplot as plt
 import numpy as np
 from numba import njit
 from scipy import optimize
 from itertools import product
 from typing import List, Tuple, Dict
 import cv2
+
+try:
+    from . import cray_trace
+    c_ext = True
+except ImportError:
+    c_ext = False
+
 
 
 def get_intersect_of_lines_slow(lines):
@@ -32,7 +40,7 @@ def get_intersect_of_lines_slow(lines):
     return np.linalg.solve(M, b).ravel()
 
 
-def get_intersect_of_lines_batch(lines):
+def py_get_intersect_of_lines_batch(lines):
     """
     lines = [line, ...], shape -> (n, view, 2, 3)
     line = [points (a), unit directions (v)]
@@ -44,7 +52,6 @@ def get_intersect_of_lines_batch(lines):
     for line in lines:
         M *= 0
         b *= 0
-        d = 0
         for view in line:
             a, v = view
             v1, v2, v3 = v
@@ -59,6 +66,10 @@ def get_intersect_of_lines_batch(lines):
         xyz.append(x)
     return np.array(xyz)
 
+if c_ext:
+    get_intersect_of_lines_batch = cray_trace.get_intersect_of_lines
+else:
+    get_intersect_of_lines_batch = py_get_intersect_of_lines_batch
 
 def get_intersect_of_lines(lines):
     """
@@ -118,7 +129,7 @@ def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     - camera: a Camera instance
     - z: the hight of water level with respect to world origin
     - corrdinate: the position (u, v) of object on the image, unit is pixel
-        it can be one point or many points
+        it can be one point or many points, but they should be undistorted
     - poi, point on interface. See the sketch for its meaning
     - return [X, Y, Z], shape (3, n)
 
@@ -134,13 +145,13 @@ def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
 
     The equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved for x, y, c, knowing everything else
     """
-    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.ext.ravel()
+    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.p.ravel()
 
     if coordinate.ndim == 1:  # (just one point)
-        x, y = camera.undistort(coordinate)
+        x, y = coordinate
         z = z
     elif coordinate.ndim == 2:  # (number, dim)
-        x, y = camera.undistort_points(coordinate).T
+        x, y = coordinate.T
         z = z * np.ones(x.shape)
     else:
         raise RuntimeError("The shape of coordinates array is not valid")
@@ -356,10 +367,10 @@ def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
-    X = np.zeros((3, 2))
-    Y = np.zeros((3, 1))
+    X = np.zeros((5, 2))
+    Y = np.zeros((5, 1))
     ray_length = abs(depth / trans[-1])
-    for i, step in enumerate([0, ray_length/2, ray_length]):
+    for i, step in enumerate([0, ray_length/4, ray_length/2, ray_length*3/4, ray_length]):
         m = poi_1 + step * trans
         z = abs(m[-1])
         d = abs(co_2[-1] - interface)
@@ -371,7 +382,8 @@ def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
-        uv_2 = camera_2.project(q)
+        uv_2 = camera_2.p @ np.hstack((q, 1))
+        uv_2 = uv_2/uv_2[-1]
         X[i, :] = uv_2[0], 1
         Y[i, 0] = uv_2[1]
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
@@ -460,7 +472,7 @@ def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: Lis
 
 def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of centres (u, v) in different views, they should NOT be undistorted
+    :param centres: a list of centres (u, v) in different views, they should be undistorted
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
@@ -482,7 +494,7 @@ def ray_trace_refractive(centres, cameras, z=0, normal=(0, 0, 1), refractive_ind
 
 def ray_trace_refractive_faster(centres, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     """
-    :param centres: a list of centres (u, v) in different views, they should NOT be undistorted
+    :param centres: a list of centres (u, v) in different views, they should be undistorted
     :param cameras: a list of *calibrated* Camera objects
     :param z: the z-value of the refractive interface
     """
