@@ -6,12 +6,12 @@ from scipy.spatial import ConvexHull
 
 
 def auto_corr(var, dt=1):
-    fluctuation = np.array(var) - np.mean(var)
+    fluctuation = np.array(var) - np.nanmean(var)
     stop = len(var)
     corr = fluctuation[dt:stop] * fluctuation[:stop-dt]
-    c = np.mean(corr)
-    std = np.std(corr)
-    c0 = np.mean(fluctuation * fluctuation)
+    c = np.nanmean(corr)
+    std = np.nanstd(corr)
+    c0 = np.nanmean(fluctuation * fluctuation)
     return c/c0, std/c0
 
 

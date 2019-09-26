@@ -21,7 +21,7 @@ def get_maxima(image: np.ndarray, threshold: float, window_size):
     mmap = ndimage.grey_dilation(image, window_size) == image
     mmap *= image > threshold
     labels, _ = ndimage.label(mmap)
-    maxima = ndimage.center_of_mass(image, labels=labels, index=range(1, labels.max()))
+    maxima = ndimage.center_of_mass(image, labels=labels, index=range(1, labels.max()+1))
     maxima = np.flip(np.array(maxima), axis=1)
     return maxima
 
