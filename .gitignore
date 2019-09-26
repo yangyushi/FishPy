@@ -3,4 +3,5 @@
 **/tags
 **/__pycache__
 **/*.pyc
+**/test.py
 !.gitignore
