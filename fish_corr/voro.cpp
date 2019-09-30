@@ -1,9 +1,5 @@
+#include <iostream>
 #include "voro.hpp"
-
-namespace py = pybind11;
-using namespace std;
-using namespace voro;
-
 
 array<double, 3> get_projection(double x, double y, double z, double c) {
     /*
@@ -23,21 +19,6 @@ array<double, 3> get_projection(double x, double y, double z, double c) {
     proj[1] = radius_proj * sin(theta);
     proj[2] = c * pow(radius_proj, 2.);
     return proj;
-}
-
-
-vector<double> get_volumes(container& box){
-    c_loop_all particle_iter(box);
-    voronoicell cell;
-    int particle_id;
-    double x, y, z, radius;
-    vector<double> volumes;
-
-    if (particle_iter.start()) do if (box.compute_cell(cell, particle_iter)) {
-        particle_iter.pos(particle_id, x, y, z, radius);  // retrieve the position & id
-        volumes.push_back(cell.volume());
-    } while (particle_iter.inc());
-    return volumes;
 }
 
 
@@ -72,7 +53,38 @@ double Fish_tank::get_volume() {
 }
 
 vector<double> Fish_tank::volumes(){
-    return get_volumes(this->core);
+    c_loop_all particle_iter(this->core);
+    voronoicell cell;
+    int particle_id;
+    double x, y, z, radius;
+    vector<double> volumes;
+
+    if (particle_iter.start()) do if (this->core.compute_cell(cell, particle_iter)) {
+        particle_iter.pos(particle_id, x, y, z, radius);  // retrieve the position & id
+        volumes.push_back(cell.volume());
+    } while (particle_iter.inc());
+    return volumes;
+}
+
+vector<double> Fish_tank::volumes(py::array_t<int> indices){
+    c_loop_all particle_iter(this->core);
+    voronoicell cell;
+    int particle_id;
+    double x, y, z, radius;
+    vector<double> volumes;
+
+    auto buf = indices.request();
+    int *ptr = (int *) buf.ptr;
+
+    if (particle_iter.start()) do if (this->core.compute_cell(cell, particle_iter)) {
+        particle_iter.pos(particle_id, x, y, z, radius);  // retrieve the position & id
+        for (int i = 0; i < buf.shape[0]; i++) {
+            if (ptr[i] == particle_id){
+                volumes.push_back(cell.volume());
+            }
+        }
+    } while (particle_iter.inc());
+    return volumes;
 }
 
 py::array_t<double> get_voro_volumes(py::array_t<double> points, double z, double c){
@@ -109,7 +121,48 @@ py::array_t<double> get_voro_volumes(py::array_t<double> points, double z, doubl
     return volumes_array;
 }
 
+py::array_t<double> get_voro_volumes_select(py::array_t<double> points, py::array_t<int> indices, double z, double c){
+    // get voronoi volumes of selected points
+    // indices: indices of the points that is selected to calculate cell volumes
+    //          all points were used to construct the voronoi tesselation, but only the points of the indices
+    //          were considered
+    //          Typically, I use this function to get voronoi volumes of cells that do not belong to vertices
+    //          of the convex hull
+    // z: depth of water in the tank
+    // c: the fitting parameter, z = c * r^2
+    // shape of points in numpy array should be (number, 3)
+    auto buf = points.request();
+    size_t index_max = buf.shape[0];
+    double *ptr = (double *) buf.ptr;
+
+    Fish_tank tank(z, c);
+
+    double p_x, p_y, p_z;
+    for (size_t i = 0; i < index_max; i++){
+        p_x = ptr[i * 3 + 0];
+        p_y = ptr[i * 3 + 1];
+        p_z = ptr[i * 3 + 2];
+        if (tank.is_inside(p_x, p_y, p_z)) {
+            tank.put(i, p_x, p_y, p_z);
+        }
+    }
+
+    vector<double> volumes = tank.volumes(indices);
+
+    py::array_t<double> volumes_array = py::array_t<double>(volumes.size());
+    auto buf_vol = volumes_array.request();
+    double * ptr_vol = (double *) buf_vol.ptr;
+
+    for (size_t i = 0; i < buf_vol.size; i++) {
+        ptr_vol[i] = volumes[i];
+    }
+    return volumes_array;
+}
+
+
 PYBIND11_MODULE(voro, m) {
     m.doc() = "Voronoi analysis using voro++ in 3D";
     m.def("get_voro_volumes", &get_voro_volumes, "getting the voronoi cells volumes in a confined parbobla gemetry");
+    m.def("get_voro_volumes_select", &get_voro_volumes_select,
+            "getting the voronoi cells volumes in a confined parbobla gemetry, given indices of points inside the convex hull");
 }

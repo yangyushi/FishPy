@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace voro;
+namespace py = pybind11;
 
 
 array<double, 3> get_projection(double x, double y, double z, double c);
@@ -58,7 +59,6 @@ class Fish_tank {
      * It is composed of the curvy surface and the top water level (fish don't swim above water)
      */
     public:
-
         Wall_tank  wall_side;
         container  core;
 
@@ -71,6 +71,7 @@ class Fish_tank {
         double get_volume();
 
         vector<double> volumes();
+        vector<double> volumes(py::array_t<int> indices);
 
     private:
         double z_max;
