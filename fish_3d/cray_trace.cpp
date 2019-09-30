@@ -121,6 +121,7 @@ py::array_t<double> get_intersect_of_lines(py::array_t<double> py_lines){
 
 PYBIND11_MODULE(cray_trace, m){
     m.doc() = "refractive ray tracing";
+
     m.def("get_intersect_of_lines", &get_intersect_of_lines,
           "calculate the point that are closest to multiple lines",
           py::return_value_policy::move, py::arg("lines").noconvert());
@@ -128,6 +129,7 @@ PYBIND11_MODULE(cray_trace, m){
     m.def("get_intersect_single", &get_intersect_single,
           "calculate the point that is closest to multiple lines",
           py::return_value_policy::move, py::arg("lines").noconvert());
+
     m.def("get_intersect_multiple", &get_intersect_multiple,
           "calculate the points that are closest to a collection of multiple lines",
           py::return_value_policy::move, py::arg("lines").noconvert());

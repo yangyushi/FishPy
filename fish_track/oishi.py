@@ -202,8 +202,8 @@ def refine_oishi_features(features, rot_num, dist_threshold, orient_threshold, l
     to_del = np.array(to_del)
 
     mask = np.ones(features.shape[1], dtype=bool)
-    mask[to_del] = False
-
+    if len(to_del) > 0:
+        mask[to_del] = False
     mask[features[-1] < likelihood_threshold] = False
     mask[features[-2] < (intensity_threshold * features[-2].max())] = False
     refined = features[:, mask]
