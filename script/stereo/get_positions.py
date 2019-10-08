@@ -89,13 +89,10 @@ for frame in range(frame_start, frame_end):
     )
 
     # from 2D clusters to 3D clouds
-    clouds = f3.stereolink.reconstruct_clouds(
+    clouds, err = f3.stereolink.reconstruct_clouds(
             cameras_ordered, matched_indices, clusters_multi_view,
             water_level=water_level, normal=normal, sample_size=sample_size, tol=tol_3d
     )
-
-    # merge the overlapped 3D clouds
-    clouds = f3.stereolink.merge_clouds(clouds, min_dist=tol_3d, min_num=sample_size)
     matched_centre = np.array([np.mean(cloud, 0) for cloud in clouds])
 
     if see_reprojection:
