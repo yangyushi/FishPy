@@ -34,6 +34,8 @@ see_reprojection = bool(config.Plot.see_reprojection)
 
 for frame in range(frame_start, frame_end):
     images_multi_view = []
+    rois_multi_view = []
+    features_multi_view = []
     clusters_multi_view = []
     cameras_ordered = []
 
@@ -64,19 +66,22 @@ for frame in range(frame_start, frame_end):
             feature = pickle.load(f)
         f.close()
 
-        binary = image > (image[roi].max() * view_config.Fish.threshold * 0.5)
+        fg = image[roi]
 
         clusters = ft.oishi.get_clusters(
-            feature, binary, shape_kernels, angles, roi,
+            feature, shape_kernels, angles, roi,
             kernel_threshold=config.Stereo.kernel_threshold
         )
+
 
         cameras_ordered.append(cameras[cam_name])
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
+        rois_multi_view.append(roi)
+        features_multi_view.append(feature)
 
         if see_cluster:
-            plt.imshow(image, cmap='gray')
+            plt.imshow(fg, cmap='gray')
             for c in clusters:
                 plt.scatter(*c.T, alpha=0.5)
             plt.show()
@@ -85,7 +90,7 @@ for frame in range(frame_start, frame_end):
     matched_indices = f3.stereolink.greedy_match_centre(
         clusters_multi_view, cameras_ordered, images_multi_view,
         depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, tol_3d=tol_3d, report=True
+        tol_2d=tol_2d, tol_3d=tol_3d, report=True, sample_size=sample_size
     )
 
     # from 2D clusters to 3D clouds
@@ -93,21 +98,28 @@ for frame in range(frame_start, frame_end):
             cameras_ordered, matched_indices, clusters_multi_view,
             water_level=water_level, normal=normal, sample_size=sample_size, tol=tol_3d
     )
+
     matched_centre = np.array([np.mean(cloud, 0) for cloud in clouds])
 
     if see_reprojection:
         f3.utility.plot_reproject(
-                images_multi_view[0], matched_centre, cameras_ordered[0],
-                filename=f'cam_1-reproject_frame_{frame:04}.png'
-                )
+            images_multi_view[0],
+            rois_multi_view[0], features_multi_view[0],
+            matched_centre, cameras_ordered[0],
+            filename=f'cam_1-reproject_frame_{frame:04}.png'
+        )
         f3.utility.plot_reproject(
-                images_multi_view[1], matched_centre, cameras_ordered[1],
-                filename=f'cam_2-reproject_frame_{frame:04}.png'
-                )
+            images_multi_view[1],
+            rois_multi_view[1], features_multi_view[1],
+            matched_centre, cameras_ordered[1],
+            filename=f'cam_2-reproject_frame_{frame:04}.png'
+        )
         f3.utility.plot_reproject(
-                images_multi_view[2], matched_centre, cameras_ordered[2],
-                filename=f'cam_3-reproject_frame_{frame:04}.png'
-                )
+            images_multi_view[2],
+            rois_multi_view[2], features_multi_view[2],
+            matched_centre, cameras_ordered[2],
+            filename=f'cam_3-reproject_frame_{frame:04}.png'
+        )
     print(f'frame {frame}', len(matched_centre))
     np.save(f'location_3d_frame_{frame:04}', matched_centre)
 
