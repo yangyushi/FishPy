@@ -68,8 +68,7 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(l % size):(l // size)]
 
 
-
-def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, sample_size=10, report=True):
+def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, sample_size=10, report=True):
     """
     use greedy algorithm to match clusters across THREE views
 
@@ -85,7 +84,6 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     :param depth: the maximum depth of water used to constrain the length of the epipolar relation
     :param normal: the direction of the normal of the water. It should be [0, 0, 1]
     :param tol_2d: tolerance on the distance between epipolar line and pixels
-    :param tol_3d: tolerance on the distance between 3D rays
     :param points: the number of points used in 3D stereo matching for each cluster
     :return: the matched indices across different views. The indices are for the clusters.
     """
@@ -168,7 +166,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[2][candidate[2]]
             ]
             par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
-            cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
+            cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level)
 
             z = np.sum(cloud.T[-1] / error) / np.sum(1/error)  # weighted by inverse error
             in_tank = (z < water_level) and (z > -depth)
@@ -188,14 +186,15 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     return matched
 
 
-def match_clusters_batch(clusters, cameras, normal, water_level, tol):
+def match_clusters_batch(clusters, cameras, normal, water_level):
     """
     return allowed 3d points given matched clusters in different views
+    the error is the average of perpendicular of 3D points to the three rays, unit is mm
     """
     xyz, err = ray_trace.ray_trace_refractive_cluster(
             clusters, cameras, z=water_level, normal=normal
             )
-    return xyz[err < tol], err[err < tol]
+    return xyz, err
 
 
 def match_clusters(clusters, cameras, normal, water_level, tol):
@@ -215,7 +214,7 @@ def match_clusters_faster(clusters, cameras, normal, water_level, tol):
     return np.array(results)
 
 
-def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_level, normal, sample_size, tol):
+def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_level, normal, sample_size):
     clouds, errors = [], []
     for indices in matched_indices:
         i1, i2, i3 = indices
@@ -225,13 +224,10 @@ def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_leve
             cameras[2].undistort_points(clusters_multi_view[2][i3], want_uv=True)
         )
 
-        par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
-        xyz, err = ray_trace.ray_trace_refractive_cluster(
+        par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
+        cloud, error = ray_trace.ray_trace_refractive_cluster(
                 par_clusters, cameras, z=water_level, normal=normal
         )
-
-        cloud = xyz[err < tol]
-        error = err[err < tol]
         if len(cloud) > 0:
             clouds.append(cloud)
             errors.append(error)

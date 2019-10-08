@@ -429,7 +429,7 @@ def get_u(n, d, x, z):
         if (u > 0) and (u <= x):
             return u * 1000
 
-    raise ValueError("Root finding for u failed, getting %s" % u)
+    raise ValueError("Root finding for u failed, z = " % z)
 
 def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
@@ -467,7 +467,6 @@ def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, no
 
 def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
-    #centres = [np.mean(c, axis=0) for c in clusters]
     pois_mv = []
     for camera, cluster in zip(cameras, clusters):
         pois = get_poi(camera, z=z, coordinate=cluster).T
@@ -482,9 +481,6 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)
-    #error = np.array([
-    #    get_reproj_err(p3, centres, cameras, z, normal) for p3 in points_3d
-    #])
     return points_3d, error
 
 

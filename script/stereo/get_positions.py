@@ -28,7 +28,6 @@ water_level = config.Stereo.water_level
 water_depth = config.Stereo.water_depth
 sample_size = config.Stereo.sample_size
 tol_2d = config.Stereo.tol_2d
-tol_3d = config.Stereo.tol_3d
 see_cluster = bool(config.Plot.see_cluster)
 see_reprojection = bool(config.Plot.see_reprojection)
 
@@ -90,16 +89,16 @@ for frame in range(frame_start, frame_end):
     matched_indices = f3.stereolink.greedy_match_centre(
         clusters_multi_view, cameras_ordered, images_multi_view,
         depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, tol_3d=tol_3d, report=True, sample_size=sample_size
+        tol_2d=tol_2d, report=True, sample_size=sample_size
     )
 
     # from 2D clusters to 3D clouds
-    clouds, err = f3.stereolink.reconstruct_clouds(
+    clouds, errors = f3.stereolink.reconstruct_clouds(
             cameras_ordered, matched_indices, clusters_multi_view,
-            water_level=water_level, normal=normal, sample_size=sample_size, tol=tol_3d
+            water_level=water_level, normal=normal, sample_size=sample_size
     )
 
-    matched_centre = np.array([np.mean(cloud, 0) for cloud in clouds])
+    matched_centre = np.array([np.sum(cloud / np.vstack(err), 0) / np.sum(1 / err) for cloud, err in zip(clouds, errors)])
 
     if see_reprojection:
         f3.utility.plot_reproject(
