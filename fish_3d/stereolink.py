@@ -68,6 +68,7 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(l % size):(l // size)]
 
 
+
 def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, tol_3d, sample_size=10, report=True):
     """
     use greedy algorithm to match clusters across THREE views
@@ -90,6 +91,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     """
     matched = []
 
+    clusters_distorted = [c for c in clusters]
     clusters = [[cam.undistort_points(cc, want_uv=True) for cc in c] for (cam, c) in zip(cameras, clusters)]
 
     centres_mv = [[
@@ -165,13 +167,20 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
-            par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
+            par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
             cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level, tol_3d)
+
             z = np.sum(cloud.T[-1] / error) / np.sum(1/error)  # weighted by inverse error
             in_tank = (z < water_level) and (z > -depth)
+
             if len(cloud) > 0 and in_tank:
+                cloud_com = np.sum(cloud / np.vstack(error), axis=0) / np.sum(1 / error)
+                locations_2d = [np.mean(full_clusters[i], 0) for i in range(3)]
+                reproj_err = ray_trace.get_reproj_err(cloud_com, locations_2d, cameras, water_level, normal)
                 allowed.append(candidate)
-                errors.append(np.mean(error))
+                errors.append(reproj_err)
+
+
         if len(allowed) > 0:
             matched.append(allowed[np.argmin(errors)])
         if report:
@@ -180,7 +189,9 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
 
 def match_clusters_batch(clusters, cameras, normal, water_level, tol):
-    results = []
+    """
+    return allowed 3d points given matched clusters in different views
+    """
     xyz, err = ray_trace.ray_trace_refractive_cluster(
             clusters, cameras, z=water_level, normal=normal
             )
@@ -209,9 +220,10 @@ def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_leve
     for indices in matched_indices:
         i1, i2, i3 = indices
         full_clusters = (
-            clusters_multi_view[0][i1],
-            clusters_multi_view[1][i2],
-            clusters_multi_view[2][i3])
+            cameras[0].undistort_points(clusters_multi_view[0][i1], want_uv=True),
+            cameras[1].undistort_points(clusters_multi_view[1][i2], want_uv=True),
+            cameras[2].undistort_points(clusters_multi_view[2][i3], want_uv=True)
+        )
 
         par_clusters = map(lambda x: get_partial_cluster(x, sample_size), full_clusters)
         xyz, err = ray_trace.ray_trace_refractive_cluster(
