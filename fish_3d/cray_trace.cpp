@@ -119,6 +119,7 @@ py::array_t<double> get_intersect_of_lines(py::array_t<double> py_lines){
     return result;
 }
 
+
 PYBIND11_MODULE(cray_trace, m){
     m.doc() = "refractive ray tracing";
 
