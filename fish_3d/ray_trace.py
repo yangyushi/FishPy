@@ -359,26 +359,23 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
 def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     linear approximation for epipolar line under water
-    the line path through two DISTORTED projection points, one at the interface on below water
-    use 3 epipolar points under water and do a linear fit
+    the line path through two UNDISTORTED projection points, one at the interface one below water
+    use 5 epipolar points under water and do a linear fit
     """
-    poi_1 = get_poi(camera_1, interface, np.array(uv))
+    poi_1 = get_poi(camera_1, interface, np.array(uv))  # uv should be undistorted
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
-    X = np.zeros((5, 2))
-    Y = np.zeros((5, 1))
+    X = np.zeros((6, 2))
+    Y = np.zeros((6, 1))
     ray_length = abs(depth / trans[-1])
-    for i, step in enumerate([0, ray_length/4, ray_length/2, ray_length*3/4, ray_length]):
+    for i, step in enumerate([ray_length/4, ray_length/2, ray_length*3/4, ray_length, ray_length*2]):
         m = poi_1 + step * trans
-        z = abs(m[-1])
+        z = abs(m[-1] - interface)
         d = abs(co_2[-1] - interface)
         x = np.linalg.norm(m[:2] - co_2[:2])
-        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x*0.8, x1=x*0.5).root
-        if (u > x) or (u < 0):
-            print("root finding in refractive epipolar geometry fails")
-            break
+        u = get_u(n, d, x, z)
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
@@ -389,6 +386,50 @@ def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
     return a, b
 
+def get_u(n, d, x, z):
+    """
+    n - relative refractive index
+    d, x, z - length in mm
+    """
+    x = x / 1000
+    d = d / 1000
+    z = z / 1000
+
+    A = n**2 - 1  # u^4
+    B = - 2 * A * x # u^3
+    C = d**2 * n**2 + A * x**2 - z**2  # u^2
+    D = -2 * d**2 * n**2 * x  # u^1
+    E = d**2 * n**2 * x**2
+
+    p1 = 2*C**3 - 9*B*C*D + 27*A*D**2 + 27*B**2*E - 72*A*C*E;
+
+    p2 = p1 + np.sqrt(-4 * (C**2 - 3*B*D + 12*A*E)**3 + p1**2)
+    p3 = (C**2 - 3*B*D + 12*A*E) / (3*A * (p2/2)**(1/3)) +\
+         ((p2/2)**(1/3)) / (3*A)
+    p4 = np.sqrt( B**2 / (4*A**2) - (2*C)/(3*A) + p3 )
+    p5 = B**2 / (2*A**2) - (4*C)/(3*A) - p3
+
+    p6 = (-(B/A)**3 + (4*B*C)/A**2 - 8*D/A) / (4*p4)
+
+    if (p5 - p6) > 0:
+        u = -B / (4*A) - p4/2 - np.sqrt(p5 - p6)/2
+        if (u > 0) and (u <= x):
+            return u * 1000
+
+        u = -B / (4 * A) - p4 / 2 + np.sqrt(p5 - p6) / 2
+        if (u > 0) and (u <= x):
+            return u * 1000
+
+    if (p5 + p6) > 0:
+        u = -B / (4 * A) + p4 / 2 - np.sqrt(p5 + p6) / 2
+        if (u > 0) and (u <= x):
+            return u * 1000
+
+        u = -B / (4 * A) + p4 / 2 + np.sqrt(p5 + p6) / 2
+        if (u > 0) and (u <= x):
+            return u * 1000
+
+    raise ValueError("Root finding for u failed, getting %s" % u)
 
 def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
@@ -426,6 +467,7 @@ def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, no
 
 def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refractive_index=1.33):
     camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
+    #centres = [np.mean(c, axis=0) for c in clusters]
     pois_mv = []
     for camera, cluster in zip(cameras, clusters):
         pois = get_poi(camera, z=z, coordinate=cluster).T
@@ -440,7 +482,18 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
     combinations = np.array(list(product(*trans_rays_mv)))  # shape: (n^view, view, 2, dim), can be HUGE!
     points_3d = get_intersect_of_lines_batch(combinations)
     error = pl_dist_batch(points_3d, combinations)
+    #error = np.array([
+    #    get_reproj_err(p3, centres, cameras, z, normal) for p3 in points_3d
+    #])
     return points_3d, error
+
+
+def get_reproj_err(point_3d, points_2d, cameras, water_level, normal):
+    reproj_err = 0
+    for p_2d, cam in zip(points_2d, cameras):
+        reproj = reproject_refractive_no_distort(point_3d, cam, water_level, normal)
+        reproj_err += np.linalg.norm(reproj - p_2d)
+    return reproj_err / len(cameras)
 
 
 def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: List['Camera'], z=0, normal=(0, 0, 1), refractive_index=1.33):
@@ -524,30 +577,43 @@ def same_direction(v1, v2, v3, axis):
 
 
 def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractive_index=1.333):
-    camera_origin = -camera.r.T @ camera.t
-
-    c_ = (
-            { 'type': 'ineq', 'fun': lambda v1, v2, v3: same_direction(v1, v2, v3, 0), 'args': (xyz, camera_origin) },
-            { 'type': 'ineq', 'fun': lambda v1, v2, v3: same_direction(v1, v2, v3, 1), 'args': (xyz, camera_origin) },
-            )
-
-    result = optimize.minimize(
-            cost_snell,
-            x0=(xyz[0], xyz[1]),
-            args=(water_level, xyz, camera_origin, np.array(normal), refractive_index),
-            method='SLSQP',
-            constraints=c_
-            )
-    poi_xy = result.x
-    poi = np.hstack((poi_xy, water_level))
-    uv_2, _ = cv2.projectPoints(
+    """
+    variable names follwoing https://ieeexplore.ieee.org/document/5957554, figure 1
+    """
+    co = -camera.r.T @ camera.t
+    d = co[-1] - water_level
+    x = np.linalg.norm(co[:2] - xyz[:2])
+    z = abs(xyz[-1] - water_level)
+    u = get_u(refractive_index, d, x, z)
+    o = np.hstack((co[:2], water_level))
+    oq_vec = np.hstack((xyz[:2], water_level)) - o
+    oq_vec /= np.linalg.norm(oq_vec)
+    poi = o + u * oq_vec
+    uv, _ = cv2.projectPoints(
             objectPoints=np.vstack(poi).T,
             rvec=camera.rotation.as_rotvec(),
             tvec=camera.t,
             cameraMatrix=camera.k,
             distCoeffs=camera.distortion
     )
-    return uv_2.ravel()
+    return uv.ravel()
+
+
+def reproject_refractive_no_distort(xyz, camera, water_level=0, normal=(0, 0, 1), refractive_index=1.333):
+    co = -camera.r.T @ camera.t
+
+    d = co[-1] - water_level
+    x = np.linalg.norm(co[:2] - xyz[:2])
+    z = abs(xyz[-1] - water_level)
+    u = get_u(refractive_index, d, x, z)
+    oq_vec = xyz[:2] - co[:2]
+    oq_vec /= np.linalg.norm(oq_vec)
+    poi_xy = co[:2] + u * oq_vec
+    poi = np.hstack((poi_xy, water_level, 1))
+    xyw = camera.p @ poi
+    xy = (xyw / xyw[-1])[:2]
+    return xy
+
 
 
 if __name__ == "__main__":
