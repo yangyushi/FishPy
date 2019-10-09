@@ -152,6 +152,7 @@ class Camera():
         self.rotation = R.from_rotvec(np.zeros(3))
         self.distortion = np.zeros(5)
         self.skew = 0
+        self.o = np.zeros(3)
         self.t = np.zeros(3)
         self.k = np.zeros((3, 3))
         self.calibration_files = []
@@ -163,6 +164,7 @@ class Camera():
         self.c = self.r.T @ (-self.t) # camera centre in world coordinate system
         self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
         self.p = np.dot(self.k, self.ext)
+        self.o = np.vstack(-self.r.T @ self.t)  # origin of the camera, shape (3, 1)
 
     def read_calibration(self, mat_file):
         """
