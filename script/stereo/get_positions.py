@@ -8,7 +8,10 @@ import fish_3d as f3
 import fish_track as ft
 from scipy import ndimage
 import matplotlib.pyplot as plt
-from scipy.spatial.distance import cdist
+
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
 
 config = ft.utility.Configure('config.ini')
 
@@ -72,7 +75,6 @@ for frame in range(frame_start, frame_end):
             kernel_threshold=config.Stereo.kernel_threshold
         )
 
-
         cameras_ordered.append(cameras[cam_name])
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
@@ -86,41 +88,67 @@ for frame in range(frame_start, frame_end):
             plt.show()
 
     # stereomatcing using refractive epipolar relationships
-    matched_indices = f3.stereolink.greedy_match_centre(
+    matched_indices_v1, matched_centres_v1, reproj_errors_v1 = f3.stereolink.greedy_match_centre(
         clusters_multi_view, cameras_ordered, images_multi_view,
         depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, report=True, sample_size=sample_size
+        tol_2d=tol_2d, report=False, sample_size=sample_size,
+        order=(0, 1, 2)
     )
 
-    # from 2D clusters to 3D clouds
-    clouds, errors = f3.stereolink.reconstruct_clouds(
-            cameras_ordered, matched_indices, clusters_multi_view,
-            water_level=water_level, normal=normal, sample_size=sample_size
+    matched_indices_v2, matched_centres_v2, reproj_errors_v2 = f3.stereolink.greedy_match_centre(
+        clusters_multi_view, cameras_ordered, images_multi_view,
+        depth=water_depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=False, sample_size=sample_size,
+        order=(1, 0, 2)
     )
 
-    matched_centre = np.array([np.sum(cloud / np.vstack(err), 0) / np.sum(1 / err) for cloud, err in zip(clouds, errors)])
+    matched_indices_v3, matched_centres_v3, reproj_errors_v3 = f3.stereolink.greedy_match_centre(
+        clusters_multi_view, cameras_ordered, images_multi_view,
+        depth=water_depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=False, sample_size=sample_size,
+        order=(2, 0, 1),
+    )
+
+    extra_v2 = [mi for mi in matched_indices_v2 if mi not in matched_indices_v1]
+    extra_v2_indices = np.array([i for i, mi in enumerate(matched_indices_v2) if mi not in matched_indices_v1])
+
+    if len(extra_v2) > 0:
+        matched_indices = matched_indices_v1 + extra_v2
+        matched_centres = np.concatenate((matched_centres_v1, matched_centres_v2[extra_v2_indices]))
+        reproj_errors = np.concatenate((reproj_errors_v1, reproj_errors_v2[extra_v2_indices]))
+
+    extra_v3 = [mi for mi in matched_indices_v3 if mi not in matched_indices_v1]
+    extra_v3_indices = np.array([i for i, mi in enumerate(matched_indices_v3) if mi not in matched_indices_v1])
+    if len(extra_v3) > 0:
+        matched_indices = matched_indices_v1 + extra_v3
+        matched_centres = np.concatenate((matched_centres_v1, matched_centres_v3[extra_v3_indices]))
+        reproj_errors = np.concatenate((reproj_errors_v1, reproj_errors_v3[extra_v3_indices]))
+
+    good_indices = f3.stereolink.remove_overlap(matched_centres, reproj_errors, 25)
+
+    matched_centres = matched_centres[good_indices]
 
     if see_reprojection:
         f3.utility.plot_reproject(
             images_multi_view[0],
             rois_multi_view[0], features_multi_view[0],
-            matched_centre, cameras_ordered[0],
+            matched_centres, cameras_ordered[0],
             filename=f'cam_1-reproject_frame_{frame:04}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[1],
             rois_multi_view[1], features_multi_view[1],
-            matched_centre, cameras_ordered[1],
+            matched_centres, cameras_ordered[1],
             filename=f'cam_2-reproject_frame_{frame:04}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[2],
             rois_multi_view[2], features_multi_view[2],
-            matched_centre, cameras_ordered[2],
+            matched_centres, cameras_ordered[2],
             filename=f'cam_3-reproject_frame_{frame:04}.png'
         )
-    print(f'frame {frame}', len(matched_centre))
-    np.save(f'location_3d_frame_{frame:04}', matched_centre)
+    print(f'frame {frame}', len(matched_centres))
+    np.save(f'location_3d_frame_{frame:04}', matched_centres)
 
 f = open('positions.pkl', 'wb')
 frames = glob.glob(r'./location_3d_frame_*.npy')

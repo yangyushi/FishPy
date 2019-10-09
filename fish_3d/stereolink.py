@@ -4,6 +4,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from typing import List
 from scipy import ndimage
+from scipy.spatial import ConvexHull, Delaunay
 from . import ray_trace
 
 
@@ -68,7 +69,7 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(l % size):(l // size)]
 
 
-def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, sample_size=10, report=True):
+def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, sample_size=10, report=True, order=(0, 1, 2)):
     """
     use greedy algorithm to match clusters across THREE views
 
@@ -88,18 +89,20 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     :return: the matched indices across different views. The indices are for the clusters.
     """
     matched = []
+    centres = []
+    reproj_errors = []
+    cameras_reordered = [cameras[i] for i in order]
 
-    clusters_distorted = [c for c in clusters]
-    clusters = [[cam.undistort_points(cc, want_uv=True) for cc in c] for (cam, c) in zip(cameras, clusters)]
+    clusters = [[cam.undistort_points(cluster, want_uv=True) for cluster in clusters[i]] for (i, cam) in zip(order, cameras_reordered)]
 
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
-        ] for cam, cluster_one_view in zip(cameras, clusters)]
+        ] for cluster_one_view in clusters]
 
     for i, centre in enumerate(centres_mv[0]):
 
-        a12, b12 = ray_trace.epipolar_la(centre, cameras[0], cameras[1], images[1], water_level, depth, normal)
-        a13, b13 = ray_trace.epipolar_la(centre, cameras[0], cameras[2], images[2], water_level, depth, normal)
+        a12, b12 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[1], images[1], water_level, depth, normal)
+        a13, b13 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[2], images[2], water_level, depth, normal)
 
         candidates_12, candidates_13 = [], []
 
@@ -122,7 +125,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         for j, c2 in enumerate(candidates_12):
             centre_2 = centres_mv[1][c2]
             a23, b23 = ray_trace.epipolar_la(
-                    centre_2, cameras[1], cameras[2], images[1], water_level, depth, normal
+                    centre_2, cameras_reordered[1], cameras_reordered[2], images[1], water_level, depth, normal
                     )
             for c3 in candidates_13:
                 cluster = clusters[2][c3]
@@ -141,7 +144,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         for j, c3 in enumerate(candidates_13):
             centre_3 = centres_mv[2][c3]
             a32, b32 = ray_trace.epipolar_la(
-                    centre_3, cameras[2], cameras[1], images[2], water_level, depth, normal
+                    centre_3, cameras_reordered[2], cameras_reordered[1], images[2], water_level, depth, normal
                     )
             for c2 in candidates_12:
                 cluster = clusters[1][c2]
@@ -157,7 +160,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
         # get xyz coordinates from 3 views
         candidates = list(itertools.product([i], candidates_12, candidates_13))
-        allowed, errors = [], []
+        allowed, coms, errors = [], [], []
 
         for candidate in candidates:
             full_clusters = [
@@ -166,24 +169,27 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
                     clusters[2][candidate[2]]
             ]
             par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
-            cloud, error = match_clusters_batch(par_clusters, cameras, normal, water_level)
+            cloud, error = match_clusters_batch(par_clusters, cameras_reordered, normal, water_level)
 
             z = np.sum(cloud.T[-1] / error) / np.sum(1/error)  # weighted by inverse error
             in_tank = (z < water_level) and (z > -depth)
 
             if len(cloud) > 0 and in_tank:
-                cloud_com = np.sum(cloud / np.vstack(error), axis=0) / np.sum(1 / error)
+                cloud_com = np.sum(cloud / np.reshape(error, (len(error), 1)), axis=0) / np.sum(1 / error)
                 locations_2d = [np.mean(full_clusters[i], 0) for i in range(3)]
-                reproj_err = ray_trace.get_reproj_err(cloud_com, locations_2d, cameras, water_level, normal)
-                allowed.append(candidate)
+                reproj_err = ray_trace.get_reproj_err(cloud_com, locations_2d, cameras_reordered, water_level, normal)
+                candidate_origional = [candidate[order.index(i)] for i in range(3)]
+                allowed.append(candidate_origional)
                 errors.append(reproj_err)
-
+                coms.append(cloud_com)
 
         if len(allowed) > 0:
-            matched.append(allowed[np.argmin(errors)])
+            matched.append(tuple(allowed[np.argmin(errors)]))
+            reproj_errors.append(np.min(errors))
+            centres.append(coms[np.argmin(errors)])
         if report:
             print(f"{len(matched)} 3D clouds found")
-    return matched
+    return matched, np.array(centres), np.array(reproj_errors)
 
 
 def match_clusters_batch(clusters, cameras, normal, water_level):
@@ -259,6 +265,28 @@ def merge_clouds(clouds, min_dist, min_num):
                 to_del.append(l)
         clouds = np.delete(clouds, to_del)
     return clouds
+
+
+def remove_overlap(centres, errors, search_range=10):
+    """
+    centres: possible fish locations, array shape (number, dimension)
+    errors: reprojection errors of COM of different cloudsshape, shape (number, )
+    overlap = convex hull overlap; vertices of ch1 goes into ch2
+    """
+    overlapped = []
+    for i, c1 in enumerate(centres):
+        for j, c2 in enumerate(centres[i+1:]):
+            if np.linalg.norm(centres[i] - centres[i+j+1]) <= search_range:
+                overlapped.append((i, j+i+1))
+    if len(overlapped) > 0:
+        overlapped = join_pairs(overlapped)
+    else:
+        return np.array([i for i in range(len(centres))])  # do not remove anything
+    not_overlapped = [i for i in range(len(centres)) if not (i in np.hstack(overlapped))]
+    for group in overlapped:
+        best = np.argmin(errors[np.array(group)])
+        not_overlapped.append(group[best])
+    return np.array(not_overlapped)
 
 
 def triangulation_v3(positions: np.ndarray, cameras: List['Camera']):
