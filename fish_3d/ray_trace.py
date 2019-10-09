@@ -115,13 +115,13 @@ def pl_dist_batch(points, lines):
     lines -> (n, view, 2, dim) [dim = 3]
     """
     view_num = lines.shape[1]
-    dists = []
+    dists = 0
     for v in range(view_num):
         delta = points - lines[:, v, 0, :]  # (num, 0)
         d = np.linalg.norm(np.cross(delta, lines[:, v, 1, :]), axis=-1)
-        dists.append(d)
-    dists = np.mean(dists, 0)  # (view, n, dim) -> (n, dim)
-    return dists
+        dists += d
+    #dists = np.mean(dists, 0)  # (view, n, dim) -> (n, dim)
+    return dists / view_num
 
 
 def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
@@ -156,6 +156,21 @@ def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     else:
         raise RuntimeError("The shape of coordinates array is not valid")
 
+    X =  (z*p12*p23 - z*p12*p33*y - z*p13*p22 + z*p13*p32*y + z*p22*p33*x - \
+          z*p23*p32*x + p12*p24 - p12*p34*y - p14*p22 + p14*p32*y + p22*p34*x - p24*p32*x) /\
+         (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
+
+    Y = -(z*p11*p23 - z*p11*p33*y - z*p13*p21 + z*p13*p31*y + z*p21*p33*x - \
+          z*p23*p31*x + p11*p24 - p11*p34*y - p14*p21 + p14*p31*y + p21*p34*x - p24*p31*x) /\
+         (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
+
+    return np.array([X, Y, z])
+
+
+def get_poi_cluster(camera, z, coordinate):
+    p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.p.ravel()
+    x, y = coordinate.T
+    z = z * np.ones(x.shape)
     X =  (z*p12*p23 - z*p12*p33*y - z*p13*p22 + z*p13*p32*y + z*p22*p33*x - \
           z*p23*p32*x + p12*p24 - p12*p34*y - p14*p22 + p14*p32*y + p22*p34*x - p24*p32*x) /\
          (p11*p22 - p11*p32*y - p12*p21 + p12*p31*y + p21*p32*x - p22*p31*x)
@@ -469,7 +484,7 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
     camera_origins = [np.vstack(-camera.r.T @ camera.t) for camera in cameras]  # 3 coordinates whose shape is (3, 1)
     pois_mv = []
     for camera, cluster in zip(cameras, clusters):
-        pois = get_poi(camera, z=z, coordinate=cluster).T
+        pois = get_poi_cluster(camera, z=z, coordinate=cluster).T
         pois_mv.append(pois)  # poi shape: (n, dim)
     incid_rays_mv = [poi - co.T for poi, co in zip(pois_mv, camera_origins)]
     trans_rays_mv = [
