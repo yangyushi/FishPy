@@ -88,7 +88,7 @@ for frame in range(frame_start, frame_end):
             plt.show()
 
     # stereomatcing using refractive epipolar relationships
-    matched_indices_v1, matched_centres_v1, reproj_errors_v1 = f3.stereolink.greedy_match_centre(
+    matched_indices, matched_centres, reproj_errors = f3.stereolink.greedy_match_centre(
         clusters_multi_view, cameras_ordered, images_multi_view,
         depth=water_depth, normal=normal, water_level=water_level,
         tol_2d=tol_2d, report=False, sample_size=sample_size,
@@ -109,20 +109,23 @@ for frame in range(frame_start, frame_end):
         order=(2, 0, 1),
     )
 
-    extra_v2 = [mi for mi in matched_indices_v2 if mi not in matched_indices_v1]
-    extra_v2_indices = np.array([i for i, mi in enumerate(matched_indices_v2) if mi not in matched_indices_v1])
-
+    extra_v2 = [mi for mi in matched_indices_v2 if mi not in matched_indices]
+    extra_v2_indices = np.array([i for i, mi in enumerate(matched_indices_v2) if mi not in matched_indices])
     if len(extra_v2) > 0:
-        matched_indices = matched_indices_v1 + extra_v2
-        matched_centres = np.concatenate((matched_centres_v1, matched_centres_v2[extra_v2_indices]))
-        reproj_errors = np.concatenate((reproj_errors_v1, reproj_errors_v2[extra_v2_indices]))
+        matched_indices = matched_indices + extra_v2
+        matched_centres = np.concatenate((matched_centres, matched_centres_v2[extra_v2_indices]))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v2[extra_v2_indices]))
 
-    extra_v3 = [mi for mi in matched_indices_v3 if mi not in matched_indices_v1]
-    extra_v3_indices = np.array([i for i, mi in enumerate(matched_indices_v3) if mi not in matched_indices_v1])
+    extra_v3 = [mi for mi in matched_indices_v3 if mi not in matched_indices]
+    extra_v3_indices = np.array([i for i, mi in enumerate(matched_indices_v3) if mi not in matched_indices])
     if len(extra_v3) > 0:
-        matched_indices = matched_indices_v1 + extra_v3
-        matched_centres = np.concatenate((matched_centres_v1, matched_centres_v3[extra_v3_indices]))
-        reproj_errors = np.concatenate((reproj_errors_v1, reproj_errors_v3[extra_v3_indices]))
+        matched_indices = matched_indices + extra_v3
+        matched_centres = np.concatenate((matched_centres, matched_centres_v3[extra_v3_indices]))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v3[extra_v3_indices]))
+
+    if len(matched_indices) + len(matched_indices_v2) + len(matched_indices_v3) == 0:
+        np.save(f'location_3d_frame_{frame:04}', np.empty((0, 3)))
+        continue
 
     good_indices = f3.stereolink.remove_overlap(matched_centres, reproj_errors, 25)
 
