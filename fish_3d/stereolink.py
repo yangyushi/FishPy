@@ -189,7 +189,11 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             centres.append(coms[np.argmin(errors)])
         if report:
             print(f"{len(matched)} 3D clouds found")
-    return matched, np.array(centres), np.array(reproj_errors)
+    if len(centres) > 0:
+        centres = np.array(centres)
+    else:
+        centres = np.zeros((0, 3))
+    return matched, centres, np.array(reproj_errors)
 
 
 def match_clusters_batch(clusters, cameras, normal, water_level):
