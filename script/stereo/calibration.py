@@ -45,9 +45,12 @@ for cam_name in config:
 
 f3.camera.calib_mult_ext(*cameras, *calib_files, *calib_orders, grid_size, corner_number, win_size)
 
+camera_dict = {}
+
 for name, cam in zip(camera_names, cameras):
     with open(f'{name}.pkl', 'wb') as f:
         pickle.dump(cam, f)
+    camera_dict.update({name: cam})
 
 with open(f'cameras.pkl', 'wb') as f:
-    pickle.dump(cameras, f)
+    pickle.dump(camera_dict, f)
