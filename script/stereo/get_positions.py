@@ -17,10 +17,10 @@ config = ft.utility.Configure('config.ini')
 
 if 'cameras.pkl' in os.listdir('.'):
     with open(f'cameras.pkl', 'rb') as f:
-        cameras = pickle.load(f)
+        camera_dict = pickle.load(f)
 elif 'cameras.pkl' in os.listdir('result'):
     with open(f'result/cameras.pkl', 'rb') as f:
-        cameras = pickle.load(f)
+        camera_dict = pickle.load(f)
 else:
     raise FileNotFoundError("Can't locate calibrated cameras, run make calib")
 
@@ -39,9 +39,9 @@ for frame in range(frame_start, frame_end):
     rois_multi_view = []
     features_multi_view = []
     clusters_multi_view = []
-    cameras_ordered = []
+    cameras = []
 
-    for i, cam_name in enumerate(cameras):
+    for i, cam_name in enumerate(camera_dict):
         cam_config = eval(f'config.{cam_name}')
         view_config = ft.utility.Configure(cam_config.config)
 
@@ -69,13 +69,15 @@ for frame in range(frame_start, frame_end):
         f.close()
 
         fg = image[roi]
+        cam = camera_dict[cam_name]
 
         clusters = ft.oishi.get_clusters(
             feature, shape_kernels, angles, roi,
             kernel_threshold=config.Stereo.kernel_threshold
         )
+        clusters = [cam.undistort_points(c, want_uv=True) for c in clusters]  # undistort each cluster
 
-        cameras_ordered.append(cameras[cam_name])
+        cameras.append(cam)
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
         rois_multi_view.append(roi)
@@ -88,70 +90,61 @@ for frame in range(frame_start, frame_end):
             plt.show()
 
     # stereomatcing using refractive epipolar relationships
-    matched_indices, matched_centres, reproj_errors = f3.stereolink.greedy_match_centre(
-        clusters_multi_view, cameras_ordered, images_multi_view,
-        depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, report=False, sample_size=sample_size,
-        order=(0, 1, 2)
+    matched_indices, matched_centres, reproj_errors = f3.three_view_cluster_match(
+        clusters_multi_view, cameras,
+        tol_2d=tol_2d, sample_size=sample_size, depth=water_depth,
+        report=False, normal=normal, water_level=water_level
     )
 
-    matched_indices_v2, matched_centres_v2, reproj_errors_v2 = f3.stereolink.greedy_match_centre(
-        clusters_multi_view, cameras_ordered, images_multi_view,
-        depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, report=False, sample_size=sample_size,
-        order=(1, 0, 2)
+
+    matched_indices, matched_centres, reproj_errors = f3.remove_conflict(
+        matched_indices, matched_centres, reproj_errors
     )
 
-    matched_indices_v3, matched_centres_v3, reproj_errors_v3 = f3.stereolink.greedy_match_centre(
-        clusters_multi_view, cameras_ordered, images_multi_view,
-        depth=water_depth, normal=normal, water_level=water_level,
-        tol_2d=tol_2d, report=False, sample_size=sample_size,
-        order=(2, 0, 1),
-    )
+    while True:  # try to match all un-matched flusters
+        extra_indices, extra_centres, extra_reproj_errors = f3.extra_three_view_cluster_match(
+            matched_indices, clusters_multi_view, cameras,
+            tol_2d=tol_2d, sample_size=sample_size, depth=water_depth,
+            report=False, normal=normal, water_level=water_level
+        )
+        if len(extra_indices) == 0:
+            break
 
-    extra_v2 = [mi for mi in matched_indices_v2 if mi not in matched_indices]
-    extra_v2_indices = np.array([i for i, mi in enumerate(matched_indices_v2) if mi not in matched_indices])
-    if len(extra_v2) > 0:
-        matched_indices = matched_indices + extra_v2
-        matched_centres = np.concatenate((matched_centres, matched_centres_v2[extra_v2_indices]))
-        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v2[extra_v2_indices]))
+        matched_indices = np.concatenate((matched_indices, extra_indices))
+        matched_centres = np.concatenate((matched_centres, extra_centres))
+        reproj_errors = np.concatenate((reproj_errors, extra_reproj_errors))
 
-    extra_v3 = [mi for mi in matched_indices_v3 if mi not in matched_indices]
-    extra_v3_indices = np.array([i for i, mi in enumerate(matched_indices_v3) if mi not in matched_indices])
-    if len(extra_v3) > 0:
-        matched_indices = matched_indices + extra_v3
-        matched_centres = np.concatenate((matched_centres, matched_centres_v3[extra_v3_indices]))
-        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v3[extra_v3_indices]))
+        matched_indices, matched_centres, reproj_errors = f3.remove_conflict(
+            matched_indices, matched_centres, reproj_errors
+        )
 
-    if len(matched_indices) + len(matched_indices_v2) + len(matched_indices_v3) == 0:
+    print(f'frame {frame}', len(matched_centres))
+
+    if len(matched_indices) == 0:
         np.save(f'location_3d_frame_{frame:04}', np.empty((0, 3)))
         continue
 
-    good_indices = f3.stereolink.remove_overlap(matched_centres, reproj_errors, 25)
-
-    matched_centres = matched_centres[good_indices]
+    np.save(f'location_3d_frame_{frame:04}', matched_centres)
 
     if see_reprojection:
         f3.utility.plot_reproject(
             images_multi_view[0],
             rois_multi_view[0], features_multi_view[0],
-            matched_centres, cameras_ordered[0],
+            matched_centres, cameras[0],
             filename=f'cam_1-reproject_frame_{frame:04}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[1],
             rois_multi_view[1], features_multi_view[1],
-            matched_centres, cameras_ordered[1],
+            matched_centres, cameras[1],
             filename=f'cam_2-reproject_frame_{frame:04}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[2],
             rois_multi_view[2], features_multi_view[2],
-            matched_centres, cameras_ordered[2],
+            matched_centres, cameras[2],
             filename=f'cam_3-reproject_frame_{frame:04}.png'
         )
-    print(f'frame {frame}', len(matched_centres))
-    np.save(f'location_3d_frame_{frame:04}', matched_centres)
 
 f = open('positions.pkl', 'wb')
 frames = glob.glob(r'./location_3d_frame_*.npy')

@@ -6,6 +6,7 @@ from typing import List
 from scipy import ndimage
 from scipy.spatial import ConvexHull, Delaunay
 from . import ray_trace
+from typing import List, Tuple
 
 
 def get_fundamental_from_projections(p1, p2):
@@ -69,7 +70,49 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(l % size):(l // size)]
 
 
-def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, tol_2d, sample_size=10, report=True, order=(0, 1, 2)):
+def three_view_cluster_match(
+    clusters_multi_view, cameras, tol_2d: float, sample_size: int, depth: float,
+    report=False, normal=(0, 0, 1), water_level=0.0
+    ):
+    """
+    match clusters tanking simutaneously by three cameras
+    the clusters were assumed to be in water, n = 1.333
+    """
+    matched_indices, matched_centres, reproj_errors = greedy_match(
+        clusters_multi_view, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(0, 1, 2)
+    )
+
+    extra_indices_v2, extra_centres_v2, reproj_errors_v2 = greedy_match(
+        clusters_multi_view, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(1, 0, 2), history=matched_indices
+    )
+
+    if len(extra_indices_v2) > 0:
+        matched_indices = np.concatenate((matched_indices, extra_indices_v2))
+        matched_centres = np.concatenate((matched_centres, extra_centres_v2))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v2))
+
+    extra_indices_v3, extra_centres_v3, reproj_errors_v3 = greedy_match(
+        clusters_multi_view, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(2, 0, 1), history=matched_indices
+    )
+
+    if len(extra_indices_v3) > 0:
+        matched_indices = np.concatenate((matched_indices, extra_indices_v3))
+        matched_centres = np.concatenate((matched_centres, extra_centres_v3))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v3))
+
+    return matched_indices, matched_centres, reproj_errors
+
+
+def greedy_match(clusters, cameras, depth, normal, water_level, tol_2d, sample_size=10, report=True, order=(0, 1, 2), history=np.empty((0, 3))):
     """
     use greedy algorithm to match clusters across THREE views
 
@@ -81,7 +124,6 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
     :param clusters: a collection of points in the 2D image with the format of (u, v), NOT (x, y)
     :param cameras: a collection of Camera instances
-    :param images: multiple images in views of different cameras
     :param depth: the maximum depth of water used to constrain the length of the epipolar relation
     :param normal: the direction of the normal of the water. It should be [0, 0, 1]
     :param tol_2d: tolerance on the distance between epipolar line and pixels
@@ -92,8 +134,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
     centres = []
     reproj_errors = []
     cameras_reordered = [cameras[i] for i in order]
-
-    clusters = [[cam.undistort_points(cluster, want_uv=True) for cluster in clusters[i]] for (i, cam) in zip(order, cameras_reordered)]
+    clusters = [clusters[i] for i in order]
 
     centres_mv = [[
             cluster.mean(0) for cluster in cluster_one_view
@@ -101,8 +142,8 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
 
     for i, centre in enumerate(centres_mv[0]):
 
-        a12, b12 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[1], images[1], water_level, depth, normal)
-        a13, b13 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[2], images[2], water_level, depth, normal)
+        a12, b12 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[1], water_level, depth, normal)
+        a13, b13 = ray_trace.epipolar_la(centre, cameras_reordered[0], cameras_reordered[2], water_level, depth, normal)
 
         candidates_12, candidates_13 = [], []
 
@@ -125,7 +166,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         for j, c2 in enumerate(candidates_12):
             centre_2 = centres_mv[1][c2]
             a23, b23 = ray_trace.epipolar_la(
-                    centre_2, cameras_reordered[1], cameras_reordered[2], images[1], water_level, depth, normal
+                    centre_2, cameras_reordered[1], cameras_reordered[2], water_level, depth, normal
                     )
             for c3 in candidates_13:
                 cluster = clusters[2][c3]
@@ -144,7 +185,7 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         for j, c3 in enumerate(candidates_13):
             centre_3 = centres_mv[2][c3]
             a32, b32 = ray_trace.epipolar_la(
-                    centre_3, cameras_reordered[2], cameras_reordered[1], images[2], water_level, depth, normal
+                    centre_3, cameras_reordered[2], cameras_reordered[1], water_level, depth, normal
                     )
             for c2 in candidates_12:
                 cluster = clusters[1][c2]
@@ -163,16 +204,20 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
         allowed, coms, errors = [], [], []
 
         for candidate in candidates:
+            test = history.T - np.vstack(candidate)
+            if (test == 0).any():
+                continue
             full_clusters = [
                     clusters[0][candidate[0]],
                     clusters[1][candidate[1]],
                     clusters[2][candidate[2]]
             ]
             par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
-            cloud, error = match_clusters_batch(par_clusters, cameras_reordered, normal, water_level)
+            cloud, error = match_clusters(par_clusters, cameras_reordered, normal, water_level)
 
             z = np.sum(cloud.T[-1] / error) / np.sum(1/error)  # weighted by inverse error
             in_tank = (z < water_level) and (z > -depth)
+            in_tank = True
 
             if len(cloud) > 0 and in_tank:
                 cloud_com = np.sum(cloud / np.reshape(error, (len(error), 1)), axis=0) / np.sum(1 / error)
@@ -191,12 +236,14 @@ def greedy_match_centre(clusters, cameras, images, depth, normal, water_level, t
             print(f"{len(matched)} 3D clouds found")
     if len(centres) > 0:
         centres = np.array(centres)
+        matched = np.array(matched)
     else:
         centres = np.zeros((0, 3))
+        matched = np.zeros((0, 3), dtype=int)
     return matched, centres, np.array(reproj_errors)
 
 
-def match_clusters_batch(clusters, cameras, normal, water_level):
+def match_clusters(clusters, cameras, normal, water_level):
     """
     return allowed 3d points given matched clusters in different views
     the error is the average of perpendicular of 3D points to the three rays, unit is mm
@@ -205,70 +252,6 @@ def match_clusters_batch(clusters, cameras, normal, water_level):
             clusters, cameras, z=water_level, normal=normal
             )
     return xyz, err
-
-
-def match_clusters(clusters, cameras, normal, water_level, tol):
-    combinations = list(itertools.product(*clusters))
-    results = []
-    # todo: write a batch version for this
-    for comb in combinations:
-        xyz, err = ray_trace.ray_trace_refractive_faster(comb, cameras, z=water_level, normal=normal)
-        if err < tol:
-            results.append(xyz)
-    return np.array(results)
-
-
-def match_clusters_faster(clusters, cameras, normal, water_level, tol):
-    xyz, err = ray_trace.ray_trace_refractive_faster(clusters, cameras, z=water_level, normal=normal)
-    xyz = xyz[np.where(err < tol)]
-    return np.array(results)
-
-
-def reconstruct_clouds(cameras, matched_indices, clusters_multi_view, water_level, normal, sample_size):
-    clouds, errors = [], []
-    for indices in matched_indices:
-        i1, i2, i3 = indices
-        full_clusters = (
-            cameras[0].undistort_points(clusters_multi_view[0][i1], want_uv=True),
-            cameras[1].undistort_points(clusters_multi_view[1][i2], want_uv=True),
-            cameras[2].undistort_points(clusters_multi_view[2][i3], want_uv=True)
-        )
-
-        par_clusters = list(map(lambda x: get_partial_cluster(x, sample_size), full_clusters))
-        cloud, error = ray_trace.ray_trace_refractive_cluster(
-                par_clusters, cameras, z=water_level, normal=normal
-        )
-        if len(cloud) > 0:
-            clouds.append(cloud)
-            errors.append(error)
-    return clouds, errors
-
-
-def merge_clouds(clouds, min_dist, min_num):
-    """
-    close pair = two points whose distance is smaller than min_dist
-    overlapped clouds = two clouds that have more than *min_num* close paris
-    merge all overlapped clouds
-    """
-    overlapped = []
-    for i, c1 in enumerate(clouds):
-        for j, c2 in enumerate(clouds[i+1:]):
-            dist = cdist(c1, c2)
-            indices = np.triu_indices_from(dist, k=1)
-            dist = dist[indices]
-            if np.sum(dist < min_dist) > min_num:
-                overlapped.append((i, j+i+1))
-    if len(overlapped) > 0:
-        overlapped = join_pairs(overlapped)
-
-        to_del = []
-        for labels in overlapped:
-            new_p1 = np.concatenate([clouds[l] for l in labels], axis=0)
-            clouds[labels[0]] = new_p1
-            for l in labels[1:]:
-                to_del.append(l)
-        clouds = np.delete(clouds, to_del)
-    return clouds
 
 
 def remove_overlap(centres, errors, search_range=10):
@@ -285,12 +268,96 @@ def remove_overlap(centres, errors, search_range=10):
     if len(overlapped) > 0:
         overlapped = join_pairs(overlapped)
     else:
-        return np.array([i for i in range(len(centres))])  # do not remove anything
+        return centres  # do not remove anything
     not_overlapped = [i for i in range(len(centres)) if not (i in np.hstack(overlapped))]
     for group in overlapped:
         best = np.argmin(errors[np.array(group)])
         not_overlapped.append(group[best])
-    return np.array(not_overlapped)
+    return centres[np.array(not_overlapped)]
+
+
+def remove_conflict(matched_indices, matched_centres, reproj_errors):
+    """
+    Only allow each unique feature, indicated by a number in `matched_indices`, appear once for each view
+    This means all values in matched_indices.T should be unique along three views
+    It works for n views
+    matched_indices: shape (number, view)
+    """
+    mask = np.ones(len(matched_centres), dtype=bool)
+    view_num = matched_indices.shape[1]
+
+    for view in range(view_num):
+        unique_vals, counts = np.unique(matched_indices[:, view], return_counts=True)
+        duplicate = unique_vals[counts > 1]
+
+        for val in duplicate:
+            indices = np.where(matched_indices[:, view] == val)[0]
+            best = np.argmin(reproj_errors[indices])
+            for j, i in enumerate(indices):
+                if j != best:
+                    mask[i] = 0
+
+    matched_indices = matched_indices[mask>0]
+    matched_centres = matched_centres[mask>0]
+    reproj_errors = reproj_errors[mask>0]
+    return matched_indices, matched_centres, reproj_errors
+
+
+def extra_three_view_cluster_match(
+    matched_indices, clusters_multi_view, cameras, tol_2d: float, sample_size: int, depth: float,
+    report=False, normal=(0, 0, 1), water_level=0.0
+    ):
+    """
+    match clusters tanking simutaneously by three cameras
+    pretending only features that DID NOT correspond to indices in  `matched_indices` appear in the view
+    matched_indices: shape (number, view)
+    """
+    clusters_left = []
+    indices_left_multi_view = []
+    for view, indices_matched in enumerate(matched_indices.T):
+        clusters_left.append([])
+        cluster_num = len(clusters_multi_view[view])
+        indices_full = np.arange(cluster_num)
+        indices_left = np.setdiff1d(indices_full, indices_matched)
+        for i in indices_left:
+            clusters_left[-1].append(clusters_multi_view[view][i])
+        indices_left_multi_view.append(indices_left)
+
+    matched_indices, matched_centres, reproj_errors = greedy_match(
+        clusters_left, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(0, 1, 2)
+    )
+
+    extra_indices_v2, extra_centres_v2, reproj_errors_v2 = greedy_match(
+        clusters_left, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(1, 0, 2), history=matched_indices
+    )
+
+    if len(extra_indices_v2) > 0:
+        matched_indices = np.concatenate((matched_indices, extra_indices_v2))
+        matched_centres = np.concatenate((matched_centres, extra_centres_v2))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v2))
+
+    extra_indices_v3, extra_centres_v3, reproj_errors_v3 = greedy_match(
+        clusters_left, cameras,
+        depth=depth, normal=normal, water_level=water_level,
+        tol_2d=tol_2d, report=report, sample_size=sample_size,
+        order=(2, 0, 1), history=matched_indices
+    )
+
+    if len(extra_indices_v3) > 0:
+        matched_indices = np.concatenate((matched_indices, extra_indices_v3))
+        matched_centres = np.concatenate((matched_centres, extra_centres_v3))
+        reproj_errors = np.concatenate((reproj_errors, reproj_errors_v3))
+
+    for view in range(matched_indices.shape[1]):
+        matched_indices[:, view] = indices_left_multi_view[view][matched_indices[:, view]]
+
+    return matched_indices, matched_centres, reproj_errors
 
 
 def triangulation_v3(positions: np.ndarray, cameras: List['Camera']):
@@ -323,17 +390,3 @@ def join_pairs(pairs):
         joined_pair = np.unique(np.vstack(np.where(labels == val)))
         joined_pairs.append(joined_pair)
     return joined_pairs
-
-
-def rematch(points_3d, points_2d, camera):
-    for p3 in points_3d:
-        proj = reproject_refractive(p3, camera)
-        dists = np.linalg.norm(points_2d - proj.reshape((1, 2)), axis=1)
-
-
-def post_process(points_3d, points_2d_mv, cameras, tol_2d):
-    links_v1, count_v1 = rematch(points_3d, points_2d_mv[0], cameras[0], tol_2d)
-    links_v2, count_v2 = rematch(points_3d, points_2d_mv[1], cameras[1], tol_2d)
-    links_v3, count_v3 = rematch(points_3d, points_2d_mv[2], cameras[2], tol_2d)
-    # remove suspecious links, where one 2d feature is "shared" by many 3d points
-    pass
