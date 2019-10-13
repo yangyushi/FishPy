@@ -371,7 +371,7 @@ def epipolar_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, norma
     return np.array(epipolar_pixels)
 
 
-def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_la(uv, camera_1, camera_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     linear approximation for epipolar line under water
     the line path through two UNDISTORTED projection points, one at the interface one below water
@@ -382,10 +382,11 @@ def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
-    X = np.zeros((6, 2))
-    Y = np.zeros((6, 1))
     ray_length = abs(depth / trans[-1])
-    for i, step in enumerate([ray_length/4, ray_length/2, ray_length*3/4, ray_length, ray_length*2]):
+    sample_points = [ray_length/10, ray_length/8, ray_length/6, ray_length/4, ray_length/2, ray_length*3/4, ray_length]
+    X = np.zeros((len(sample_points), 2))
+    Y = np.zeros((len(sample_points), 1))
+    for i, step in enumerate(sample_points):
         m = poi_1 + step * trans
         z = abs(m[-1] - interface)
         d = abs(co_2[-1] - interface)
@@ -400,6 +401,7 @@ def epipolar_la(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=
         Y[i, 0] = uv_2[1]
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
     return a, b
+
 
 def get_u(n, d, x, z):
     """
@@ -445,6 +447,7 @@ def get_u(n, d, x, z):
             return u * 1000
 
     raise ValueError("Root finding for u failed, z = " % z)
+
 
 def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
@@ -500,11 +503,11 @@ def ray_trace_refractive_cluster(clusters, cameras, z=0, normal=(0, 0, 1), refra
 
 
 def get_reproj_err(point_3d, points_2d, cameras, water_level, normal):
-    reproj_err = 0
-    for p_2d, cam in zip(points_2d, cameras):
+    reproj_err = np.zeros(3)
+    for i, (p_2d, cam) in enumerate(zip(points_2d, cameras)):
         reproj = reproject_refractive_no_distort(point_3d, cam, water_level, normal)
-        reproj_err += np.linalg.norm(reproj - p_2d)
-    return reproj_err / len(cameras)
+        reproj_err[i] = np.linalg.norm(reproj - p_2d)
+    return np.max(reproj_err)
 
 
 def ray_trace_refractive_trajectory(trajectories: List[np.ndarray], cameras: List['Camera'], z=0, normal=(0, 0, 1), refractive_index=1.33):
@@ -612,7 +615,6 @@ def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractiv
 
 def reproject_refractive_no_distort(xyz, camera, water_level=0, normal=(0, 0, 1), refractive_index=1.333):
     co = -camera.r.T @ camera.t
-
     d = co[-1] - water_level
     x = np.linalg.norm(co[:2] - xyz[:2])
     z = abs(xyz[-1] - water_level)
