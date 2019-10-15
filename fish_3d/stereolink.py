@@ -6,6 +6,7 @@ from typing import List
 from scipy import ndimage
 from scipy.spatial import ConvexHull, Delaunay
 from . import ray_trace
+from . import camera
 from typing import List, Tuple
 
 
@@ -390,3 +391,46 @@ def join_pairs(pairs):
         joined_pair = np.unique(np.vstack(np.where(labels == val)))
         joined_pairs.append(joined_pair)
     return joined_pairs
+
+
+def match_points_v3(cameras: List['Camera'], points: List[np.ndarray], max_cost=1):
+    """
+    match points in three views
+    no refractions were considered
+    :param cameras: a list of three cameras
+    :param points: (x, y) coordinates in three views
+    """
+    # (n, 3) & (n, 1)
+    points_homo = [np.concatenate(
+        (p, np.ones((len(p), 1))), axis=1
+    ) for p in points]
+    results = []
+    f12 = camera.get_fundamental( cameras[0], cameras[1] )
+    f13 = camera.get_fundamental( cameras[0], cameras[2] )
+    f23 = camera.get_fundamental( cameras[1], cameras[2] )
+    f12 = f12 / f12.max()
+    f13 = f13 / f13.max()
+    f23 = f23 / f23.max()
+    results = []
+    for p1h in points_homo[0]:
+        cost_v2 = np.array([p2h @ f12 @ p1h for p2h in points_homo[1]])
+        cost_v3 = np.array([p3h @ f13 @ p1h for p3h in points_homo[2]])
+        mc2 = np.min(np.abs(cost_v2))
+        mc3 = np.min(np.abs(cost_v3))
+        
+        best_v2 = np.argmin(np.abs(cost_v2))
+        best_v3 = np.argmin(np.abs(cost_v3))
+        
+        mc3 = np.min(np.abs(cost_v3))
+        
+        p2h = points_homo[1][best_v2]
+        p3h = points_homo[2][best_v3]
+        mc23 = abs(p3h @ f23 @ p2h)
+
+        if max(mc2, mc3, mc23) < max_cost:
+            p3d = triangulation_v3(
+                (p1h, p2h, p3h),
+                cameras
+            )
+            results.append(p3d)
+    return np.array(results)
