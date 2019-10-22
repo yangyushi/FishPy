@@ -6,6 +6,7 @@ import pickle
 import matplotlib.pyplot as plt
 from numba import jit
 import trackpy as tp
+from nrook import solve_nrook
 
 
 class Trajectory():
