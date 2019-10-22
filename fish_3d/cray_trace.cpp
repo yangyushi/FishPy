@@ -134,6 +134,4 @@ PYBIND11_MODULE(cray_trace, m){
     m.def("get_intersect_multiple", &get_intersect_multiple,
           "calculate the points that are closest to a collection of multiple lines",
           py::return_value_policy::move, py::arg("lines").noconvert());
-
-
 }
