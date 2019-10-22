@@ -6,7 +6,8 @@ import pickle
 import matplotlib.pyplot as plt
 from numba import jit
 import trackpy as tp
-from nrook import solve_nrook
+from typing import List
+from .nrook import solve_nrook
 
 
 class Trajectory():
@@ -31,7 +32,7 @@ class Trajectory():
         """
         assert t > self.t_end, "We predict the future, not the past"
         pos_predict = self.p_end + self.spd_end * (t - self.t_end)
-        spd_predict = self.spd_end#[-1]
+        spd_predict = self.spd_end
         return pos_predict, spd_predict
 
     def __len__(self):
@@ -145,185 +146,6 @@ class Manager():
 
     def __str__(self):
         return f'trajectory manager: {len(self)} trajectories'
-
-
-class Link():
-    def __init__(self, traj_1, traj_2):
-        assert type(traj_1) == Trajectory, "Link is only for trajectories, not %s" % type(traj_1)
-        assert type(traj_2) == Trajectory, "Link is only for trajectories, not %s" % type(traj_2)
-        self.traj_1, self.traj_2 = traj_1, traj_2
-        self.pos_dist = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
-        #self.pos_dist = np.linalg.norm(traj_1.p_end - traj_2.p_start)
-        self.spd_dist = np.linalg.norm(traj_1.spd_end - traj_2.spd_end) * (traj_2.t_start - traj_1.t_end)
-        #self.spd_dist = np.linalg.norm(traj_1.spd_end - traj_2.spd_start) * (traj_2.t_start - traj_1.t_end)
-        self.dist = np.sqrt(self.pos_dist**2 + self.spd_dist**2)
-
-    def __and__(self, link):
-        assert type(link) == Link, "logic and is only for Link instance"
-        c11 = link.traj_1 is self.traj_1
-        c12 = link.traj_1 is self.traj_2
-        c21 = link.traj_2 is self.traj_1
-        c22 = link.traj_2 is self.traj_2
-        return c11 or c12 or c21 or c22
-
-    def conflict(self, links):
-        conf = []
-        for l in links:
-            if self & l:
-                conf.append(l)
-        return conf
-
-
-class Network():
-    def __init__(self):
-        "collection of links"
-        self.net = []
-        self.length = 0
-        self.index = 0
-
-    def get_cost(self):
-        cost = 0
-        for link in self.net:
-            cost += link.dist
-        return cost
-
-    def __add__(self, link):
-        assert type(link) == Link, "Only links can be added into the network"
-        self.net.append(link)
-        self.length += 1
-        return self
-
-    def __iadd__(self, link):
-        self.__add__(link)
-        return self
-
-    def __sub__(self, link):
-        assert link in self.net, "Only the links within the network can be removed"
-        self.net.remove(link)
-        self.length -= 1
-        return self
-
-    def __isub__(self, link):
-        self.__sub__(link)
-        return self
-
-    def __len__(self):
-        return self.length
-
-    def __iter__(self):
-        self.index = 0
-        return self
-
-    def __next__(self):
-        if self.index >= self.length:
-            raise StopIteration
-        link = self.net[self.index]
-        self.index += 1
-        return link
-
-    def __eq__(self, network):
-        assert type(network) == Network, f"{type(network)} can not be compared with a network"
-        if len(self) != len(network):
-            return False
-        for link in self.net:
-            if link not in network.net:
-                return False
-        for link in network.net:
-            if link not in self.net:
-                return False
-        return True
-
-    def __lt__(self, network):
-        return len(self) < len(network)
-
-    def __gt__(self, network):
-        return len(self) > len(network)
-
-    def __le__(self, network):
-        return len(self) <= len(network)
-
-    def __ge__(self, network):
-        return len(self) >= len(network)
-
-
-    def __contains__(self, network):
-        assert type(network) == Network, f"{type(network)} can not be contained in a network"
-        for link in network:
-            if link not in self.net:
-                return False
-        return True
-
-
-class LinkingNet():
-    def __init__(self, trajs, dist_threshold, time_threshold):
-        self.trajs = trajs
-        self.dist_threshold = dist_threshold
-        self.time_threshold = time_threshold
-        self.links = self.get_possible_links()
-
-    def get_possible_links(self):
-        """
-        get links that link trajectories together
-        if their 'distance' is below the dist_threshold
-        also if their time interval is smaller than time_threshold
-        """
-        possible_links = []  # [trajectory_early, trajectory_late, distance]
-        for t1 in self.trajs:
-            for t2 in self.trajs:
-                if t1 is t2:
-                    continue
-                dt = t2.t_start - t1.t_end
-                if (dt > 0) and (dt < self.time_threshold):
-                    x1p, v1p = t1.predict(t2.t_start)
-                    dist_1 = np.linalg.norm(x1p - t2.p_start) ** 2
-                    dist_2 = (np.linalg.norm(v1p - t2.spd_start) * (t2.t_start - t1.t_end)) ** 2
-                    dist = np.sqrt(dist_1 + dist_2)
-                    if dist < self.dist_threshold:
-                        possible_links.append(Link(t1, t2))
-        if len(possible_links) > 20:
-            print(f"{len(possible_links)} possible links found!")
-        return possible_links
-
-    def get_networks(self, links=None, networks=None, level=0):
-        """
-        generate networks from possible links
-        one trajectory can only be used once in each network
-        considering following possible links
-        """
-        if not networks:
-            networks = []
-        used = []
-        networks.append(Network())
-        current_network = networks[-1]
-        if not links:
-            links = self.links
-        for link in links:
-            conf = link.conflict(used)
-            if conf: # branching without conflicting element
-                self.get_networks([l for l in links if l not in conf], networks, level=level+1)
-            else:
-                current_network += link
-                used += [link]
-        if level == 0: # only return something in the top recursion
-            return networks
-
-    def get_best_network(self):
-        all_networks = self.get_networks()
-        if len(all_networks) > 1000:
-            print(f"{len(all_networks)} networks were found")
-        good_networks = self.merge_networks(all_networks)
-        costs = [np.sum([net.get_cost() for net in good_networks])]
-        best_network = all_networks[np.argmin(costs)]
-        return best_network
-
-    def merge_networks(self, networks):
-        for n1 in networks:
-            for n2 in networks:
-                if (n1 < n2):
-                    if n1 in n2:
-                        networks.remove(n1)
-                        self.merge_networks(networks)
-        return networks
 
 
 class ActiveLinker():
@@ -537,24 +359,94 @@ class TrackpyLinker():
         return self.__get_trajectories(list(link_result), pos, time, labels)
 
 
-def relink(trajectories, dist_threshold, time_threshold, pos_key='position', time_key='time'):
-    traj_objs = [
-        Trajectory(t[time_key], t[pos_key]) for t in trajectories if len(t[time_key]) > 2
-    ]
-    link_net = LinkingNet(traj_objs, dist_threshold, time_threshold)
-    best_link = link_net.get_best_network()
+def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
+    start_time_points = np.empty(len(trajectories))
+    for i, traj in enumerate(trajectories):
+        start_time_points[i] = traj.t_start
+    sorted_indices = np.argsort(start_time_points)
+    return [trajectories[si] for si in sorted_indices]
+
+
+def build_dist_matrix(trajectories: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
+    """
+    :param dt: if the last time point  of trajectory #1 + dt > first time point of trajectory #2, consider a link being possible
+    :param dx: if within dt, the distance between trajectory #1's prediction and trajectory #2's first point is smaller than dx, assign a link
+    :return: a matrix records the distance (cost) of the link, if such link is possible
+    todo: this funciton needs test
+    """
+    trajs_sorted = sort_trajectories(trajectories)
+    traj_num = len(trajs_sorted)
+    dist_matrix = np.zeros((traj_num, traj_num), dtype=float)
+    for i, traj_1 in enumerate(trajs_sorted):
+        for j, traj_2 in enumerate(trajs_sorted[i+1:]):
+            if (traj_2.t_start - traj_1.t_end) > dt:
+                break
+            elif traj_2.t_start > traj_1.t_end:
+                distance = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
+                if distance < dx:
+                    dist_matrix[i, i+j+1] = distance
+    return dist_matrix
+
+
+def reduce_network(network: np.ndarray) -> List[np.ndarray]:
+    """
+    network is compose of [(i_1, j_1), (i_2, j_2) ...] links
+    the network is *sorted* with i_n > ... > i_2 > i_1
+    example: input  ([0, 1], [1, 3], [3, 5], [4, 5], [6, 7], [7, 8])
+             output [(0, 1, 3, 5), (4, 5), (6, 7, 8)]
+    """
+    reduced, to_skip = [], []
+    for i, link in enumerate(network):
+        if i in to_skip:
+            continue
+        new_link = link.copy()
+        ll = np.where(link[-1] == network[:, 0])[0]
+        while len(ll) > 0:
+            to_skip.append(ll)
+            new_link = np.hstack((new_link, network[ll[0], 1]))
+            ll = np.where(new_link[-1] == network[:, 0])[0]
+        reduced.append(new_link)
+    return np.array(reduced)
+
+
+def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> List[np.ndarray]:
+    distances = []
+    for network in networks:
+        costs = distance_matrix[tuple(network.T)]
+        dist_total = distance_matrix[network].sum()
+        distances.append(dist_total)
+    best_network = networks[np.argmin(distances)]
+    return reduce_network(best_network)
+
+
+def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -> List['Trajectory']:
     new_trajs = []
-    to_remove = []
-    for link in best_link:
-        traj_early, traj_late = link.traj_1, link.traj_2
-        new_trajs.append(traj_late + traj_early)
-        to_remove.append(traj_early)
-        to_remove.append(traj_late)
-    for t in to_remove:
-        traj_objs.remove(t)
-    for t in new_trajs:
-        traj_objs.append(t)
-    return [{'time': t.time, 'position': t.positions} for t in traj_objs]
+    to_modify = np.hstack(network)
+    for link in network:
+        to_sum = []
+        for i, t in enumerate(trajectories):
+            if i in link: to_sum.append(t)
+            if len(to_sum) == len(link): break
+        for t in to_sum[1:]:
+            to_sum[0] = to_sum[0] + t
+        new_trajs.append(to_sum[0])
+    for i, t in enumerate(trajectories):
+        if i not in to_modify:
+            new_trajs.append(t)
+    return new_trajs
+
+
+def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
+    trajs = [
+        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 2
+    ]
+    dist_mat = build_dist_matrix(trajs, dx=dist_threshold, dt=time_threshold)
+    networks = solve_nrook(dist_mat.astype(bool))
+    if len(networks[0]) == 0:
+        return trajectories
+    best = choose_network(dist_mat, networks)
+    new_trajs = apply_network(trajs, best)
+    return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 
 if __name__ == "__main__":
