@@ -14,9 +14,8 @@ class Trajectory():
         self.time = time
         self.positions = positions
         self.length = len(time)
-        self.blur = blur
         if blur:
-            self.positions = ndimage.gaussian_filter1d(self.positions, blur)
+            self.positions = ndimage.gaussian_filter1d(self.positions, blur, axis=0)
         self.p_start = self.positions[0]
         self.p_end = self.positions[-1]
         self.t_start = self.time[0]
@@ -51,11 +50,11 @@ class Trajectory():
         if self.t_start <= another_traj.t_end:  # self is earlier
             new_time = np.concatenate([self.time, another_traj.time])
             new_positions = np.concatenate([self.positions, another_traj.positions])
-            return Trajectory(new_time, new_positions, self.blur)
+            return Trajectory(new_time, new_positions)
         elif self.t_end >= another_traj.t_start:  # self is later
             new_time = np.concatenate([another_traj.time, self.time])
             new_positions = np.concatenate([another_traj.positions, self.positions])
-            return Trajectory(new_time, new_positions, self.blur)
+            return Trajectory(new_time, new_positions)
         else:  # there are overlap between time
             return self
 
@@ -65,7 +64,7 @@ class Trajectory():
         p2 = self.positions[time_index:]
         t2 = self.time[time_index:]
         if (len(t1) > 2) and (len(t2) > 2):
-            return [Trajectory(t1, p1, self.blur), Trajectory(t2, p2, self.blur)]
+            return [Trajectory(t1, p1), Trajectory(t2, p2)]
         else:
             return [self]  # do not break if trying to break tail
 
