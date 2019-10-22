@@ -42,7 +42,10 @@ class DynamicalOrder():
             labels_movie.append(np.array(labels, dtype=int))
         return positions_movie, labels_movie
 
-    def get_orders(self):
+    def get_orders(self, size_threshold=10):
+        """
+        return nan for one frame if the matched pair in that frame is smaller than size_threshold
+        """
         t_orders, r_orders, d_orders = [], [], []
         for i in range(self.end - self.begin - 1):
             idx_0 = np.nonzero(np.in1d(self.labels[i], self.labels[i+1], assume_unique=True))
@@ -57,6 +60,10 @@ class DynamicalOrder():
             directions = velocities.T / np.linalg.norm(velocities, axis=1)
             t_orders.append(np.linalg.norm(np.mean(directions, axis=1)))
 
+            if len(r0) < size_threshold:
+                r_orders.append(np.nan)
+                d_orders.append(np.nan)
+                continue
 
             # Kabsch algorithm
             G, R = utility.get_best_dilatation_rotation(r0, r1)
