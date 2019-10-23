@@ -14,10 +14,11 @@ class Trajectory():
     def __init__(self, time, positions, blur=None):
         assert len(time) == len(positions), "Time points do not match the position number"
         self.time = time
-        self.positions = positions
         self.length = len(time)
         if blur:
-            self.positions = ndimage.gaussian_filter1d(self.positions, blur, axis=0)
+            self.positions = ndimage.gaussian_filter1d(positions, blur, axis=0)
+        else:
+            self.positions = positions
         self.p_start = self.positions[0]
         self.p_end = self.positions[-1]
         self.t_start = self.time[0]
@@ -367,14 +368,13 @@ def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
     return [trajectories[si] for si in sorted_indices]
 
 
-def build_dist_matrix(trajectories: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
+def build_dist_matrix(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
     """
     :param dt: if the last time point  of trajectory #1 + dt > first time point of trajectory #2, consider a link being possible
     :param dx: if within dt, the distance between trajectory #1's prediction and trajectory #2's first point is smaller than dx, assign a link
     :return: a matrix records the distance (cost) of the link, if such link is possible
     todo: this funciton needs test
     """
-    trajs_sorted = sort_trajectories(trajectories)
     traj_num = len(trajs_sorted)
     dist_matrix = np.zeros((traj_num, traj_num), dtype=float)
     for i, traj_1 in enumerate(trajs_sorted):
@@ -438,14 +438,15 @@ def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -
 
 def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
     trajs = [
-        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 2
+        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
     ]
-    dist_mat = build_dist_matrix(trajs, dx=dist_threshold, dt=time_threshold)
+    trajs_ordered = sort_trajectories(trajs)
+    dist_mat = build_dist_matrix(trajs_ordered, dx=dist_threshold, dt=time_threshold)
     networks = solve_nrook(dist_mat.astype(bool))
     if len(networks[0]) == 0:
         return trajectories
     best = choose_network(dist_mat, networks)
-    new_trajs = apply_network(trajs, best)
+    new_trajs = apply_network(trajs_ordered, best)
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 
