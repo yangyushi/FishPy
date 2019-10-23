@@ -153,7 +153,7 @@ py::array_t<double> get_voro_volumes_select(py::array_t<double> points, py::arra
     auto buf_vol = volumes_array.request();
     double * ptr_vol = (double *) buf_vol.ptr;
 
-    for (size_t i = 0; i < buf_vol.size; i++) {
+    for (size_t i = 0; i < volumes.size(); i++) {
         ptr_vol[i] = volumes[i];
     }
     return volumes_array;
