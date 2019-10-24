@@ -59,6 +59,18 @@ class Trajectory():
         else:  # there are overlap between time
             return self
 
+    def interpolate(self):
+        if len(self.positions) == self.time[-1] - self.time[0]:
+            return
+        else:
+            x, y, z = self.positions.T
+            ti = np.arange(self.time[0], self.time[-1]+1, 1)
+            xi = np.interp(x=ti, xp=self.time, fp = x)
+            yi = np.interp(x=ti, xp=self.time, fp = y)
+            zi = np.interp(x=ti, xp=self.time, fp = z)
+            self.time = ti
+            self.positions = np.vstack((xi, yi, zi)).T
+
     def break_into_two(self, time_index):
         p1 = self.positions[:time_index]
         t1 = self.time[:time_index]
@@ -356,6 +368,64 @@ class TrackpyLinker():
         tp.linking.Linker.MAX_SUB_NET_SIZE = self.max_subnet_size
         link_result = tp.link_iter(pos, search_range=self.max_movement, memory=self.memory, **self.kwargs)
         return self.__get_trajectories(list(link_result), pos, time, labels)
+
+
+class Movie:
+    def __init__(self, trajs, blur=None, interpolate=True):
+        self.trajs = self.__pre_process(trajs, blur, interpolate)
+        self.__sniff()
+        self.movie = {}
+        self.labels = {}
+
+    def __pre_process(self, trajs, blur, interpolate):
+        new_trajs = []
+        for t in trajs:
+            if isinstance(t, Trajectory):
+                if blur:
+                    new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
+                else:
+                    new_trajs.append(t)
+            else:
+                new_trajs.append(Trajectory(t['time'], t['position'], blur=blur))
+        if interpolate:
+            for traj in new_trajs:
+                traj.interpolate()
+        return new_trajs
+
+    def __sniff(self):
+        self.max_frame = max([t.time.max() for t in self.trajs])
+        self.size = len(self.trajs)
+
+    def __len__(self):
+        return self.max_frame
+
+    def __getitem__(self, frame):
+        if frame > self.max_frame:
+            raise StopIteration
+        elif frame in self.movie.keys():
+            return self.movie[frame]
+        else:
+            positions = []
+            labels = []
+            for i, t in enumerate(self.trajs):
+                if frame in t.time:
+                    time_index = np.where(t.time == frame)[0][0]
+                    positions.append(t.positions[time_index])
+                    labels.append(i)
+            positions = np.array(positions)
+            labels = np.array(labels)
+            self.movie.update({frame: positions})
+            self.labels.update({frame: labels})
+            return positions
+
+    def label(self, frame):
+        if frame > self.max_frame:
+            return None
+        elif frame in self.movie.keys():
+            return self.labels[frame]
+        else:
+            self[frame]
+            return self.labels[frame]
 
 
 def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
