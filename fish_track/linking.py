@@ -371,7 +371,7 @@ class TrackpyLinker():
 
 
 class Movie:
-    def __init__(self, trajs, blur=None, interpolate=True):
+    def __init__(self, trajs, blur=None, interpolate=False):
         self.trajs = self.__pre_process(trajs, blur, interpolate)
         self.__sniff()
         self.movie = {}
