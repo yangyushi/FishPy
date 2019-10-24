@@ -28,13 +28,11 @@ class Trajectory():
 
     def predict(self, t):
         """
-        predict the position and speed of the particle at time t
-        acceleration is ignored --> spd_predict = self.spd_end
+        predict the position of the particle at time t
         """
         assert t > self.t_end, "We predict the future, not the past"
         pos_predict = self.p_end + self.spd_end * (t - self.t_end)
-        spd_predict = self.spd_end
-        return pos_predict, spd_predict
+        return pos_predict
 
     def __len__(self):
         return len(self.positions)
