@@ -202,49 +202,27 @@ def get_align_map(features, rot_num):
     return align_map
 
 
-def verify_pair(features, pair, rot_num, orient_threshold):
-    p1, p2 = features.T[pair]
-    shift = p1[:2] - p2[:2]
-    o1, o2 = p1[2] / rot_num * 180, p2[2] / rot_num * 180  # [0, 180]
-    if o1 > 90: o1 = 180 - o1
-    if o2 > 90: o2 = 180 - o2  # [-90, 90]
-    o_shift = np.abs(np.arctan(shift[1] / shift[0]) / np.pi * 180)  # [-90, 90]
-
-    o1s = abs(o1 - o_shift)
-    o2s = abs(o2 - o_shift)
-
-    if o1s > 90: o1s = 180 - o1s
-    if o2s > 90: o2s = 180 - o2s
-
-    if min(o1s, o2s) > orient_threshold * 2:
-        return False
-    else:
-        return True
-
-
-def refine_oishi_features(features, rot_num,
-                          dist_threshold, orient_threshold,
-                          likelihood_threshold, intensity_threshold):
+def refine_oishi_features(features, rot_num, dist_threshold,
+                          orient_threshold, likelihood_threshold, intensity_threshold):
     dist_xy = cdist(features[:2].T, features[:2].T)
     align_map = get_align_map(features, rot_num)
     is_close = dist_xy < dist_threshold
     is_aligned = align_map < orient_threshold
     is_same = np.triu(is_close * is_aligned, k=1)
     pairs_to_join = np.array(is_same.nonzero()).T
-    #pairs_to_join = [
-    #    pair for pair in pairs_to_join if verify_pair(features, pair, rot_num, orient_threshold)
-    #]
     pairs = join_pairs(pairs_to_join)
     to_del = []
 
     for p in pairs:
         to_keep = np.argmax(features[-1][p])
         to_del += np.concatenate((p[:to_keep], p[to_keep + 1:])).tolist()
+
     to_del = np.array(to_del)
 
     mask = np.ones(features.shape[1], dtype=bool)
     if len(to_del) > 0:
         mask[to_del] = False
+
     mask[features[-1] < likelihood_threshold] = False
     mask[features[-2] < (intensity_threshold * features[-2].max())] = False
     refined = features[:, mask]
