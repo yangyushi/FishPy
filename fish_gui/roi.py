@@ -10,7 +10,47 @@ class Model():
     def __init__(self, images):
         self.images = images
         self.history = [next(images)]
+        self.random = []
         self.cursor = 0
+
+    @property
+    def rand_max(self):
+        """randomly overlapping 10 images"""
+        step = 1
+        if not self.random:
+            while True:
+                for _ in range(step):
+                    try:
+                        img = next(self.images)
+                    except StopIteration:
+                        img = None
+                        break
+                if not isinstance(img, type(None)):
+                    self.random.append(img)
+                    step *= 2
+                else:
+                    break
+        return np.max(self.random, axis=0)
+
+    @property
+    def rand_min(self):
+        """randomly overlapping 10 images"""
+        step = 1
+        if not self.random:
+            while True:
+                for _ in range(step):
+                    try:
+                        img = next(self.images)
+                    except StopIteration:
+                        img = None
+                        break
+                if not isinstance(img, type(None)):
+                    self.random.append(img)
+                    step *= 2
+                else:
+                    break
+        return np.min(self.random, axis=0)
+
 
     @property
     def max(self):
@@ -79,28 +119,28 @@ class Viewer(QMainWindow):
         pannel = QWidget()
         layout = QHBoxLayout()
         pannel.setLayout(layout)
-        self.btn_next = QPushButton('Next')
-        self.btn_back = QPushButton('Back')
+        self.btn_max = QPushButton('Random Max')
+        self.btn_min = QPushButton('Random Min')
         self.btn_save = QPushButton('Save')
         self.btn_exit = QPushButton('Exit')
-        layout.addWidget(self.btn_next)
-        layout.addWidget(self.btn_back)
+        layout.addWidget(self.btn_max)
+        layout.addWidget(self.btn_min)
         layout.addWidget(self.btn_save)
         layout.addWidget(self.btn_exit)
 
-        self.btn_next.clicked.connect(self.next)
-        self.btn_back.clicked.connect(self.back)
+        self.btn_max.clicked.connect(self.get_max)
+        self.btn_min.clicked.connect(self.get_min)
         self.btn_save.clicked.connect(self.save)
         self.btn_exit.clicked.connect(self.close)
 
         self.layout.addWidget(pannel, 1, 0)
 
-    def next(self):
-        image = self.model.max
+    def get_max(self):
+        image = self.model.rand_max
         self.canvas.setImage(image)
 
-    def back(self):
-        image = self.model.min
+    def get_min(self):
+        image = self.model.rand_min
         self.canvas.setImage(image)
 
     def save(self):
