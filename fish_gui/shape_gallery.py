@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QMessageBox,\
                             QGridLayout, QApplication, QHBoxLayout, QFileDialog
@@ -150,13 +151,13 @@ class Viewer(QMainWindow):
         filename = event.mimeData().text()
         if os.name == 'nt':
             filename = filename[8:]
-        elif os.name == 'posix':
-            filename = filename[7:-2]
-        else:
+        elif platform.system() == 'Linux':
+            filename = filename[7:2]
+        elif platform.system() == 'Darwin':
             filename = filename[7:]
         if '\n' in filename:
             warn("I can't accept multiple files")
-            return 
+            return
         if 'npy' not in filename:
             warn("Only *.npy file is accepted!")
             return

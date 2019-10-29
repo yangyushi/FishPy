@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import glob
 import pickle
@@ -8,12 +8,11 @@ import fish_3d as f3
 import fish_track as ft
 from scipy import ndimage
 import matplotlib.pyplot as plt
-
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
 
-config = ft.utility.Configure('config.ini')
+config = ft.utility.Configure('configure.ini')
 
 if 'cameras.pkl' in os.listdir('.'):
     with open(f'cameras.pkl', 'rb') as f:
@@ -31,48 +30,37 @@ water_level = config.Stereo.water_level
 water_depth = config.Stereo.water_depth
 sample_size = config.Stereo.sample_size
 tol_2d = config.Stereo.tol_2d
-see_cluster = bool(config.Plot.see_cluster)
 see_reprojection = bool(config.Plot.see_reprojection)
 
 for frame in range(frame_start, frame_end):
     images_multi_view = []
-    rois_multi_view = []
     features_multi_view = []
     clusters_multi_view = []
     cameras = []
 
     for i, cam_name in enumerate(camera_dict):
         cam_config = eval(f'config.{cam_name}')
-        view_config = ft.utility.Configure(cam_config.config)
-
-        roi = view_config.Process.roi
-        x0, y0, size_x, size_y = [int(x) for x in roi.split(', ')]
-        roi = (slice(y0, y0 + size_y, None), slice(x0, x0 + size_x))
 
         # the degree 180 is not included, it should be covered by another "upside-down" shape
-        angle_number = view_config.Locate.orientation_number
+        angle_number = cam_config.orientation_number
         angles = np.linspace(0, 180, angle_number)
 
         shape_kernels = np.load(cam_config.shape)
 
-        video_format = view_config.Data.type
-        if video_format == 'images':
-            images = ft.read.iter_image_sequence(cam_config.images)
-        elif video_format == 'video':
-            images = ft.read.iter_video(cam_config.images)
+        images = ft.read.iter_video(cam_config.images)
 
         f = open(cam_config.feature, 'rb')
 
         for _ in range(frame + 1):
             image = next(images)
             feature = pickle.load(f)
+
         f.close()
 
-        fg = image[roi]
         cam = camera_dict[cam_name]
 
-        clusters = ft.oishi.get_clusters_with_roi(
-            feature, shape_kernels, angles, roi,
+        clusters = ft.oishi.get_clusters(
+            feature, shape_kernels, angles,
             kernel_threshold=config.Stereo.kernel_threshold
         )
         clusters = [cam.undistort_points(c, want_uv=True) for c in clusters]  # undistort each cluster
@@ -80,14 +68,7 @@ for frame in range(frame_start, frame_end):
         cameras.append(cam)
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
-        rois_multi_view.append(roi)
         features_multi_view.append(feature)
-
-        if see_cluster:
-            plt.imshow(fg, cmap='gray')
-            for c in clusters:
-                plt.scatter(*c.T, alpha=0.5)
-            plt.show()
 
     # stereomatcing using refractive epipolar relationships
     matched_indices, matched_centres, reproj_errors = f3.three_view_cluster_match(
@@ -124,30 +105,30 @@ for frame in range(frame_start, frame_end):
         np.save(f'location_3d_frame_{frame:04}', np.empty((0, 3)))
         continue
 
-    np.save(f'location_3d_frame_{frame:04}', matched_centres)
+    np.save(f'locations_3d/frame_{frame:04}', matched_centres)
 
     if see_reprojection:
-        f3.utility.plot_reproject_with_roi(
+        f3.utility.plot_reproject(
             images_multi_view[0],
-            rois_multi_view[0], features_multi_view[0],
+            features_multi_view[0],
             matched_centres, cameras[0],
             filename=f'cam_1-reproject_frame_{frame:04}.png'
         )
-        f3.utility.plot_reproject_with_roi(
+        f3.utility.plot_reproject(
             images_multi_view[1],
-            rois_multi_view[1], features_multi_view[1],
+            features_multi_view[1],
             matched_centres, cameras[1],
             filename=f'cam_2-reproject_frame_{frame:04}.png'
         )
-        f3.utility.plot_reproject_with_roi(
+        f3.utility.plot_reproject(
             images_multi_view[2],
-            rois_multi_view[2], features_multi_view[2],
+            features_multi_view[2],
             matched_centres, cameras[2],
             filename=f'cam_3-reproject_frame_{frame:04}.png'
         )
 
-f = open('positions.pkl', 'wb')
-frames = glob.glob(r'./location_3d_frame_*.npy')
+f = open('locations_3d.pkl', 'wb')
+frames = glob.glob(r'locations_3d/frame_*.npy')
 frames.sort()
 for frame in frames:
     pickle.dump(np.load(frame), f)

@@ -70,7 +70,7 @@ def get_box_for_kernel(kernel, u, v, image) -> tuple:
     return box_in_image, box_in_kernel
 
 
-def get_clusters(feature, kernels, angles, roi, kernel_threshold=0.0) -> list:
+def get_clusters(feature, kernels, angles, kernel_threshold=0.0) -> list:
     """
     return the pixels that 'belong' to different features
     the returnned results are (x, y), the shape is (number, dimension)
@@ -84,7 +84,7 @@ def get_clusters(feature, kernels, angles, roi, kernel_threshold=0.0) -> list:
 
         mask = kernel > (kernel_threshold * kernel.max())
 
-        offset = np.array([r.start - b/2 for b, r in zip(kernel.shape, roi)])
+        offset = np.array([-b/2 for b in kernel.shape])
 
         cluster_mi = np.array(np.nonzero(kernel * mask)) + np.vstack((y, x))  # matrix indices, shape (2, n)
 
@@ -92,7 +92,29 @@ def get_clusters(feature, kernels, angles, roi, kernel_threshold=0.0) -> list:
             clusters.append(
                 np.flip(cluster_mi.T + offset, axis=1)  # CONVERT (row, column) to (x, y)
             )
+    return clusters
 
+
+def get_clusters_with_roi(feature, kernels, angles, roi, kernel_threshold=0.0) -> list:
+    """
+    return the pixels that 'belong' to different features
+    the returnned results are (x, y), the shape is (number, dimension)
+    """
+    clusters = []
+
+    for x, y, o, s, _, p in zip(*feature.tolist()):
+        x, y, o, s = tuple(map(int, (x, y, o, s)))
+        kernel = kernels[int(s)]
+        kernel = rotate_kernel(kernel, angles[int(o)])
+
+        mask = kernel > (kernel_threshold * kernel.max())
+        offset = np.array([r.start - b/2 for b, r in zip(kernel.shape, roi)])
+        cluster_mi = np.array(np.nonzero(kernel * mask)) + np.vstack((y, x))  # matrix indices, shape (2, n)
+
+        if len(cluster_mi) > 1:
+            clusters.append(
+                np.flip(cluster_mi.T + offset, axis=1)  # CONVERT (row, column) to (x, y)
+            )
     return clusters
 
 
