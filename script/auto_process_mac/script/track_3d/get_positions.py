@@ -32,14 +32,26 @@ sample_size = config.Stereo.sample_size
 tol_2d = config.Stereo.tol_2d
 see_reprojection = bool(config.Plot.see_reprojection)
 
+movies = []
+cameras = []
+camera_configurations = []
+feature_handlers = []
+for i, cam_name in enumerate(camera_dict):
+    cam_config = eval(f'config.{cam_name}')
+    images = ft.read.iter_video(cam_config.images)
+    cam = camera_dict[cam_name]
+    cameras.append(cam)
+    movies.append(images)
+    camera_configurations.append(cam_config)
+    feature_handlers.append(open(cam_config.feature, 'rb'))
+
 for frame in range(frame_start, frame_end):
     images_multi_view = []
     features_multi_view = []
     clusters_multi_view = []
-    cameras = []
 
-    for i, cam_name in enumerate(camera_dict):
-        cam_config = eval(f'config.{cam_name}')
+    for i, cam in enumerate(cameras):
+        cam_config = camera_configurations[i]
 
         # the degree 180 is not included, it should be covered by another "upside-down" shape
         angle_number = cam_config.orientation_number
@@ -47,17 +59,9 @@ for frame in range(frame_start, frame_end):
 
         shape_kernels = np.load(cam_config.shape)
 
-        images = ft.read.iter_video(cam_config.images)
+        image = next(movies[i])
 
-        f = open(cam_config.feature, 'rb')
-
-        for _ in range(frame + 1):
-            image = next(images)
-            feature = pickle.load(f)
-
-        f.close()
-
-        cam = camera_dict[cam_name]
+        feature = pickle.load(feature_handlers[i])
 
         clusters = ft.oishi.get_clusters(
             feature, shape_kernels, angles,
@@ -65,7 +69,6 @@ for frame in range(frame_start, frame_end):
         )
         clusters = [cam.undistort_points(c, want_uv=True) for c in clusters]  # undistort each cluster
 
-        cameras.append(cam)
         images_multi_view.append(image)
         clusters_multi_view.append(clusters)
         features_multi_view.append(feature)
@@ -126,6 +129,9 @@ for frame in range(frame_start, frame_end):
             matched_centres, cameras[2],
             filename=f'cam_3-reproject_frame_{frame:04}.png'
         )
+
+for f in feature_handlers:
+    f.close()
 
 f = open('locations_3d.pkl', 'wb')
 frames = glob.glob(r'locations_3d/frame_*.npy')
