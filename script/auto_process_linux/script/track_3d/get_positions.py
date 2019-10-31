@@ -105,7 +105,7 @@ for frame in range(frame_start, frame_end):
     print(f'frame {frame}', len(matched_centres))
 
     if len(matched_indices) == 0:
-        np.save(f'location_3d_frame_{frame:08}', np.empty((0, 3)))
+        np.save(f'locations_3d/frame_{frame:08}', np.empty((0, 3)))
         continue
 
     np.save(f'locations_3d/frame_{frame:08}', matched_centres)
