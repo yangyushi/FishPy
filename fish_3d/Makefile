@@ -3,7 +3,7 @@ LDLIBS = -L${prefix}/lib
 PYFLAGS = `${PY} -m pybind11 --includes` `${PY}-config --ldflags`
 
 cray_trace`${PY}-config --extension-suffix`: cray_trace.cpp
-	g++ -o cray_trace`${PY}-config --extension-suffix` cray_trace.cpp $(LDLIBS) $(CPPFLAGS) $(PYFLAGS)
+	g++ $(LDLIBS) $(CPPFLAGS) $(PYFLAGS) cray_trace.cpp -o cray_trace`${PY}-config --extension-suffix` 
 
 test:
 	${PY} test.py

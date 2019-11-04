@@ -3,7 +3,7 @@ LDLIBS = -L${prefix}/lib
 PYFLAGS = `${PY} -m pybind11 --includes` `${PY}-config --ldflags`
 
 nrook`${PY}-config --extension-suffix`: nrook.cpp
-	g++ -o nrook`${PY}-config --extension-suffix` nrook.cpp $(LDLIBS) $(CPPFLAGS) $(PYFLAGS)
+	g++ $(LDLIBS) $(CPPFLAGS) $(PYFLAGS) nrook.cpp -o nrook`${PY}-config --extension-suffix` 
 
 test:
 	${PY} test.py
