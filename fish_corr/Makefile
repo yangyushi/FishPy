@@ -3,4 +3,4 @@ LDLIBS = -L${prefix}/lib -lvoro++
 PYFLAGS = `${PY} -m pybind11 --includes` `${PY}-config --ldflags`
 
 voro`${PY}-config --extension-suffix`: voro.cpp
-	g++ $(LDLIBS) $(CPPFLAGS)  $(PYFLAGS)$ voro.cpp -o voro`${PY}-config --extension-suffix` 
+	g++ $(LDLIBS) $(CPPFLAGS)  $(PYFLAGS) voro.cpp -o voro`${PY}-config --extension-suffix` 
