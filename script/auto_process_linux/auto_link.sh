@@ -1,12 +1,19 @@
+#!/usr/bin/env bash
+source configure.sh
+
 # Linking parameters
 link_frame_start=0
-link_frame_end=75
+link_frame_end=0
 link_linker="trackpy"
 link_range=40
 link_dx_max=25
 link_dt_max=10
 link_blur=1
 link_threshold=3
+
+if [ ! $link_frame_end -gt 0 ]; then
+    link_frame_end=$track_3d_frame_end
+fi
 
 if [ ! -d "link_3d" ]; then
     mkdir link_3d
