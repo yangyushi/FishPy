@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+Pillow
+opencv-python
+pybind11
+trackpy
