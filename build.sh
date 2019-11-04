@@ -1,4 +1,5 @@
-export prefix="/usr/local"
+export prefix=/usr/local
+export PY=python3
 
 cd fish_3d
 make
