@@ -86,13 +86,13 @@ class StereoImageItem(pg.ImageItem):
         self.buddy.clear()
         self.plot.addPoints(x=[u], y=[v], pen=edge, brush=fill)
         if self.label == 1:
-            epipolar_line = self.model.get_ep12([v, u])
+            epipolar_line = self.model.get_ep12([u, v])
         elif self.label == 2:
-            epipolar_line = self.model.get_ep21([v, u])
+            epipolar_line = self.model.get_ep21([u, v])
         else:
             raise ValueError("Wrong StereoImageItem Label, ", self.label)
         if len(epipolar_line) > 0:
-            self.buddy.addPoints(x=epipolar_line.T[1], y=epipolar_line.T[0], pen=edge, brush=fill)
+            self.buddy.addPoints(x=epipolar_line.T[0], y=epipolar_line.T[1], pen=edge, brush=fill)
 
 
 class Viewer(QMainWindow):
