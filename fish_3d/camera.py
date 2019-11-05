@@ -163,10 +163,11 @@ class Camera():
         self.update()
 
     def __str__(self):
-        info_1 = f'Camera instance @{id(self):x}'
-        info_2 = f'Intrinsic Matrix is \n {self.k}'
-        info_3 = f'Extrinsic Matrix is \n {self.ext}'
-        info_4 = f'Distortion is \n {self.distortion}'
+        def ff(x): return np.array2string(x, precision=4, floatmode='fixed', separator='\t')
+        info_1 = f'Camera instance @{id(self):x}\n'
+        info_2 = f'Intrinsic Matrix is \n {ff(self.k)}\n'
+        info_3 = f'Extrinsic Matrix is \n {ff(self.ext)}\n'
+        info_4 = f'Distortion is \n {ff(self.distortion)}\n'
         return info_1 + info_2 + info_3 + info_4
 
     def update(self):
