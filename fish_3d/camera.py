@@ -154,14 +154,24 @@ class Camera():
         self.skew = 0
         self.o = np.zeros(3)
         self.t = np.zeros(3)
+        self.r = np.zeros((3, 3))
         self.k = np.zeros((3, 3))
+        self.ext = np.zeros((3, 4))
+        self.p = np.zeros((3, 4))
         self.calibration_files = []
+        self.f = []
         self.update()
+
+    def __str__(self):
+        info_1 = f'Camera instance @{id(self):x}'
+        info_2 = f'Intrinsic Matrix is \n {self.k}'
+        info_3 = f'Extrinsic Matrix is \n {self.ext}'
+        info_4 = f'Distortion is \n {self.distortion}'
+        return info_1 + info_2 + info_3 + info_4
 
     def update(self):
         self.r = self.rotation.as_dcm()  # rotation
         self.f = [self.k[0, 0], self.k[1, 1]]  # focal length
-        self.c = self.r.T @ (-self.t) # camera centre in world coordinate system
         self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
         self.p = np.dot(self.k, self.ext)
         self.o = np.vstack(-self.r.T @ self.t)  # origin of the camera, shape (3, 1)

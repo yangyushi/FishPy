@@ -459,18 +459,16 @@ def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, no
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
     trans = get_trans_vec(incid, normal=normal)
-    X = np.zeros((3, 2))
-    Y = np.zeros((3, 1))
     ray_length = abs(depth / trans[-1])
-    for i, step in enumerate([0, ray_length/2, ray_length]):
+    sample_points = [ray_length/100, ray_length/10, ray_length/2, ray_length]
+    X = np.zeros((len(sample_points), 2))
+    Y = np.zeros((len(sample_points), 1))
+    for i, step in enumerate(sample_points):
         m = poi_1 + step * trans
         z = abs(m[-1])
         d = abs(co_2[-1] - interface)
         x = np.linalg.norm(m[:2] - co_2[:2])
-        u = optimize.root_scalar(find_u, args=(n, d, x, z), x0=x*0.8, x1=x*0.5).root
-        if (u > x) or (u < 0):
-            print("root finding in refractive epipolar geometry fails")
-            break
+        u = get_u(n, d, x, z)
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
@@ -573,8 +571,8 @@ def ray_trace_refractive_faster(centres, cameras, z=0, normal=(0, 0, 1), refract
     trans_rays = get_trans_vecs(incid_rays, normal=normal)
     trans_lines = np.array([[p, t] for p, t in zip(pois, trans_rays)])
     point_3d = get_intersect_of_lines(trans_lines)
-    error = pl_dist_faster(point_3d, trans_lines)
-    return point_3d, error / len(cameras)
+    error = get_reproj_err(point_3d, centres, cameras, z, normal)
+    return point_3d, error
 
 
 def cost_snell(xy, z, location, origin, normal, refractive_index):
