@@ -155,7 +155,7 @@ class Camera():
         self.o = np.zeros(3)
         self.t = np.zeros(3)
         self.r = np.zeros((3, 3))
-        self.k = np.zeros((3, 3))
+        self.k = np.identity(3)
         self.ext = np.zeros((3, 4))
         self.p = np.zeros((3, 4))
         self.calibration_files = []
@@ -186,9 +186,12 @@ class Camera():
         self.k[1][1] = calib_result['fc'][1, 0]
         self.k[0][2] = calib_result['cc'][0, 0]
         self.k[1][2] = calib_result['cc'][1, 0]
-        self.distortion = np.zeros(5)
-        self.t = calib_result['Tc_ext'][:, 0]
-        self.rotation = R.from_dcm(calib_result['Rc_ext'])
+        if 'kc' in calib_result.keys():
+            self.distortion = np.array(calib_result['kc']).ravel()
+        if 'Tc_ext' in calib_result.keys():
+            self.t = calib_result['Tc_ext'][:, 0]
+        if 'Rc_ext' in calib_result.keys():
+            self.rotation = R.from_dcm(calib_result['Rc_ext'])
         self.update()
 
     def read_int(self, pkl_file):
@@ -351,12 +354,14 @@ class Camera():
                         img_points[j], obj_points[j],
                         rvecs[j], tvecs[j], distortion, camera_matrix
                         )
-                print(f"reproject error for {fname:<12} is {err:.4f}")
+                if show:
+                    print(f"reproject error for {fname:<12} is {err:.4f}")
 
         self.k = camera_matrix
-        print("==== Intrinsic Matrix ====")
-        print(self.k)
-        print("==== Dist coefficients ====\n", distortion)
+        if show:
+            print("==== Intrinsic Matrix ====")
+            print(self.k)
+            print("==== Dist coefficients ====\n", distortion)
         self.distortion = distortion
         self.update()
 

@@ -613,9 +613,9 @@ def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractiv
 
 def reproject_refractive_no_distort(xyz, camera, water_level=0, normal=(0, 0, 1), refractive_index=1.333):
     co = -camera.r.T @ camera.t
-    d = co[-1] - water_level
-    x = np.linalg.norm(co[:2] - xyz[:2])
+    d = abs(co[-1] - water_level)
     z = abs(xyz[-1] - water_level)
+    x = np.linalg.norm(co[:2] - xyz[:2])
     u = get_u(refractive_index, d, x, z)
     oq_vec = xyz[:2] - co[:2]
     oq_vec /= np.linalg.norm(oq_vec)
