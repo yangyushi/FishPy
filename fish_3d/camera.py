@@ -159,7 +159,6 @@ class Camera():
         self.ext = np.zeros((3, 4))
         self.p = np.zeros((3, 4))
         self.calibration_files = []
-        self.f = []
         self.update()
 
     def __str__(self):
@@ -172,7 +171,6 @@ class Camera():
 
     def update(self):
         self.r = self.rotation.as_dcm()  # rotation
-        self.f = [self.k[0, 0], self.k[1, 1]]  # focal length
         self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
         self.p = np.dot(self.k, self.ext)
         self.o = np.vstack(-self.r.T @ self.t)  # origin of the camera, shape (3, 1)
