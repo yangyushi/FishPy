@@ -28,27 +28,52 @@ def reduce_angle_gap(angles):
 
 
 class Tank:
-    def __init__(self, base, surface):
+    def __init__(self, base, surface=None):
         """
         A fish tank in 3D, whose surface can be described by
-            Z = c1 * (exp(c2 * r) - 1)
-        where c1 = 2.3497 * 10^1, c2 = 4.0434 * 10^-3
+            z = c * r ^ 2
+        where c = 0.7340428, and the length unit for the equation is m [meter]
         """
         self.base = np.vstack(base)  # shape: (3, 1)
-        self.rot = self.__get_rotation(base, surface)
-        self.c1 = 23.497
-        self.c2 = 4.0434e-3
+        if isinstance(surface, type(None)):
+            self.rot = np.identity(3)
+        else:
+            self.rot = self.__get_rotation(base, surface)
+        self.c = 0.7340428
         self.z_max = -base[-1]  # maximum height from bottom of the tank
-        self.r_max = np.log(self.z_max * 1/self.c1 + 1) / self.c2
+        self.r_max = np.sqrt(self.z_max / self.c)
 
-    def z(self, r):
-        return self.c1 * (np.exp(self.c2 * r) - 1)
+    def __project_r(self, radii, z):
+        """
+        calculate the projection of 2D point in cylindar coordinate system
+        to a hyprobolic function y = self.c * x^2
+        the input / ouput unit is mm
+        in the calculation, the unit is convert to m
+        """
+        r = radii / 1000  # mm -> m
+        z = z.copy() / 1000
+        p = 2**(1/3)
+        term = 108 * self.c ** 4 * r + np.sqrt(
+            11664 * self.c**8 * r**2 + 864 * self.c**6 * (1 - 2 * self.c * z)**3
+        )
+        term = np.power(term, 1/3)
+        radii_proj = -(p * (1 - 2 * self.c * z)) / term + term / (6 * p * self.c**2)
+        return radii_proj * 1000  # m -> mm
 
     def __get_rotation(self, base, surface):
         tank = np.vstack((surface, base)).T
         covar = np.cov(tank)
         u, s, vh = np.linalg.svd(covar)
         return vh
+
+    def z(self, r):
+        """
+        calculate the z coordinate on the hyprobolic function z = self.c * r^2
+        given r
+        the input/output unit is mm
+        """
+        z = self.c * (r/1000)**2
+        return z * 1000
 
     def get_xyz(self, points):
         """
@@ -59,49 +84,37 @@ class Tank:
     def get_cylinder(self, points):
         XYZ = self.rot @ (points.T - self.base)
         X, Y, Z = XYZ
-        theta = np.arctan(Y / X)
-        theta[X<0] += np.pi
-        #theta[(X<0) & (Y<0)] += np.pi
-        theta[theta < 0] += np.pi * 2
+        theta = np.arctan2(Y, X)
         radii = np.sqrt(X**2 + Y**2)
         return np.array([radii, theta, Z])
 
+
     def get_projection(self, points):
-        radii, theta, Z = self.get_cylinder(points)
-        proj_cylind = np.empty((3, len(Z)), dtype=np.float64)
-
-        for i, (r, z) in enumerate(zip(radii, Z)):
-            par_func = lambda x: 4.4648 * np.exp(0.0080868 * x) + 2 * (x - r) + np.exp(0.004034 * x) * (-4.4648 - 0.190016 * z)
-            r_project = root_scalar(par_func, x0=r, x1=r/2).root
-            z_project = self.z(r_project)
-
-            proj_cylind[0, i] = r_project
-            proj_cylind[1, i] = theta[i]
-            proj_cylind[2, i] = z_project
-
-        proj_cart = np.empty((3, len(Z)), dtype=np.float64)
-        proj_cart[0] = proj_cylind[0] * np.cos(theta)  # x = r * cos(t)
-        proj_cart[1] = proj_cylind[0] * np.sin(theta)  # y = r * sin(t)
-        proj_cart[2] = proj_cylind[2]  # z = z
+        radii, theta, z = self.get_cylinder(points)
+        radii_proj = self.__project_r(radii, z)
+        z_proj = self.z(radii_proj)
+        proj_cart = np.empty((3, len(z)), dtype=np.float64)
+        proj_cart[0] = radii_proj * np.cos(theta) # x = r * cos(t)
+        proj_cart[1] = radii_proj * np.sin(theta) # y = r * sin(t)
+        proj_cart[2] = z_proj
         return (self.rot.T @ proj_cart) + self.base  # (3, n)
 
     def get_curvilinear(self, points):
-        radii, theta, Z = self.get_cylinder(points)
-        curvilinear = np.empty((3, len(Z)), dtype=np.float64)
-        a, b = self.c1, self.c2
+        radii, theta, z = self.get_cylinder(points)
+        radii_proj = self.__project_r(radii, z)
 
-        for i, (r, z) in enumerate(zip(radii, Z)):
-            par_func = lambda x: 4.4648 * np.exp(0.0080868 * x) + 2 * (x - r) + np.exp(0.004034 * x) * (-4.4648 - 0.190016 * z)
-            r_project = root_scalar(par_func, x0=r, x1=r/2).root
-            z_project = self.z(r_project)
-            distance = np.sqrt((r_project - r)**2 + (z_project - z)**2)
+        c = self.c / 1000
+        arc_length = 0.5 * radii_proj * np.sqrt(1 + 4 * c**2 * radii_proj**2) +\
+                     np.arcsinh(2 * c * radii_proj) / (4 * c)
 
-            r_range = np.arange(0, abs(r_project))
-            curve = np.sqrt(a**2 * b**2 * np.exp(2 * b * r_range) + 1)
-            arc_length = np.trapz(curve, r_range)
-            curvilinear[0, i] = arc_length
-            curvilinear[1, i] = theta[i]
-            curvilinear[2, i] = distance
+        distance = np.linalg.norm(
+            np.vstack((radii, z)) - np.vstack((radii_proj, self.z(radii_proj))),
+            axis=0
+        )
+        curvilinear = np.empty((3, len(z)), dtype=np.float64)
+        curvilinear[0] = arc_length
+        curvilinear[1] = theta
+        curvilinear[2] = distance
         return curvilinear
 
     def random(self, number):
