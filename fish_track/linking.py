@@ -418,6 +418,23 @@ class Movie:
             self.labels.update({frame: labels})
             return positions
 
+    def velocity(self, frame):
+        if frame > self.max_frame-1:
+            raise IndexError("frame ", frame, "does not have velocities")
+        else:
+            position_0 = self[frame]
+            position_1 = self[frame + 1]
+            label_0 = self.labels[frame]
+            label_1 = self.labels[frame + 1]
+            label_intersection = [l for l in label_0 if l in label_1]
+            if label_intersection:
+                indices_0 = np.array([np.where(li == label_0)[0][0] for li in label_intersection])
+                indices_1 = np.array([np.where(li == label_1)[0][0] for li in label_intersection])
+                velocities = position_1[indices_1] - position_0[indices_0]
+                return velocities, indices_0
+            else:
+                return np.empty((0, 3)), np.empty(3, dtype=int)
+
     def label(self, frame):
         if frame > self.max_frame:
             return None
