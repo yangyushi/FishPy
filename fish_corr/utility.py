@@ -104,6 +104,7 @@ def get_convex_hull(trajectories, target_num=0):
         if len(points) >= target_num:
             yield ConvexHull(np.array(points))
 
+
 def get_rg_tensor(trajectories, target_num=0):
     frames = list(set(np.hstack([t.time for t in trajectories]).ravel()))
     for frame in frames:
@@ -114,6 +115,7 @@ def get_rg_tensor(trajectories, target_num=0):
         points = np.squeeze(points)
         if len(points) >= target_num:
             yield np.cov((points - points.mean(0)).T)
+
 
 class GCE:
     def __init__(self, trajs, good_frames=None):
