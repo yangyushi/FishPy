@@ -36,11 +36,11 @@ nn_locations = np.zeros((0, 3))
 nn_dists_mean = []
 
 for i in range(len(movie) - 1):
+    frame = movie[i]
     indices = movie.indice_pair(i)[0]
-    if len(indices) > 1:
-        frame = movie[i][indices]
+    if len(indices) > 1 + (int(ignore_vertices) * 3):
         velocity = movie.velocity(i)[indices]
-        loc, dist = fc.static.get_nn_with_velocity(frame, velocity, False)
+        loc, dist = fc.static.get_nn_with_velocity(frame[indices], velocity, ignore_vertices)
         nn_locations = np.concatenate((nn_locations, loc))
         nn_dists_mean.append(np.mean(dist))
 
@@ -74,6 +74,3 @@ plt.axis('off')
 plt.tight_layout()
 plt.savefig(f'{output_folder}/nn_dist.pdf')
 plt.close()
-
-np.save('nn_locations', nn_locations)
-np.save('nn_locations_dist_3d', hist)

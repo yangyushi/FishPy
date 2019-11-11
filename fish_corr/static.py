@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
 from scipy.optimize import root_scalar
 from scipy.spatial.distance import cdist, pdist, squareform
@@ -221,7 +222,9 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
         cv = ConvexHull(positions)
         not_vertices =  np.array([
             x for x in np.arange(len(cv.points)) if x not in cv.vertices
-        ])
+        ], dtype=int)
+        if len(not_vertices) == 0:
+            return np.empty((0, 3)), np.empty(0)
         focus = cv.points[not_vertices]
     else:
         focus = positions
