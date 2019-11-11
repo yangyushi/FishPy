@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from scipy.stats import binned_statistic_2d, binned_statistic
 import fish_track as ft
+import fish_corr as fc
 import matplotlib.pyplot as plt
 
 
@@ -87,7 +88,7 @@ plt.plot(speed_average, color='teal')
 plt.xlabel("Time (frame)", fontsize=14)
 plt.ylabel("<Speed (mm/frame)>", fontsize=14)
 plt.tight_layout()
-plt.savefig(f'{output_folder}/speed_movie.pdf')
+plt.savefig(f'{output_folder}/speed_movie.png')
 plt.close()
 
 
@@ -187,6 +188,34 @@ axs[1].axis('off')
 fig.colorbar(im_xz, ax=axs[1])
 
 plt.savefig(f"{output_folder}/alignemnt_spatial_dist.pdf")
+plt.close()
+
+"""
+    fit the speed distribution with Maxwell Boltzmann distribution
+"""
+
+bins = np.linspace(0, np.nanmax(speed_multi_frames), 51)
+
+dimension, (bin_centres, spd_pdf), (fit_x, fit_y) = fc.utility.fit_maxwell_boltzmann(speed_multi_frames, bins)
+
+plt.scatter(
+    bin_centres, spd_pdf, color='tomato', facecolor='w',
+    label=f'Dimension: {dimension:.2f}',
+    zorder=1
+)
+
+plt.plot(
+    fit_x, fit_y, color='k',
+    zorder=2, ls='--', alpha=0.8,
+    label='Maxwell Boltzmann fit',
+)
+
+plt.legend(fontsize=14)
+plt.gca().set_yscale('log')
+plt.ylim(np.min(spd_pdf[spd_pdf > 0])/10, np.max(spd_pdf)*10)
+plt.xlabel('Speed (mm/frame)', fontsize=14)
+plt.ylabel('PDF(Speed)', fontsize=14)
+plt.savefig(f"{output_folder}/speed_fit.pdf")
 plt.close()
 
 with open('movie.pkl', 'wb') as f:
