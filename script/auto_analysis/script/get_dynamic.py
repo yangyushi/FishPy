@@ -78,7 +78,7 @@ plt.xlabel('time / s', fontsize=14)
 plt.ylabel(f'Order Parameter', fontsize=14)
 plt.gcf().set_size_inches(6, 3)
 plt.tight_layout()
-plt.savefig(f'{output_folder}/order_parameters_movei.pdf')
+plt.savefig(f'{output_folder}/order_parameters_movei.png')
 plt.close()
 
 """
