@@ -353,12 +353,14 @@ class Camera():
                         img_points[j], obj_points[j],
                         rvecs[j], tvecs[j], distortion, camera_matrix
                         )
-                print(f"reproject error for {fname:<12} is {err:.4f}")
+                if show:
+                    print(f"reproject error for {fname:<12} is {err:.4f}")
 
         self.k = camera_matrix
-        print("==== Intrinsic Matrix ====")
-        print(self.k)
-        print("==== Dist coefficients ====\n", distortion)
+        if show:
+            print("==== Intrinsic Matrix ====")
+            print(self.k)
+            print("==== Dist coefficients ====\n", distortion)
         self.distortion = distortion
         self.update()
 
