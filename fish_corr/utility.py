@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import warnings
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
+from scipy.special import gamma
 
 
 def auto_corr(var, dt=1):
@@ -104,6 +105,7 @@ def get_convex_hull(trajectories, target_num=0):
         if len(points) >= target_num:
             yield ConvexHull(np.array(points))
 
+
 def get_rg_tensor(trajectories, target_num=0):
     frames = list(set(np.hstack([t.time for t in trajectories]).ravel()))
     for frame in frames:
@@ -114,6 +116,7 @@ def get_rg_tensor(trajectories, target_num=0):
         points = np.squeeze(points)
         if len(points) >= target_num:
             yield np.cov((points - points.mean(0)).T)
+
 
 class GCE:
     def __init__(self, trajs, good_frames=None):
@@ -191,3 +194,36 @@ class GCE:
             for i, frame in enumerate(range(gf, r[1], +1)):
                 right += get_centre_move(self.trajs, frame)
                 self.centres[gi+i+1] = right
+
+
+def maxwell_boltzmann_nd(v, theta, v_sq_mean):
+    alpha = (1 + theta) / 2
+    lambda_ = v_sq_mean * gamma(alpha) / gamma(alpha + 1)
+    term_1 = 2 * v ** theta
+    term_2 = gamma(alpha) * lambda_ ** alpha
+    term_3 = np.exp(-v ** 2 / lambda_)
+    return term_1 / term_2 * term_3
+
+
+def fit_maxwell_boltzmann(speed, bins):
+    """
+    fit the speed distribution with maxwell boltzmann distribution
+    the average of the energy (< speed ** 2> is fixed)
+    return: the dimension & fitting function
+    """
+    spd_sqr_mean = np.nanmean(speed ** 2)
+    spd_pdf, bin_edges = np.histogram(speed, bins=bins, density=True)
+    bin_centres = (bin_edges[1:] + bin_edges[:-1]) / 2
+
+    res = curve_fit(
+        lambda x, theta: maxwell_boltzmann_nd(x, theta, spd_sqr_mean),
+        bin_centres,
+        spd_pdf, (2.0),  # start with initial guess of 3D world
+    )
+
+    dimension = res[0][0] + 1
+
+    fit_x = np.linspace(0, bins[-1], 200)
+    fit_y = maxwell_boltzmann_nd(fit_x, dimension-1, spd_sqr_mean)
+
+    return dimension, (bin_centres, spd_pdf), (fit_x, fit_y)

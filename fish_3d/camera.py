@@ -155,11 +155,10 @@ class Camera():
         self.o = np.zeros(3)
         self.t = np.zeros(3)
         self.r = np.zeros((3, 3))
-        self.k = np.zeros((3, 3))
+        self.k = np.identity(3)
         self.ext = np.zeros((3, 4))
         self.p = np.zeros((3, 4))
         self.calibration_files = []
-        self.f = []
         self.update()
 
     def __str__(self):
@@ -172,7 +171,6 @@ class Camera():
 
     def update(self):
         self.r = self.rotation.as_dcm()  # rotation
-        self.f = [self.k[0, 0], self.k[1, 1]]  # focal length
         self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
         self.p = np.dot(self.k, self.ext)
         self.o = np.vstack(-self.r.T @ self.t)  # origin of the camera, shape (3, 1)
@@ -188,9 +186,12 @@ class Camera():
         self.k[1][1] = calib_result['fc'][1, 0]
         self.k[0][2] = calib_result['cc'][0, 0]
         self.k[1][2] = calib_result['cc'][1, 0]
-        self.distortion = np.zeros(5)
-        self.t = calib_result['Tc_ext'][:, 0]
-        self.rotation = R.from_dcm(calib_result['Rc_ext'])
+        if 'kc' in calib_result.keys():
+            self.distortion = np.array(calib_result['kc']).ravel()
+        if 'Tc_ext' in calib_result.keys():
+            self.t = calib_result['Tc_ext'][:, 0]
+        if 'Rc_ext' in calib_result.keys():
+            self.rotation = R.from_dcm(calib_result['Rc_ext'])
         self.update()
 
     def read_int(self, pkl_file):

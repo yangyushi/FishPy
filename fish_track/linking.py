@@ -370,64 +370,6 @@ class TrackpyLinker():
         return self.__get_trajectories(list(link_result), pos, time, labels)
 
 
-class Movie:
-    def __init__(self, trajs, blur=None, interpolate=False):
-        self.trajs = self.__pre_process(trajs, blur, interpolate)
-        self.__sniff()
-        self.movie = {}
-        self.labels = {}
-
-    def __pre_process(self, trajs, blur, interpolate):
-        new_trajs = []
-        for t in trajs:
-            if isinstance(t, Trajectory):
-                if blur:
-                    new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
-                else:
-                    new_trajs.append(t)
-            else:
-                new_trajs.append(Trajectory(t['time'], t['position'], blur=blur))
-        if interpolate:
-            for traj in new_trajs:
-                traj.interpolate()
-        return new_trajs
-
-    def __sniff(self):
-        self.max_frame = max([t.time.max() for t in self.trajs])
-        self.size = len(self.trajs)
-
-    def __len__(self):
-        return self.max_frame
-
-    def __getitem__(self, frame):
-        if frame > self.max_frame:
-            raise StopIteration
-        elif frame in self.movie.keys():
-            return self.movie[frame]
-        else:
-            positions = []
-            labels = []
-            for i, t in enumerate(self.trajs):
-                if frame in t.time:
-                    time_index = np.where(t.time == frame)[0][0]
-                    positions.append(t.positions[time_index])
-                    labels.append(i)
-            positions = np.array(positions)
-            labels = np.array(labels)
-            self.movie.update({frame: positions})
-            self.labels.update({frame: labels})
-            return positions
-
-    def label(self, frame):
-        if frame > self.max_frame:
-            return None
-        elif frame in self.movie.keys():
-            return self.labels[frame]
-        else:
-            self[frame]
-            return self.labels[frame]
-
-
 def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
     start_time_points = np.empty(len(trajectories))
     for i, traj in enumerate(trajectories):
@@ -516,6 +458,124 @@ def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='pos
     best = choose_network(dist_mat, networks)
     new_trajs = apply_network(trajs_ordered, best)
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
+
+
+class Movie:
+    def __init__(self, trajs, blur=None, interpolate=False):
+        self.trajs = self.__pre_process(trajs, blur, interpolate)
+        self.__sniff()
+        self.movie = {}
+        self.__velocities = {}
+        self.__labels = {}
+        self.__indice_pairs = {}
+
+    def __pre_process(self, trajs, blur, interpolate):
+        new_trajs = []
+        for t in trajs:
+            if isinstance(t, Trajectory):
+                if blur:
+                    new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
+                else:
+                    new_trajs.append(t)
+            else:
+                new_trajs.append(Trajectory(t['time'], t['position'], blur=blur))
+        if interpolate:
+            for traj in new_trajs:
+                traj.interpolate()
+        return new_trajs
+
+    def __sniff(self):
+        self.max_frame = max([t.time.max() for t in self.trajs])
+        self.size = len(self.trajs)
+
+    def __len__(self):
+        return self.max_frame
+
+    def __process_velocities(self, frame):
+        """
+        Calculate *velocities* at different frames
+        if particle i does not have a position in frame+1, its velocity is nan
+        """
+        if frame > self.max_frame - 1:
+            raise IndexError("frame ", frame, "does not have velocities")
+        else:
+            position_0 = self[frame]
+            position_1 = self[frame + 1]
+
+            velocity = np.empty(position_0.shape)
+            velocity.fill(np.nan)
+
+            label_0 = self.__labels[frame]
+            label_1 = self.__labels[frame + 1]
+            label_intersection = [l for l in label_0 if l in label_1]
+
+            if label_intersection:
+                indices_0 = np.array([np.where(li == label_0)[0][0] for li in label_intersection])
+                indices_1 = np.array([np.where(li == label_1)[0][0] for li in label_intersection])
+                velocity[indices_0] = position_1[indices_1] - position_0[indices_0]
+            else:
+                indices_0 = np.empty(0)
+                indices_1 = np.empty(0)
+
+            return velocity, (indices_0, indices_1)
+
+
+    def __getitem__(self, frame):
+        if frame > self.max_frame:
+            raise StopIteration
+        elif frame in self.movie.keys():
+            return self.movie[frame]
+        else:
+            positions = []
+            labels = []
+            for i, t in enumerate(self.trajs):
+                if frame in t.time:
+                    time_index = np.where(t.time == frame)[0][0]
+                    positions.append(t.positions[time_index])
+                    labels.append(i)
+
+            positions = np.array(positions)
+            self.movie.update({frame: positions})
+
+            labels = np.array(labels)
+            self.__labels.update({frame: labels})
+            return positions
+
+
+    def label(self, frame):
+        if frame > self.max_frame:
+            return None
+        elif frame in self.movie.keys():
+            return self.__labels[frame]
+        else:
+            self[frame]
+            return self.__labels[frame]
+
+    def velocity(self, frame):
+        if frame > self.max_frame - 1:
+            raise IndexError(f"frame {frame} does not velocities")
+        elif frame in self.__velocities.keys():
+            return self.__velocities[frame]
+        else:
+            velocities, indice_pair = self.__process_velocities(frame)
+            self.__velocities.update({frame: velocities})
+            self.__indice_pairs.update({frame: indice_pair})
+            return velocities
+
+    def indice_pair(self, frame):
+        """
+        return two indices, idx_0 & idx_1
+        self[frame][idx_0] corresponds to self[frame + 1][idx_1]
+        """
+        if frame > self.max_frame - 1:
+            raise IndexError(f"frame {frame} does not have a indices pair")
+        elif frame in self.__indice_pairs.keys():
+            return self.__indice_pairs[frame]
+        else:
+            velocities, indice_pair = self.__process_velocities(frame)
+            self.__velocities.update({frame: velocities})
+            self.__indice_pairs.update({frame: indice_pair})
+            return indice_pair
 
 
 if __name__ == "__main__":
