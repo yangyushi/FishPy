@@ -3,6 +3,11 @@
 #PBS -N fish_link
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=12:00:00
+
+if [ $PBS_O_WORKDIR ]; then
+    cd $PBS_O_WORKDIR
+fi
+
 source configure.sh
 
 # Linking parameters

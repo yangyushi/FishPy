@@ -4,6 +4,10 @@
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=48:00:00
 
+if [ $PBS_O_WORKDIR ]; then
+    cd $PBS_O_WORKDIR
+fi
+
 # retrieving parameters
 source configure.sh
 
