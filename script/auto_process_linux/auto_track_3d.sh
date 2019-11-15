@@ -1,4 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# request resources:
+#PBS -N fish_track_3d
+#PBS -l nodes=1:ppn=1
+#PbS -l walltime=72:00:00
+
 # retrieving parameters
 source configure.sh
 

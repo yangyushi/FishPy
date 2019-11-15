@@ -1,11 +1,15 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# request resources:
+#PBS -N fish_link
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=12:00:00
 source configure.sh
 
 # Linking parameters
 link_frame_start=0
 link_frame_end=0
 link_linker="trackpy"
-link_range=40
+link_range=20
 link_dx_max=25
 link_dt_max=10
 link_blur=1
