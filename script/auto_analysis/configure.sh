@@ -6,16 +6,16 @@ fps=15  # frames / second
 body_length=20  # mm
 
 # analysis for any number of fish
-location=0
+location=1
 velocity=1
 
 # analysis for 2 fish
-nn_analysis=0
+nn_analysis=1
 nn_ignore_vertices=1
 nn_maximum_length=200
 
 # analysis for many fish (more than 1)
-dynamical_order=0
+dynamical_order=1
 velocity_corr=1
 voronoi=1
 
