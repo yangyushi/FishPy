@@ -7,7 +7,7 @@ cam_3_internal="database/cam_3_int.pkl"
 
 # Calibration Spec
 calib_folder="../calib-ext"
-order_json="../calib-orders.json"
+order_json="../calib-ext/calib-orders.json"
 calib_format="tiff"
 grid_size=16   # size of square on the calibration board, unit: mm
 corner_number="23, 15"  # number of inner corners in the row, column
