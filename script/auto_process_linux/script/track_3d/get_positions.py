@@ -61,7 +61,10 @@ for frame in range(frame_start, frame_end):
 
         image = next(movies[i])
 
-        feature = pickle.load(feature_handlers[i])
+        try:
+            feature = pickle.load(feature_handlers[i])
+        except EOFError:
+            break
 
         clusters = ft.oishi.get_clusters(
             feature, shape_kernels, angles,
