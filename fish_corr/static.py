@@ -45,7 +45,7 @@ class Tank:
             self.rot = self.__get_rotation(base, surface)
         self.c = 0.7340428
         self.z_max = -base[-1]  # maximum height from bottom of the tank
-        self.r_max = np.sqrt(self.z_max / self.c)
+        self.r_max = np.sqrt(self.z_max / self.c * 1000)
 
     def __project_r(self, radii, z):
         """
@@ -133,14 +133,13 @@ class Tank:
         random points inside tank
         use rejection method to generate random points inside the tank
         """
-        a, b = self.c1, self.c2
         succeed = False
         while not succeed:
             x, y, z = np.random.random((3, number * 10)) * np.vstack((self.r_max, self.r_max, self.z_max))
             mask = np.zeros(len(z), dtype=bool)
             r = np.sqrt(x**2 + y**2)
             mask[z > self.z(r)]= True
-            if 10 * number - np.sum(mask) > number:
+            if np.sum(mask) > number:
                 x_inside = x[mask]
                 y_inside = y[mask]
                 r_inside = np.sqrt(x_inside**2 + y_inside**2)
