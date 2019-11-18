@@ -1,10 +1,21 @@
+import cv2
 import sys
-from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QGridLayout, QApplication, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QGridLayout, QApplication, QHBoxLayout, QFileDialog
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 
 pg.setConfigOptions(imageAxisOrder='row-major')
+
+def iter_video(file_name, roi=None):
+    vidcap = cv2.VideoCapture(file_name)
+    success = 1
+    while success:
+        success, image = vidcap.read()
+        if success:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            yield image
+
 
 class Model():
     def __init__(self, images):
@@ -78,6 +89,7 @@ class Model():
         self.cursor = max(self.cursor, 0)
         return self.history[self.cursor]
 
+
 class Viewer(QMainWindow):
     def __init__(self, images, roi):
         super().__init__()
@@ -119,15 +131,18 @@ class Viewer(QMainWindow):
         pannel = QWidget()
         layout = QHBoxLayout()
         pannel.setLayout(layout)
+        self.btn_load = QPushButton('load_video')
         self.btn_max = QPushButton('Random Max')
         self.btn_min = QPushButton('Random Min')
         self.btn_save = QPushButton('Save')
         self.btn_exit = QPushButton('Exit')
+        layout.addWidget(self.btn_load)
         layout.addWidget(self.btn_max)
         layout.addWidget(self.btn_min)
         layout.addWidget(self.btn_save)
         layout.addWidget(self.btn_exit)
 
+        self.btn_load.clicked.connect(self.load)
         self.btn_max.clicked.connect(self.get_max)
         self.btn_min.clicked.connect(self.get_min)
         self.btn_save.clicked.connect(self.save)
@@ -142,6 +157,17 @@ class Viewer(QMainWindow):
     def get_min(self):
         image = self.model.rand_min
         self.canvas.setImage(image)
+
+    def load(self):
+        video_name, _ = QFileDialog.getOpenFileName(
+                self, "Select the video", "",
+                "mp4 video (*.mp4);;All Files (*)"
+                )
+
+        if video_name:
+            self.model = Model(iter_video(video_name))
+            image = self.model.next
+            self.canvas.setImage(image)
 
     def save(self):
         position = np.array(self.roi_widget.pos()).astype(int)
