@@ -67,9 +67,6 @@ for frame, image in enumerate(images):
             fg, oishi_kernels, img_threshold, config.Fish.size_min,
             )
 
-    maxima[0] += x0
-    maxima[1] += y0  # remove the effect of the ROI
-
     print(f'frame {frame: ^10} feature number ', maxima.shape[1], end=' --refine--> ')
 
     maxima = ft.refine_oishi_features(
@@ -81,13 +78,14 @@ for frame, image in enumerate(images):
         intensity_threshold=0
     )
 
+    maxima[0] += x0
+    maxima[1] += y0  # remove the effect of the ROI
+
     print(maxima.shape[1])
 
     pickle.dump(maxima, f_out)
 
     x, y, o, s, b, p = maxima
-    x += x0
-    y += y0
 
     if config.Plot.want_plot == 'True':
         plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
