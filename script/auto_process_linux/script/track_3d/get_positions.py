@@ -45,6 +45,11 @@ for i, cam_name in enumerate(camera_dict):
     camera_configurations.append(cam_config)
     feature_handlers.append(open(cam_config.feature, 'rb'))
 
+for frame in range(frame_start):  # skip initial frames
+    for i in range(len(cameras)):
+        next(movies[i])
+        pickle.load(feature_handlers[i])
+
 for frame in range(frame_start, frame_end):
     images_multi_view = []
     features_multi_view = []
@@ -64,6 +69,7 @@ for frame in range(frame_start, frame_end):
         try:
             feature = pickle.load(feature_handlers[i])
         except EOFError:
+            print(f"not enough featuers from view {i+1}")
             break
 
         clusters = ft.oishi.get_clusters(
