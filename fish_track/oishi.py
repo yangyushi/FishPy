@@ -226,6 +226,8 @@ def get_align_map(features, rot_num):
 
 def refine_oishi_features(features, rot_num, dist_threshold,
                           orient_threshold, likelihood_threshold, intensity_threshold):
+    if features.shape[1] == 0:
+        return features
     dist_xy = cdist(features[:2].T, features[:2].T)
     align_map = get_align_map(features, rot_num)
     is_close = dist_xy < dist_threshold
