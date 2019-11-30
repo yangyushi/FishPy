@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+from . import tower_sample as ts
 import warnings
+from itertools import product
 import numpy as np
 from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
@@ -227,3 +229,24 @@ def fit_maxwell_boltzmann(speed, bins):
     fit_y = maxwell_boltzmann_nd(fit_x, dimension-1, spd_sqr_mean)
 
     return dimension, (bin_centres, spd_pdf), (fit_x, fit_y)
+
+
+def biased_discrete_nd(variables, bins, size=1):
+    """
+    Generate random numbers that have the joint distribution of many variables
+    Using tower sampling
+    :param variabels:
+        a iterable of random variables, each variable is a numpy array
+        shape: (Number, Dimension)
+    :param bins:
+        the bin for generating the discrete distribution, it can be either
+        shape: (Dimension, bin_number)
+    :param size:
+        the number of generated random numbers
+    """
+    discrete_pdf, bin_edges = np.histogramdd(variables, bins=bins)
+    bin_centres = np.array([(be[1:] + be[:-1]) / 2 for be in bin_edges])
+    maps = np.array(list(product(*bin_centres)))# map from bin indices to values in the bin
+    random_indices = ts.tower_sampling(size, discrete_pdf.astype(np.int64))
+    random_numbers = maps[random_indices]
+    return random_numbers
