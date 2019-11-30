@@ -22,7 +22,10 @@ def get_maxima(image: np.ndarray, threshold: float, window_size):
     mmap *= image > threshold
     labels, _ = ndimage.label(mmap)
     maxima = ndimage.center_of_mass(image, labels=labels, index=range(1, labels.max()+1))
-    maxima = np.flip(np.array(maxima), axis=1)
+    if len(maxima) > 1:
+        maxima = np.flip(np.array(maxima), axis=1)
+    else:
+        maxima = np.empty((0, 2), dtype=int)
     return maxima
 
 
@@ -92,37 +95,38 @@ def get_shapes(image, fish, report=False):
     fg = image * (image > threshold)
 
     maxima = get_maxima(image, threshold, window_size)
-    sub_images = get_sub_images(fg, maxima, window_size)
-
-    shapes = []
 
     if report:
         volumes = []
         aspect_ratios = []
 
-    for i, sub_img in enumerate(sub_images):
-        volume = np.sum(sub_img)
-        is_similiar = True
-        is_similiar *= np.sum(sub_img > 0) > fish.size_max
-        is_similiar *= ndimage.label(sub_img > 0)[1] < 2
-        is_similiar *= volume > fish.volume_min
-        is_similiar *= np.sum(sub_img) < fish.volume_max
+    if len(maxima) == 0:
+        shapes = []
+    else:
+        sub_images = get_sub_images(fg, maxima, window_size)
+        shapes = []
+        for i, sub_img in enumerate(sub_images):
+            volume = np.sum(sub_img)
+            is_similiar = True
+            is_similiar *= np.sum(sub_img > 0) > fish.size_max
+            is_similiar *= ndimage.label(sub_img > 0)[1] < 2
+            is_similiar *= volume > fish.volume_min
+            is_similiar *= np.sum(sub_img) < fish.volume_max
 
-        if report:
-            volumes.append(volume)
+            if report:
+                volumes.append(volume)
 
-        if not is_similiar:
-            continue
+            if not is_similiar:
+                continue
 
-        aligned_image, aspect_ratio = align_sub_image(sub_img, want_ar=True)
+            aligned_image, aspect_ratio = align_sub_image(sub_img, want_ar=True)
 
-        not_too_fat = aspect_ratio > fish.aspect_ratio_min
-        not_too_slim = aspect_ratio < fish.aspect_ratio_max
-        if not_too_fat and not_too_slim:
-            shapes.append(aligned_image)
-        if report:
-            aspect_ratios.append(aspect_ratio)
-
+            not_too_fat = aspect_ratio > fish.aspect_ratio_min
+            not_too_slim = aspect_ratio < fish.aspect_ratio_max
+            if not_too_fat and not_too_slim:
+                shapes.append(aligned_image)
+            if report:
+                aspect_ratios.append(aspect_ratio)
     if report:
         return shapes, volumes, aspect_ratios
     else:
