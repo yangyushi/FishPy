@@ -6,10 +6,8 @@ from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.spatial.transform import Rotation
 
 
-def a2r_cost(x, a, b, y):
-    r_range = np.arange(x)
-    curve = np.sqrt(a**2 * b**2 * np.exp(2 * b * r_range) + 1)
-    length = np.trapz(curve, r_range)
+def a2r_cost(x, c, y):
+    length = 0.5 * x * np.sqrt(1 + 4 * c**2 * x**2) + np.arcsinh(2 * c * x) / (4 * c)
     return length - y
 
 
@@ -175,17 +173,15 @@ class Tank:
     def curvilinear_2_cylindar(self, L, D):
         R = np.empty(len(L))
         Z = np.empty(len(L))
-        a, b = self.c1, self.c2
+        c = self.c / 1000
         for i, l in enumerate(L):
-            rp = root_scalar(a2r_cost, args=(a, b, l), x0=l, x1=l/2).root
+            rp = root_scalar(a2r_cost, args=(c, l), x0=l, x1=l/2).root
             zp = self.z(rp)
-            s = a*b*np.exp(b*rp)  # slope
-            tanget = (1, s)
-            normal = (1, -1/s)
-            theta = np.arccos(-s / np.sqrt(2 + s**2))
+            s = 2 * c * rp  # slope
+            theta = np.pi/2 - np.arctan(s)
             dr = D[i] * np.cos(theta)
             dz = D[i] * np.sin(theta)
-            R[i] = rp + dr
+            R[i] = rp - dr
             Z[i] = zp + dz
         return R, Z
 

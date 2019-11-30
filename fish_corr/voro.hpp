@@ -73,6 +73,8 @@ class Fish_tank {
         vector<double> volumes();
         vector<double> volumes(py::array_t<int> indices);
 
+        vector<int> indices_with_volume(py::array_t<int> indices);
+
     private:
         double z_max;
         double coef;
