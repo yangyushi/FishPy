@@ -39,15 +39,15 @@ else:
     with open('movie.pkl', 'wb') as f:
         pickle.dump(movie, f)
 
-speed_multi_frames = np.empty(0)
+speed_multi_frames = []
 speed_average = []
-X = np.empty(0)
-Y = np.empty(0)
-Z = np.empty(0)
-D = np.empty(0)  # distance from fish to tank
+X = []
+Y = []
+Z = []
+D = []  # distance from fish to tank
 
-projs_xyz = np.empty((0, 3))  # projected coordinates
-velocities_multi_frames = np.empty((0, 3))
+projs_xyz = []  # projected coordinates
+velocities_multi_frames = []
 
 for frame in range(len(movie)-1):
     indices = movie.indice_pair(frame)[0]
@@ -56,17 +56,17 @@ for frame in range(len(movie)-1):
     positions = movie[frame][indices]
     velocities = movie.velocity(frame)[indices]  # shape of velocity is n, 3
     speed = np.linalg.norm(velocities, axis=1)
-    speed_multi_frames = np.concatenate((speed_multi_frames, speed))
+    speed_multi_frames += speed.tolist()
     speed_average.append(np.mean(speed))
     x, y, z = tank.get_xyz(positions)
     proj = tank.get_projection(positions).T
     _, _, d = tank.get_curvilinear(positions)
-    X = np.concatenate((X, x))
-    Y = np.concatenate((Y, y))
-    Z = np.concatenate((Z, z))
-    D = np.concatenate((D, d))
-    projs_xyz = np.concatenate((projs_xyz, proj), axis=0)
-    velocities_multi_frames = np.concatenate((velocities_multi_frames, velocities), axis=0)
+    X += x.tolist()
+    Y += y.tolist()
+    Z += z.tolist()
+    D += d.tolist()
+    projs_xyz =+ proj.tolist()
+    velocities_multi_frames = velocities.tolist()
 
 
 """

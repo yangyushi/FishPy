@@ -35,10 +35,11 @@ want_calculate = traj_location_file not in os.listdir('.')
 
 if want_calculate:
     movie = ft.Movie(trajectories, blur=0, interpolate=False)
-    locations = np.empty((0, 3))  # shape is (frame, n, 2)
+    locations = [] # shape is (frame, n, 2)
     for i, frame in enumerate(movie):
         if len(frame) > 0:
-            locations = np.concatenate((locations, frame), axis=0)
+            locations += frame.tolist()
+    locations = np.array(locations)
     np.save(traj_location_file, locations)
 else:
     locations = np.load(traj_location_file)

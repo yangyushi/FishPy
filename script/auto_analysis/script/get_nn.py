@@ -32,7 +32,7 @@ with open(traj_file, 'rb') as f:
 
 movie = ft.Movie(trajectories)
 
-nn_locations = np.zeros((0, 3))
+nn_locations = []
 nn_dists_mean = []
 
 for i in range(len(movie) - 1):
@@ -41,8 +41,10 @@ for i in range(len(movie) - 1):
     if len(indices) > 1 + (int(ignore_vertices) * 3):
         velocity = movie.velocity(i)[indices]
         loc, dist = fc.static.get_nn_with_velocity(frame[indices], velocity, ignore_vertices)
-        nn_locations = np.concatenate((nn_locations, loc))
+        nn_locations += loc.tolist()
         nn_dists_mean.append(np.mean(dist))
+
+nn_locations = np.array(nn_locations)
 
 plt.plot(nn_dists_mean, color='tomato', markerfacecolor='none')
 plt.ylabel('Average NN distance (mm)', fontsize=14)
@@ -74,3 +76,6 @@ plt.axis('off')
 plt.tight_layout()
 plt.savefig(f'{output_folder}/nn_dist.pdf')
 plt.close()
+
+np.save('mean_nn_movie', nn_dists_mean)
+np.save('nn_locations', nn_locations)
