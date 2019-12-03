@@ -246,7 +246,8 @@ def biased_discrete_nd(variables, bins, size=1):
     """
     discrete_pdf, bin_edges = np.histogramdd(variables, bins=bins)
     bin_centres = np.array([(be[1:] + be[:-1]) / 2 for be in bin_edges])
+    bin_width = np.array([b[1] - b[0] for b in bins]).reshape(1, len(bins))
     maps = np.array(list(product(*bin_centres)))# map from bin indices to values in the bin
     random_indices = ts.tower_sampling(size, discrete_pdf.astype(np.int64))
     random_numbers = maps[random_indices]
-    return random_numbers
+    return random_numbers + np.random.random(random_numbers.shape) * bin_width
