@@ -43,6 +43,8 @@ for i in range(len(movie) - 1):
         loc, dist = fc.static.get_nn_with_velocity(frame[indices], velocity, ignore_vertices)
         nn_locations += loc.tolist()
         nn_dists_mean.append(np.mean(dist))
+    else:
+        nn_dists_mean.append(np.nan)
 
 nn_locations = np.array(nn_locations)
 
