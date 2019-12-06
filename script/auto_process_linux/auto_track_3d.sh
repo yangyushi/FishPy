@@ -1,6 +1,6 @@
 #!/bin/bash
 # request resources:
-#PBS -N fish_track_3d
+#PBS -N ft-3d-
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=72:00:00
 
@@ -56,5 +56,8 @@ fi
 
 make pos
 make sort
+
+tar -cf locations.tar locations_3d
+rm -rf locations_3d
 
 cd -

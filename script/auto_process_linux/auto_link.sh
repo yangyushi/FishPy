@@ -1,8 +1,10 @@
 #!/bin/bash
 # request resources:
-#PBS -N fish_link
+#PBS -N fl-
 #PBS -l nodes=1:ppn=1
-#PBS -l walltime=12:00:00
+#PBS -l walltime=24:00:00
+#PBS -l mem=128g
+#PBS -q himem
 
 if [ $PBS_O_WORKDIR ]; then
     cd $PBS_O_WORKDIR
