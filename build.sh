@@ -2,9 +2,9 @@ export prefix=/usr/local
 export PY=python3
 
 cd fish_3d
-make
+make all
 cd ../fish_corr
-make
+make all
 cd ../fish_track
-make
+make all
 cd ..
