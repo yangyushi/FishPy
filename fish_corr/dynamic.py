@@ -7,13 +7,13 @@ from scipy.optimize import least_squares
 from scipy.spatial.distance import pdist
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from . import utility
 
 
 class Critic():
     """
     Calculate the dynamical order & correlations from a fish movie
-
     movie:
         a `Movie` instance from package `fish_track`
             Movie[ f ]             - the positions of all particles in frame f
@@ -94,7 +94,7 @@ class Critic():
             self.__GR.update({frame: (G, R)})
             return G, R
 
-    def get_orders(self, start=0, stop=None, size_threshold=5):
+    def get_orders(self, start=0, stop=None, size_threshold=5, report=False):
         """
         return nan for one frame if the matched pair in that frame is smaller than size_threshold
         """
@@ -103,7 +103,12 @@ class Critic():
 
         t_orders, r_orders, d_orders = [], [], []
 
-        for frame in range(start, stop+1):
+        if report:
+            frames = tqdm(range(start, stop+1))
+        else:
+            frames = range(start, stop+1)
+
+        for frame in frames:
             idx_0, idx_1 = self.movie.indice_pair(frame)
 
             if len(idx_0) < size_threshold:
