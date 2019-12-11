@@ -446,7 +446,7 @@ def get_u(n, d, x, z):
         if (u > 0) and (u <= x):
             return u * 1000
 
-    raise ValueError("Root finding for u failed, z = " % z)
+    raise ValueError("Root finding for u failed, z = %.4f" % z)
 
 
 def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):

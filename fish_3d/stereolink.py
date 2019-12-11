@@ -223,11 +223,14 @@ def greedy_match(clusters, cameras, depth, normal, water_level, tol_2d, sample_s
             if len(cloud) > 0 and in_tank:
                 cloud_com = np.sum(cloud / np.reshape(error, (len(error), 1)), axis=0) / np.sum(1 / error)
                 locations_2d = [np.mean(full_clusters[i], 0) for i in range(3)]
-                reproj_err = ray_trace.get_reproj_err(cloud_com, locations_2d, cameras_reordered, water_level, normal)
-                candidate_origional = [candidate[order.index(i)] for i in range(3)]
-                allowed.append(candidate_origional)
-                errors.append(reproj_err)
-                coms.append(cloud_com)
+                try:
+                    reproj_err = ray_trace.get_reproj_err(cloud_com, locations_2d, cameras_reordered, water_level, normal)
+                    candidate_origional = [candidate[order.index(i)] for i in range(3)]
+                    allowed.append(candidate_origional)
+                    errors.append(reproj_err)
+                    coms.append(cloud_com)
+                except ValueError:
+                    continue
 
         if len(allowed) > 0:
             matched.append(tuple(allowed[np.argmin(errors)]))
