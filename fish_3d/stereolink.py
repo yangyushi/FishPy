@@ -283,6 +283,7 @@ def remove_overlap(centres, errors, search_range=10):
 def remove_conflict(matched_indices, matched_centres, reproj_errors):
     """
     Only allow each unique feature, indicated by a number in `matched_indices`, appear once for each view
+    That is to say, fish #1 and fish #2 is NOT allowed to the SAME blob in the same picture.
     This means all values in matched_indices.T should be unique along three views
     It works for n views
     matched_indices: shape (number, view)

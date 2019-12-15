@@ -101,7 +101,7 @@ for frame in range(frame_start, frame_end):
         matched_indices, matched_centres, reproj_errors
     )
 
-    while True:  # try to match all un-matched flusters
+    while True:  # try to match all un-matched clusters
         extra_indices, extra_centres, extra_reproj_errors = f3.extra_three_view_cluster_match(
             matched_indices, clusters_multi_view, cameras,
             tol_2d=tol_2d, sample_size=sample_size, depth=water_depth,
