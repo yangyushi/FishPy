@@ -68,13 +68,31 @@ hist, binedges = np.histogramdd(
     )
 )
 
-bc = binedges[0][:-1]
+tick_num = 6
+bin_ticks = np.linspace(0, hist.shape[0], tick_num, endpoint=False)
+bin_ticklabels = [int(num) for num in np.linspace(-r, r, tick_num, endpoint=False)]
+s = int(hist.shape[0] // 2)
 
-plt.gcf().set_size_inches(8, 4.5)
-plt.subplot(121).imshow(hist[:, :, bins//2].T)#, vmin=0, vmax=1e-5)
-plt.axis('off')
-plt.subplot(122).imshow(hist[:, bins//2, :].T)#, vmin=0, vmax=1e-5)
-plt.axis('off')
+fig, axes = plt.subplots(1, 2)
+fig.set_size_inches(8, 4.5)
+
+axes[0].imshow(hist[:, :, s].T)
+axes[0].set_xticks(bin_ticks)
+axes[0].set_yticks(bin_ticks)
+axes[0].set_xticklabels(bin_ticklabels)
+axes[0].set_yticklabels(bin_ticklabels)
+axes[0].set_xlabel('X / mm', fontsize=14)
+axes[0].set_ylabel('Y / mm', fontsize=14)
+
+axes[1].imshow(hist[:, s, :].T)
+axes[1].set_xticks(bin_ticks)
+axes[1].set_yticks(bin_ticks)
+axes[1].set_xticklabels(bin_ticklabels)
+axes[1].set_yticklabels(bin_ticklabels)
+axes[1].set_xlabel('X / mm', fontsize=14)
+axes[1].set_ylabel('Z / mm', fontsize=14)
+
+
 plt.tight_layout()
 plt.savefig(f'{output_folder}/nn_dist.pdf')
 plt.close()
