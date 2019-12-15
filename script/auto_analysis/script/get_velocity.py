@@ -65,8 +65,8 @@ for frame in range(len(movie)-1):
     Y += y.tolist()
     Z += z.tolist()
     D += d.tolist()
-    projs_xyz =+ proj.tolist()
-    velocities_multi_frames = velocities.tolist()
+    projs_xyz += proj.tolist()
+    velocities_multi_frames += velocities.tolist()
 
 
 """

@@ -421,12 +421,12 @@ def match_points_v3(cameras: List['Camera'], points: List[np.ndarray], max_cost=
         cost_v3 = np.array([p3h @ f13 @ p1h for p3h in points_homo[2]])
         mc2 = np.min(np.abs(cost_v2))
         mc3 = np.min(np.abs(cost_v3))
-        
+
         best_v2 = np.argmin(np.abs(cost_v2))
         best_v3 = np.argmin(np.abs(cost_v3))
-        
+
         mc3 = np.min(np.abs(cost_v3))
-        
+
         p2h = points_homo[1][best_v2]
         p3h = points_homo[2][best_v3]
         mc23 = abs(p3h @ f23 @ p2h)
