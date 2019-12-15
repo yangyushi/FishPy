@@ -196,7 +196,7 @@ plt.close()
 
 bins = np.linspace(0, np.nanmax(speed_multi_frames), 51)
 
-dimension, (bin_centres, spd_pdf), (fit_x, fit_y) = fc.utility.fit_maxwell_boltzmann(speed_multi_frames, bins)
+dimension, (bin_centres, spd_pdf), (fit_x, fit_y) = fc.utility.fit_maxwell_boltzmann(np.array(speed_multi_frames), bins)
 
 plt.scatter(
     bin_centres, spd_pdf, color='tomato', facecolor='w',
