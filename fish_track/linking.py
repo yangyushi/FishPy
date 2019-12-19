@@ -4,7 +4,6 @@ from scipy import ndimage
 from scipy.spatial.distance import cdist
 import pickle
 import matplotlib.pyplot as plt
-from numba import jit
 import trackpy as tp
 from typing import List
 from .nrook import solve_nrook
@@ -91,7 +90,6 @@ class Manager():
         """
         self.trajs = trajs
 
-    @jit
     def break_trajectories(self, search_range):
         for i, traj in enumerate(self.trajs):
             for another_traj in self.trajs[i + 1:]:

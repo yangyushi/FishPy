@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from numba import jit
 import numpy as np
 import pickle
 from scipy.stats import binned_statistic

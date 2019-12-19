@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
-from numba import njit
 from scipy import optimize
 from itertools import product
 from typing import List, Tuple, Dict
