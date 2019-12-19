@@ -39,7 +39,7 @@ class Configure:
         config = configparser.ConfigParser()
         config.read(config_file)
         for section in config:
-            if section is not "DEFAULT":
+            if section != "DEFAULT":
                 dict_property = dict(config[section])
                 setattr(self, section, SubProperty(dict_property))
 
