@@ -6,30 +6,31 @@ import numpy as np
 from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
 from scipy.special import gamma
+from numba import njit
 
 
-def auto_corr(var, dt=1):
-    fluctuation = np.array(var) - np.nanmean(var)
-    stop = len(var)
-    corr = fluctuation[dt:stop] * fluctuation[:stop-dt]
-    c = np.nanmean(corr)
-    std = np.nanstd(corr)
-    c0 = np.nanmean(fluctuation * fluctuation)
-    return c/c0, std/c0
-
-
-def get_acf(var):
-    """
-    Calculate the auto-correlation function for a 1D variable
+@njit
+def get_acf(var: np.array):
+    r"""
+    Calculate the auto-correlation function for a n-dimensional variable
+    Y[\tau] = \left< \sum_i{X[t, i] \cdot X[t+\tau, i]} \right>
+    :param var: a continual 1D variable.
+                the shape is (number, dimension)
+                there should be no 'np.nan' inside.
     """
     size = len(var)
+    dim = var.shape[1]
+    mean = np.empty((1, dim), dtype=np.float64)
+    for d in range(dim):
+        mean[0, d] = var[:, d].mean()
+    flctn = var - mean  # (n, dim) - (1, dim)
     result = np.empty(size - 1, dtype=np.float64)
-    variations = np.empty(size - 1, dtype=np.float64)
     for dt in range(0, size - 1):
-        acf, std = auto_corr(var, dt)
-        result[dt] = acf
-        variations[dt] = std
-    return result, variations
+        stop = size - dt
+        corr = np.sum(flctn[:stop] * flctn[dt:stop+dt], axis=1)
+        c0   = np.sum(flctn[:stop] * flctn[:stop], axis=1)  # normalisation factor
+        result[dt] = np.sum(corr) / np.sum(c0)
+    return result
 
 
 def get_centre(trajectories, frame):
