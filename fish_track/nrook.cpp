@@ -69,6 +69,7 @@ void solve(LinkMat & lm, vector<Config> & solutions,
     return;
 }
 
+
 py::array_t<int> solve_nrook(LinkMat lm){
     Eigen::FullPivLU<Eigen::MatrixXf> dec(lm.cast<float>());
     int lm_rank = dec.rank();
