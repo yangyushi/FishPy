@@ -10,7 +10,7 @@ from .nrook import solve_nrook
 
 
 class Trajectory():
-    def __init__(self, time, positions, blur=None):
+    def __init__(self, time: np.array, positions: np.array, blur=None):
         assert len(time) == len(positions), "Time points do not match the position number"
         self.time = time
         self.length = len(time)
@@ -57,6 +57,15 @@ class Trajectory():
             return Trajectory(new_time, new_positions)
         else:  # there are overlap between time
             return self
+
+    def offset(self, time):
+        """
+        offset all time
+        """
+        self.time += time
+        self.t_start += time
+        self.t_end += time
+        return self
 
     def interpolate(self):
         if len(self.positions) == self.time[-1] - self.time[0]:
