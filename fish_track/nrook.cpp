@@ -25,7 +25,7 @@ vector<int> nonzero(LinkMat & lm, int row_num) {
 
 bool conflict(Config config){
     int last_index = config.size() - 1;
-    for (int i = 0; i < config.size() - 1; i++) {
+    for (int i = 0; i < last_index; i++) {
         if (config[i] == config[last_index]) { return true; }
     }
     return false;
@@ -33,7 +33,7 @@ bool conflict(Config config){
 
 
 bool conflict_future_row(LinkMat & lm, int row, int col){
-    for (int r = row+1; r < lm.rows()-1; r++){
+    for (int r = row+1; r < lm.rows(); r++){
         if (lm(r, col) > 0){
             return true;
         }
@@ -49,20 +49,51 @@ void solve(LinkMat & lm, vector<Config> & solutions,
         return;
     } else {
         if (lm.rows() <= row_num) { return; }
-        while (lm.row(row_num).count() == 0) {
+        while (lm.row(row_num).count() == 0) {  // jump through blank rows
             config.push_back(-1);
             row_num++;
             if (lm.rows() <= row_num) { return; }
         }
         config.push_back(-1);
-        vector<int> alternative = config;
+        vector<int> alternative = config;  // choose nothing in this row
         for (int col : nonzero(lm, row_num)) {
             config.back() = col;
             if ( not conflict(config) ) {
                 if (conflict_future_row(lm, row_num, col)) {
-                    solve(lm, solutions, mat_rank, row_num+1, level  , alternative);
+                    solve(lm, solutions, mat_rank, row_num+1, level, alternative);
                 }
                 solve(lm, solutions, mat_rank, row_num+1, level+1, config);
+            }
+        }
+    }
+    return;
+}
+
+
+void solve_dense(LinkMat & lm, vector<Config> & solutions, int max_level,
+        int row_num=0, int level=0, Config config={}){
+    /*
+     * lm: the linkage matrix, the binarized distance matrix
+     * solutions: all possible link configurations
+     * max level: max(num-non-zero-rows, num-non-zero-cols)
+     */
+    if (level == max_level) {
+        solutions.push_back(config);
+        return;
+    }
+    else if (row_num == lm.rows()) {
+        return;
+    }
+    else {
+        config.push_back(-1);
+        vector<int> alternative = config;  // choose nothing in this row
+        for (int col : nonzero(lm, row_num)) {
+            config.back() = col;
+            if ( not conflict(config) ) {
+                if (conflict_future_row(lm, row_num, col)) {
+                    solve(lm, solutions, max_level, row_num+1, level, alternative);
+                }
+                solve(lm, solutions, max_level, row_num+1, level+1, config);
             }
         }
     }
@@ -91,16 +122,49 @@ py::array_t<int> solve_nrook(LinkMat lm){
                 *ptr++ = row_idx;
                 *ptr++ = col;
             }
-            row_idx++;
+        row_idx++;
         }
     }
     result.resize({num_solutions, lm_rank, 2});
     return result;
 }
 
+
+py::array_t<int> solve_nrook_dense(LinkMat lm, int max_level){
+    vector<vector<int>> solutions;
+    int row_idx = 0;
+
+    solve_dense(lm, solutions, max_level);
+
+    int num_solutions = solutions.size();
+
+    auto result = py::array_t<int>(num_solutions * max_level * 2);
+    auto buffer = result.request();
+    int *ptr = (int *) buffer.ptr;
+
+    for (auto config : solutions) {
+        row_idx = 0;
+        for (int col : config) {
+            if (col >= 0){
+                *ptr++ = row_idx;
+                *ptr++ = col;
+            }
+        row_idx++;
+        }
+    }
+    result.resize({num_solutions, max_level, 2});
+    return result;
+}
+
+
 PYBIND11_MODULE(nrook, m){
     m.doc() = "solve n rook problem in restricted available sites";
 
     m.def("solve_nrook", &solve_nrook, "solve the n rook problem in a given availabel sites",
           py::return_value_policy::move, py::arg("lm").noconvert());
+
+    m.def("solve_nrook_dense", &solve_nrook_dense,
+            "solve the n rook problem in a given availabel sites from a dense distance matrix",
+          py::return_value_policy::move,
+          py::arg("lm").noconvert(), py::arg("max_level"));
 }

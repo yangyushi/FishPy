@@ -6,7 +6,8 @@ import pickle
 import matplotlib.pyplot as plt
 import trackpy as tp
 from typing import List
-from .nrook import solve_nrook
+from .nrook import solve_nrook, solve_nrook_dense
+from scipy.sparse import coo_matrix
 
 
 class Trajectory():
@@ -405,6 +406,62 @@ def build_dist_matrix(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> n
     return dist_matrix
 
 
+def squeeze_sparse(array: np.array) -> np.array:
+    """
+    Given the indices in a row or column from a sparse matrix
+    remove the blank rows/columns
+    * array[i + 1] >= array[i]
+    """
+    sort_indices = np.argsort(array)
+    remap = np.argsort(sort_indices)
+    array_sorted = array[sort_indices]
+
+    result = np.empty(array.shape, dtype=int)
+    result[0] = 0
+    for i in range(1, len(array)):
+        if array_sorted[i] == array_sorted[i - 1]:
+            result[i] = result[i-1]
+        elif array_sorted[i] > array_sorted[i - 1]:
+            result[i] = result[i-1] + 1
+        else:
+            raise RuntimeError("array[i + 1] < array[i]")
+
+    return result[remap]
+
+
+def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
+    """
+    build the distance matrix as a sparse matrix
+    :param dt: if the last time point  of trajectory #1 + dt > first time point of trajectory #2, consider a link being possible
+    :param dx: if within dt, the distance between trajectory #1's prediction and trajectory #2's first point is smaller than dx, assign a link
+    :return: the squeezed rows & columns for constructing a compact matrix
+             and the origional rows & columns for retriving the indices of trajectories
+    """
+    traj_num = len(trajs_sorted)
+    values, rows, cols = [], [], []
+    for i, traj_1 in enumerate(trajs_sorted):
+        for j, traj_2 in enumerate(trajs_sorted[i+1:]):
+            if (traj_2.t_start - traj_1.t_end) > dt:
+                break
+            elif traj_2.t_start > traj_1.t_end:
+                distance = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
+                if distance < dx:
+                    rows.append(i)
+                    cols.append(i+j+1)
+                    values.append(distance)
+    rows = np.array(rows, dtype=int)
+    cols = np.array(cols, dtype=int)
+    values = np.array(values, dtype=float)
+    rows_sqz = squeeze_sparse(rows)
+    cols_sqz = squeeze_sparse(cols)
+    row_map = {r1 : r0 for r0, r1 in zip(rows, rows_sqz)}  # map from squeezed to origional
+    col_map = {c1 : c0 for c0, c1 in zip(cols, cols_sqz)}
+    larger = max(max(rows_sqz), max(cols_sqz)) + 1
+    max_level = min(max(rows_sqz), max(cols_sqz)) + 1
+    dist_mat = coo_matrix((values, (rows_sqz, cols_sqz)), shape=(larger, larger), dtype=float).toarray()
+    return dist_mat, row_map, col_map, max_level
+
+
 def reduce_network(network: np.ndarray) -> List[np.ndarray]:
     """
     network is compose of [(i_1, j_1), (i_2, j_2) ...] links
@@ -426,14 +483,13 @@ def reduce_network(network: np.ndarray) -> List[np.ndarray]:
     return np.array(reduced)
 
 
-def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> List[np.ndarray]:
+def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> np.ndarray:
     distances = []
     for network in networks:
         costs = distance_matrix[tuple(network.T)]
         dist_total = distance_matrix[network].sum()
         distances.append(dist_total)
-    best_network = networks[np.argmin(distances)]
-    return reduce_network(best_network)
+    return networks[np.argmin(distances)]
 
 
 def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -> List['Trajectory']:
@@ -453,7 +509,7 @@ def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -
     return new_trajs
 
 
-def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
+def relink_slow(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
     trajs = [
         Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
     ]
@@ -463,7 +519,30 @@ def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='pos
     if len(networks[0]) == 0:
         return trajectories
     best = choose_network(dist_mat, networks)
-    new_trajs = apply_network(trajs_ordered, best)
+    reduced = reduce_network(best)
+    new_trajs = apply_network(trajs_ordered, reduced)
+    return [{'time': t.time, 'position': t.positions} for t in new_trajs]
+
+
+def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
+    trajs = [
+        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
+    ]
+    trajs_ordered = sort_trajectories(trajs)
+
+    dist_mat, row_map, col_map, max_level = build_dist_matrix_sparse(
+        trajs_ordered, dx=dist_threshold, dt=time_threshold
+    )
+
+    networks = solve_nrook_dense(dist_mat.astype(bool), max_level)
+    if len(networks[0]) == 0:
+        return trajectories
+    best = choose_network(dist_mat, networks)
+    for i, pair in enumerate(best):
+        best[i, 0] = row_map[pair[0]]
+        best[i, 1] = col_map[pair[1]]
+    reduced = reduce_network(best)
+    new_trajs = apply_network(trajs_ordered, reduced)
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 
