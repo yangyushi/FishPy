@@ -437,7 +437,6 @@ def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: floa
     :return: the squeezed rows & columns for constructing a compact matrix
              and the origional rows & columns for retriving the indices of trajectories
     """
-    traj_num = len(trajs_sorted)
     values, rows, cols = [], [], []
     for i, traj_1 in enumerate(trajs_sorted):
         for j, traj_2 in enumerate(trajs_sorted[i+1:]):
@@ -449,6 +448,8 @@ def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: floa
                     rows.append(i)
                     cols.append(i+j+1)
                     values.append(distance)
+    if len(values) == 0:
+        return np.empty(0), {}, {}
     rows = np.array(rows, dtype=int)
     cols = np.array(cols, dtype=int)
     values = np.array(values, dtype=float)
@@ -457,9 +458,8 @@ def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: floa
     row_map = {r1 : r0 for r0, r1 in zip(rows, rows_sqz)}  # map from squeezed to origional
     col_map = {c1 : c0 for c0, c1 in zip(cols, cols_sqz)}
     larger = max(max(rows_sqz), max(cols_sqz)) + 1
-    max_level = min(max(rows_sqz), max(cols_sqz)) + 1
     dist_mat = coo_matrix((values, (rows_sqz, cols_sqz)), shape=(larger, larger), dtype=float).toarray()
-    return dist_mat, row_map, col_map, max_level
+    return dist_mat, row_map, col_map
 
 
 def reduce_network(network: np.ndarray) -> List[np.ndarray]:
@@ -496,10 +496,7 @@ def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -
     new_trajs = []
     to_modify = np.hstack(network)
     for link in network:
-        to_sum = []
-        for i, t in enumerate(trajectories):
-            if i in link: to_sum.append(t)
-            if len(to_sum) == len(link): break
+        to_sum = [trajectories[idx] for idx in link]
         for t in to_sum[1:]:
             to_sum[0] = to_sum[0] + t
         new_trajs.append(to_sum[0])
@@ -530,19 +527,23 @@ def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='pos
     ]
     trajs_ordered = sort_trajectories(trajs)
 
-    dist_mat, row_map, col_map, max_level = build_dist_matrix_sparse(
-        trajs_ordered, dx=dist_threshold, dt=time_threshold
-    )
+    dist_mat, row_map, col_map = build_dist_matrix_sparse(trajs_ordered, dx=dist_threshold, dt=time_threshold)
 
-    networks = solve_nrook_dense(dist_mat.astype(bool), max_level)
-    if len(networks[0]) == 0:
+    if len(dist_mat) == 0:
         return trajectories
+
+    max_row = max(row_map.keys())+1
+    networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
+
     best = choose_network(dist_mat, networks)
+
     for i, pair in enumerate(best):
         best[i, 0] = row_map[pair[0]]
         best[i, 1] = col_map[pair[1]]
+
     reduced = reduce_network(best)
     new_trajs = apply_network(trajs_ordered, reduced)
+
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 

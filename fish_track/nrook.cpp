@@ -17,16 +17,37 @@ vector<int> nonzero(LinkMat & lm, int row_num) {
     vector<int> indices;
     int n_col = lm.cols();
     for (int i = 0; i < n_col; i++){
-        if (row[i]) { indices.push_back(i); }
+        if (row[i]) {
+            indices.push_back(i);
+        }
     }
     return indices;
 }
 
 
+int count_config(Config & config){
+    /*
+    * count the non-zero elements in a configuration
+    * the result is possible links in a configuration
+    */
+    int result = 0;
+    for (auto col : config){
+        if (col >= 0){
+            result += 1;
+        }
+    }
+    return result;
+}
+
 bool conflict(Config config){
-    int last_index = config.size() - 1;
-    for (int i = 0; i < last_index; i++) {
-        if (config[i] == config[last_index]) { return true; }
+    if (config.size() == 1) {
+        return false;
+    }
+    else{
+        int last_index = config.size() - 1;
+        for (int i = 0; i < last_index; i++) {
+            if (config[i] == config[last_index]) { return true; }
+        }
     }
     return false;
 }
@@ -70,34 +91,40 @@ void solve(LinkMat & lm, vector<Config> & solutions,
 }
 
 
-void solve_dense(LinkMat & lm, vector<Config> & solutions, int max_level,
-        int row_num=0, int level=0, Config config={}){
+void solve_dense(LinkMat & lm, vector<Config> & solutions, int max_row,
+        int row_num=0, Config config={}){
     /*
      * lm: the linkage matrix, the binarized distance matrix
      * solutions: all possible link configurations
-     * max level: max(num-non-zero-rows, num-non-zero-cols)
      */
-    if (level == max_level) {
+    if (row_num == max_row) {
         solutions.push_back(config);
         return;
     }
-    else if (row_num == lm.rows()) {
-        return;
-    }
     else {
+        vector<int> possible_cols;
         config.push_back(-1);
-        vector<int> alternative = config;  // choose nothing in this row
-        for (int col : nonzero(lm, row_num)) {
+        Config alternative = config;
+
+        for (int col : nonzero(lm, row_num)) { 
             config.back() = col;
             if ( not conflict(config) ) {
-                if (conflict_future_row(lm, row_num, col)) {
-                    solve(lm, solutions, max_level, row_num+1, level, alternative);
-                }
-                solve(lm, solutions, max_level, row_num+1, level+1, config);
+                possible_cols.push_back(col);
             }
         }
+
+        for (int col : possible_cols) {  // choose nothing in this row
+            if (conflict_future_row(lm, row_num, col)) {
+                solve_dense(lm, solutions, max_row, row_num+1, alternative);
+                break;
+            }
+        }
+
+        for (int col : possible_cols) { // select different columns in this row
+            config.back() = col;
+            solve_dense(lm, solutions, max_row, row_num+1, config);
+        }
     }
-    return;
 }
 
 
@@ -130,29 +157,45 @@ py::array_t<int> solve_nrook(LinkMat lm){
 }
 
 
-py::array_t<int> solve_nrook_dense(LinkMat lm, int max_level){
+py::array_t<int> solve_nrook_dense(LinkMat lm, int max_row){
     vector<vector<int>> solutions;
     int row_idx = 0;
+    int size = 0;
 
-    solve_dense(lm, solutions, max_level);
+    solve_dense(lm, solutions, max_row);
 
-    int num_solutions = solutions.size();
+    int max_conf_size = 0;
+    for (auto config : solutions) {
+        size = count_config(config);
+        if (size > max_conf_size){
+            max_conf_size = size;
+        }
+    }
 
-    auto result = py::array_t<int>(num_solutions * max_level * 2);
+    int num_solutions = 0;
+    for (auto config : solutions) {
+        if (count_config(config) == max_conf_size){
+            num_solutions += 1;
+        }
+    }
+
+    auto result = py::array_t<int>(num_solutions * max_conf_size * 2);
     auto buffer = result.request();
     int *ptr = (int *) buffer.ptr;
 
     for (auto config : solutions) {
-        row_idx = 0;
-        for (int col : config) {
-            if (col >= 0){
-                *ptr++ = row_idx;
-                *ptr++ = col;
+        if (count_config(config) == max_conf_size) {
+            row_idx = 0;
+            for (int col : config) {
+                if (col >= 0){
+                    *ptr++ = row_idx;
+                    *ptr++ = col;
+                }
+            row_idx++;
             }
-        row_idx++;
         }
     }
-    result.resize({num_solutions, max_level, 2});
+    result.resize({num_solutions, max_conf_size, 2});
     return result;
 }
 
@@ -165,6 +208,5 @@ PYBIND11_MODULE(nrook, m){
 
     m.def("solve_nrook_dense", &solve_nrook_dense,
             "solve the n rook problem in a given availabel sites from a dense distance matrix",
-          py::return_value_policy::move,
-          py::arg("lm").noconvert(), py::arg("max_level"));
+          py::return_value_policy::move, py::arg("lm").noconvert(), py::arg("max_row"));
 }
