@@ -1,3 +1,5 @@
+[![time tracker](https://wakatime.com/badge/github/yangyushi/FishPy.svg)](https://wakatime.com/badge/github/yangyushi/FishPy)
+
 # FishPy
 
 ## What is this
