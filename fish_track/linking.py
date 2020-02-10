@@ -521,7 +521,12 @@ def relink_slow(trajectories, dist_threshold, time_threshold, blur=None, pos_key
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 
-def relink(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
+def relink(trajectories: List[dict], dist_threshold: float, time_threshold: int,
+        blur=None, pos_key='position', time_key='time') -> List[dict]:
+    """
+    re-link short trajectories into longer
+    normal usage: relink(trajs, dx, dt, blur)
+    """
     trajs = [
         Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
     ]
