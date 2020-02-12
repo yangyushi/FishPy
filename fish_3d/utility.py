@@ -132,10 +132,6 @@ def plot_epl(line: List[float], image: np.ndarray):
     return epl.T
 
 
-import numpy as np
-import cv2
-
-
 def get_ABCD(corners: np.array, width: int, excess_rows: int) -> dict:
     """
     :param corners: the coordinates of chessboard corners
@@ -262,6 +258,26 @@ def get_similarity(abcd: dict, H_aff: np.array) -> np.array:
     return np.linalg.inv(Hs_inv)
 
 
+def get_corners(image: np.array, rows: int, cols: int, camera_model=None):
+    """
+    use findChessboardCorners in opencv to get coordinates of corners
+    """
+    ret, corners = cv2.findChessboardCorners(
+        image, (rows, cols),
+        flags=sum((
+            cv2.CALIB_CB_FAST_CHECK,
+            cv2.CALIB_CB_ADAPTIVE_THRESH
+        ))
+    )
+    corners = np.squeeze(corners)  # shape (n, 1, 2) -> (n, 2)
+
+    # undistorting points does make l_inf fit better
+    if not isinstance(camera_model, type(None)):
+        corners = camera_model.undistort_points(corners, want_uv=True)
+
+    return corners
+
+
 def get_homography(image: np.array, rows: int, cols: int, camera_model=None):
     """
     get the homography transformation
@@ -274,19 +290,13 @@ def get_homography(image: np.array, rows: int, cols: int, camera_model=None):
     """
     length = max(rows, cols)  # length > width
     width = min(rows, cols)
-    ret, corners = cv2.findChessboardCorners(
-        image, (width, length),
-        flags=sum((
-            cv2.CALIB_CB_FAST_CHECK,
-            cv2.CALIB_CB_ADAPTIVE_THRESH
-        ))
-    )
-    corners = np.squeeze(corners)  # shape (n, 1, 2) -> (n, 2)
+
+    corners = get_corners(image, width, length, camera_model)
     excess_rows = length - width
-    # undistorting points does make l_inf fit better
-    if not isinstance(camera_model, type(None)):
-        corners = camera_model.undistort_points(corners, want_uv=True)
+
     abcd = get_ABCD(corners, width, excess_rows)
+
     H_aff = get_affinity(abcd)
     H_sim = get_similarity(abcd, H_aff)
+
     return H_sim @ H_aff

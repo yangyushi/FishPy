@@ -175,7 +175,8 @@ def get_oishi_kernels(kernels, rot_num=35):
 
 def get_oishi_features(image, oishi_kernels, threshold=0.5, local_size=4):
     """
-    :return : oishi features, (6, n) array with [x, y, orientation, shape, brightness, likelihood]
+    :return : oishi features, (6, n) array 
+              [x, y, orientation, shape, brightness, likelihood]
               the returned feature location is (x, y) in the image coordinate, NOT (row, colume) indices of the image matrix
     """
     local_max = (ndimage.grey_dilation(image, local_size) == image) * (image > image.max() * threshold)
