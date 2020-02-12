@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 import cv2
-import glob
 import pickle
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from typing import List, Tuple
-from matplotlib import cm
+
 
 def draw(img, axes):
     origin = tuple(axes[0].ravel().astype(int))
-    img = cv2.line(img, origin, tuple(axes[1].ravel()), (255, 120, 100), 5, lineType=cv2.LINE_AA)
-    img = cv2.line(img, origin, tuple(axes[2].ravel()), (100, 255, 120), 5, lineType=cv2.LINE_AA)
-    img = cv2.line(img, origin, tuple(axes[3].ravel()), (100, 120, 255), 5, lineType=cv2.LINE_AA)
+    img = cv2.line(
+            img, origin, tuple(axes[1].ravel()),
+            (255, 120, 100), 5, lineType=cv2.LINE_AA
+            )
+    img = cv2.line(
+            img, origin, tuple(axes[2].ravel()),
+            (100, 255, 120), 5, lineType=cv2.LINE_AA
+            )
+    img = cv2.line(
+            img, origin, tuple(axes[3].ravel()),
+            (100, 120, 255), 5, lineType=cv2.LINE_AA
+            )
     return img
 
 
@@ -51,7 +58,9 @@ def get_points_from_order(corner_number, order='x123'):
     """
     obj_points = []
     standard_order, standard = 'x123', np.arange(4).reshape(2, 2)
-    reality = np.array([standard_order.index(letter) for letter in order], dtype=int).reshape(2, 2)
+    reality = np.array(
+            [standard_order.index(letter) for letter in order], dtype=int
+            ).reshape(2, 2)
 
     pairs = find_pairs(standard, reality)
     pairs = 2 * pairs - 1
@@ -77,7 +86,7 @@ def get_points_from_order(corner_number, order='x123'):
         raise RuntimeError("Impossible order")
 
     std = []
-    centre = np.ones(2, dtype=np.float64) * (np.array(corner_number)[::-1] - 1) / 2
+    centre = np.ones(2, dtype=float) * (np.array(corner_number)[::-1] - 1) / 2
     for c1 in range(corner_number[1]):
         for c2 in range(corner_number[0]):
             p = np.array((c1, c2), dtype=centre.dtype)
@@ -104,17 +113,17 @@ def get_points_from_order(corner_number, order='x123'):
 def plot_cameras(axis, cameras, water_level=0, depth=400):
     origins = []
     camera_size = 100
-    focal_length = 2
+    focal_len = 2
     ray_length = 400
     camera_segments = [
-            np.array(([0, 0, 0], [1, -1, focal_length])) * camera_size,
-            np.array(([0, 0, 0], [-1, 1, focal_length])) * camera_size,
-            np.array(([0, 0, 0], [-1, -1, focal_length])) * camera_size,
-            np.array(([0, 0, 0], [1, 1, focal_length])) * camera_size,
-            np.array(([1, 1, focal_length], [1, -1, focal_length])) * camera_size,
-            np.array(([1, -1, focal_length], [-1, -1, focal_length])) * camera_size,
-            np.array(([-1, -1, focal_length], [-1, 1, focal_length])) * camera_size,
-            np.array(([-1, 1, focal_length], [1, 1, focal_length])) * camera_size
+            np.array(([0, 0, 0], [1, -1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [-1, 1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [-1, -1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [1, 1, focal_len])) * camera_size,
+            np.array(([1, 1, focal_len], [1, -1, focal_len])) * camera_size,
+            np.array(([1, -1, focal_len], [-1, -1, focal_len])) * camera_size,
+            np.array(([-1, -1, focal_len], [-1, 1, focal_len])) * camera_size,
+            np.array(([-1, 1, focal_len], [1, 1, focal_len])) * camera_size
             ]
     for cam in cameras:
         origin = -cam.r.T @ cam.t
@@ -137,7 +146,10 @@ def plot_cameras(axis, cameras, water_level=0, depth=400):
     return axis
 
 
-def get_reproject_error(points_2d, points_3d, rvec, tvec, distort, camera_matrix):
+def get_reproject_error(
+        points_2d, points_3d,
+        rvec, tvec, distort, camera_matrix
+        ):
     projected, _ = cv2.projectPoints(
             points_3d, rvec, tvec,
             cameraMatrix=camera_matrix,
@@ -162,7 +174,10 @@ class Camera():
         self.update()
 
     def __str__(self):
-        def ff(x): return np.array2string(x, precision=4, floatmode='fixed', separator='\t')
+        def ff(x):
+            return np.array2string(
+                    x, precision=4, floatmode='fixed', separator='\t'
+                    )
         info_1 = f'Camera instance @{id(self):x}\n'
         info_2 = f'Intrinsic Matrix is \n {ff(self.k)}\n'
         info_3 = f'Extrinsic Matrix is \n {ff(self.ext)}\n'
@@ -170,12 +185,18 @@ class Camera():
         return info_1 + info_2 + info_3 + info_4
 
     def update(self):
-        self.r = self.rotation.as_dcm()  # rotation
-        self.ext = np.hstack([self.r, np.vstack(self.t)])  # R, t --> [R|t]
+        """
+        self.r: rotation matrix of the camera, shape (3, 3)
+        self.ext: extrinsic parameters, # R, t --> [R|t]
+        self.p: projection matrix int @ ext
+        self.o: origin of the camera, shape (3, 1)
+        """
+        self.r = self.rotation.as_dcm()
+        self.ext = np.hstack([self.r, np.vstack(self.t)])
         self.p = np.dot(self.k, self.ext)
-        self.o = np.vstack(-self.r.T @ self.t)  # origin of the camera, shape (3, 1)
+        self.o = np.vstack(-self.r.T @ self.t)
 
-    def read_calibration(self, mat_file):
+    def read_calibration(self, mat_file: str):
         """
         Read calibration result from TOOLBOX_calib
         The calibration result is generated by following Matlab script:
@@ -194,14 +215,14 @@ class Camera():
             self.rotation = R.from_dcm(calib_result['Rc_ext'])
         self.update()
 
-    def read_int(self, pkl_file):
+    def read_int(self, pkl_file: str):
         with open(pkl_file, 'rb') as f:
             cam = pickle.load(f)
         self.k = cam.k
         self.distortion = cam.distortion
         self.update()
 
-    def project(self, position):
+    def project(self, position: np.array):
         """
         project a 3D position onto the image plane
         """
@@ -215,7 +236,7 @@ class Camera():
         )
         return uv.ravel()[:2]
 
-    def undistort(self, point, want_uv=False):
+    def undistort(self, point: np.array, want_uv=False):
         """
         undistort point in an image, coordinate is (u, v)
         return: undistorted points, being xy, not uv (camera.K @ xy = uv)
@@ -238,10 +259,17 @@ class Camera():
                     )
         return np.squeeze(undistorted)
 
-    def undistort_points(self, points, want_uv=False):
+    def undistort_image(self, image: np.array):
+        """
+        return a undistorted image (2d numpy array)
+        """
+        return cv2.undistort(image, self.k, self.distortion)
+
+    def undistort_points(self, points: np.array, want_uv=False):
         """
         undistort many points in an image, coordinate is (u, v), NOT (x, y)
-        return: undistorted version of (x', y') or (u', v'); x' * fx + cx -> u', shape (n, 2)
+        return: undistorted version of (x', y') or (u', v');
+                x' * fx + cx -> u', shape (n, 2)
         """
         new_points = points.astype(np.float64)
         new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
@@ -260,9 +288,10 @@ class Camera():
             )
         return np.squeeze(undistorted)
 
-    def redistort_points(self, points):
+    def redistort_points(self, points: np.array):
         """
-        :param points: undistorted image coordinates (u, v) in pixels, shape (2, n)
+        :param points: undistorted image coordinates (u, v) in pixels
+                       shape (2, n)
         """
         k1, k2, p1, p2, k3 = self.distortion
         fx, fy = self.k[0, 0], self.k[1, 1]
@@ -277,21 +306,25 @@ class Camera():
         dist_y = dist_y * fy + cy
         return np.vstack((dist_x, dist_y))
 
-    def calibrate_int(self, int_images: list, grid_size: float, corner_number=(6, 6), win_size=(5, 5), show=True):
+    def calibrate_int(
+            self, int_images: list, grid_size: float,
+            corner_number=(6, 6), win_size=(5, 5), show=True
+            ):
         """
         update INTERINSIC camera matrix using opencv's chessboard detector
         the distortion coefficients are also being detected
         the corner number should be in the format of (row, column)
         """
         # termination criteria
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1)
+        criteria = (
+                cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1
+                )
 
         # Arrays to store object points and image points from all the images.
-        obj_points = [] # 3d point in real world space
-        img_points = [] # 2d points in image plane.
+        obj_points = []  # 3d point in real world space
+        img_points = []  # 2d points in image plane.
 
-        for_plot = []
-        detected_indices = []  # indice of images whoes corners were detected successfully
+        detected_indices = []  # indice of images whoes corners were detected
 
         for i, fname in enumerate(int_images):
             img = cv2.imread(fname)
@@ -305,12 +338,17 @@ class Camera():
                     cv2.CALIB_CB_ADAPTIVE_THRESH
                     ))
             )
-            if ret == True:
-                obj_points_single = get_points_from_order(corner_number, order='x123') * grid_size
+            if ret:
+                obj_points_single = get_points_from_order( corner_number, order='x123') * grid_size
+
                 obj_points.append(obj_points_single)
-                corners_refined = cv2.cornerSubPix(gray, corners, win_size, (-1,-1), criteria)
+
+                corners_refined = cv2.cornerSubPix( gray, corners, win_size, (-1, -1), criteria)
+
                 img_points.append(corners_refined)
-                img = cv2.drawChessboardCorners(img, corner_number, corners_refined, ret)
+
+                img = cv2.drawChessboardCorners( img, corner_number, corners_refined, ret)
+
                 img = cv2.resize(img, (800, 600))
                 detected_indices.append(i)
                 if show:
@@ -322,10 +360,10 @@ class Camera():
         obj_points = np.array(obj_points)
         img_points = np.array(img_points)
 
-        # this initial guess is for basler AC2040 120um camera with a 6mm focal length lens
+        # this initial guess is for basler AC2040 120um camera
+        # with a 6mm focal length lens
         camera_matrix = np.array([
             [1739.13, 0, 1024],
-
             [0, 1739.13, 768],
             [0, 0, 1]
             ])
@@ -365,6 +403,7 @@ class Camera():
         self.distortion = distortion
         self.update()
 
+
     def calibrate_ext(self, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update EXTRINSIC camera matrix using opencv's chessboard detector
@@ -394,8 +433,8 @@ class Camera():
         ret, rvec, tvec = cv2.solvePnP(
                 objectPoints=obj_points,
                 imagePoints=img_points,
-                cameraMatrix = self.k,
-                distCoeffs = self.distortion,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion,
         )
 
         err = get_reproject_error(
