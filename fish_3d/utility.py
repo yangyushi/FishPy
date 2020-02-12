@@ -300,3 +300,55 @@ def get_homography(image: np.array, rows: int, cols: int, camera_model=None):
     H_sim = get_similarity(abcd, H_aff)
 
     return H_sim @ H_aff
+
+
+def update_orientation(
+        orientations: np.array, locations: np.array, H: np.array, length=10
+        ):
+    """
+    Calculate the orientatin after applying homography H
+    This is function is used to get a 'recitified' orientation
+    :param orientation: angles of the fish, sin(angle) --> x very sadly
+    :param locatons: xy positons of fish in the image, not row-col
+    :param H: the homography matrix
+    :param length: length of the orientation bar
+    """
+    orient_rec = []
+    for o, xy in zip(orientations, locations):
+        p1h = np.array((
+            xy[0] - length * np.sin(o),
+            xy[1] - length * np.cos(o), 1
+        ))
+        p2h = np.array((
+            xy[0] + length * np.sin(o),
+            xy[1] + length * np.cos(o), 1
+        ))
+        p1h = H @ p1h
+        p2h = H @ p2h
+        p1 = (p1h / p1h[-1])[:2]
+        p2 = (p2h / p2h[-1])[:2]
+        o_rec = np.arctan2(*(p2 - p1))
+        orient_rec.append(o_rec)
+    orient_rec = np.array(orient_rec)
+    orient_rec[orient_rec < 0] += np.pi
+    orient_rec[orient_rec > np.pi] -= np.pi
+    return orient_rec
+
+
+def get_orient_line(locations, orientations, length=10):
+    """
+    get the line for plot the orientations
+    :param locations: shape (n, 2)
+    :param orientations: shape (n, )
+    """
+    unit_vector = np.array((np.sin(orientations), np.cos(orientations)))
+    oline_1 = locations - length * unit_vector
+    oline_2 = locations + length * unit_vector
+
+    olines_x = []
+    olines_y = []
+
+    for i in range(oline_1.shape[1]):
+        olines_x += [oline_1[0, i], oline_2[0, i], np.nan]
+        olines_y += [oline_1[1, i], oline_2[1, i], np.nan]
+    return np.array((olines_x, olines_y))
