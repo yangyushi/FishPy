@@ -74,9 +74,9 @@ class Trajectory():
         else:
             x, y, z = self.positions.T
             ti = np.arange(self.time[0], self.time[-1]+1, 1)
-            xi = np.interp(x=ti, xp=self.time, fp = x)
-            yi = np.interp(x=ti, xp=self.time, fp = y)
-            zi = np.interp(x=ti, xp=self.time, fp = z)
+            xi = np.interp(x=ti, xp=self.time, fp=x)
+            yi = np.interp(x=ti, xp=self.time, fp=y)
+            zi = np.interp(x=ti, xp=self.time, fp=z)
             self.time = ti
             self.positions = np.vstack((xi, yi, zi)).T
 
@@ -89,82 +89,6 @@ class Trajectory():
             return [Trajectory(t1, p1), Trajectory(t2, p2)]
         else:
             return [self]  # do not break if trying to break tail
-
-
-class Manager():
-    def __init__(self, trajs):
-        """
-        trajs is a list of trajectories
-        trajectory is a list contain two parts, time & positions
-        one fish has one trajectory
-        """
-        self.trajs = trajs
-
-    def break_trajectories(self, search_range):
-        for i, traj in enumerate(self.trajs):
-            for another_traj in self.trajs[i + 1:]:
-                dists = cdist(traj.positions, another_traj.positions)
-                if np.min(dists) < search_range:
-                    dists[dists > search_range] = 0
-                    candidates = np.array(dists.nonzero()).T
-                    for c in candidates:
-                        if traj.time[c[0]] == another_traj.time[c[1]]:
-                            breaking_result = self.break_trajectory(i, c[0])
-                            if breaking_result:
-                                self.break_trajectories(search_range)
-
-    def break_trajectory(self, traj_index, time_point):
-        traj_to_break = self.trajs.pop(traj_index)
-        new_trajs = traj_to_break.break_into_two(time_point)
-        self.trajs += new_trajs
-        if len(new_trajs) == 2:
-            return True
-        else:
-            return False
-
-    def as_labels(self):
-        """
-        labels are a list containing labels of fish at every frame
-        labels = [frame_0, ... frame_i, ... (total number of frames)]
-        frame_0 = [label_1, label_2, ... label_i, ... (total number of fish in this frame)]
-        label_i is a number
-        """
-        max_frame = np.max(np.hstack([t.time for t in self.trajs]))
-        labels, positions = [], []
-        for i in range(max_frame + 1):
-            l, p = [], []
-            for j, traj in enumerate(self.trajs):
-                if i in traj.time:
-                    l.append(j)
-                    pos = traj.positions[np.where(traj.time == i)]
-                    p.append(np.squeeze(pos))
-            labels.append(np.array(l))
-            positions.append(np.array(p))
-        return labels, positions
-
-    def relink(self, dist_threshold, time_threshold):
-        link_net = LinkingNet(self.trajs, dist_threshold, time_threshold)
-        best_link = link_net.get_best_network()
-        new_trajs = []
-        to_remove = []
-        for link in best_link:
-            traj_early, traj_late = link.traj_1, link.traj_2
-            new_trajs.append(traj_late + traj_early)
-            to_remove.append(traj_early)
-            to_remove.append(traj_late)
-        for t in to_remove:
-            self.trajs.remove(t)
-        for t in new_trajs:
-            self.trajs.append(t)
-
-    def __len__(self):
-        return len(self.trajs)
-
-    def __repr__(self):
-        return f'trajectory manager @ {id(self):x}'
-
-    def __str__(self):
-        return f'trajectory manager: {len(self)} trajectories'
 
 
 class ActiveLinker():
