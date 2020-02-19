@@ -12,7 +12,14 @@ from scipy.sparse import coo_matrix
 
 class Trajectory():
     def __init__(self, time: np.array, positions: np.array, blur=None):
-        assert len(time) == len(positions), "Time points do not match the position number"
+        """
+        bundle handy methods with trajectory data
+        :param time: frame number for each positon, dtype=int
+        :param positions: shape is (n_time, n_dimension)
+        :param blur: applying gaussian_filter on each dimension along time axis
+        """
+        if len(time) != len(positions):
+            raise ValueError("Time points do not match the position number")
         self.time = time
         self.length = len(time)
         if blur:
@@ -72,13 +79,15 @@ class Trajectory():
         if len(self.positions) == self.time[-1] - self.time[0]:
             return
         else:
-            x, y, z = self.positions.T
-            ti = np.arange(self.time[0], self.time[-1]+1, 1)
-            xi = np.interp(x=ti, xp=self.time, fp=x)
-            yi = np.interp(x=ti, xp=self.time, fp=y)
-            zi = np.interp(x=ti, xp=self.time, fp=z)
+            dimensions = range(self.positions.shape[1])
+            pos_nd_interp = []
+            for dim in dimensions:
+                pos_1d = self.positions[:, dim]
+                ti = np.arange(self.time[0], self.time[-1]+1, 1)
+                pos_1d_interp = np.interp(x=ti, xp=self.time, fp=pos_1d)
+                pos_nd_interp.append(pos_1d_interp)
             self.time = ti
-            self.positions = np.vstack((xi, yi, zi)).T
+            self.positions = np.vstack(pos_nd_interp).T
 
     def break_into_two(self, time_index):
         p1 = self.positions[:time_index]
@@ -93,6 +102,10 @@ class Trajectory():
 
 class ActiveLinker():
     def __init__(self, search_range):
+        """
+        Link positions into trajectories following 10.1007/s00348-005-0068-7
+        Works with n-dimensional data in Euclidean space
+        """
         self.search_range = search_range
         self.labels = None
         self.trajectories = None
@@ -156,10 +169,10 @@ class ActiveLinker():
     def __get_links(self, fp, f0, f1, f2, links):
         """
         Get links in two successive frames
-        :param fp: previous frame, (3, n) array
-        :param f0: current frame, (3, n) array
-        :param f1: next frame, (3, n) array
-        :param f2: second next frame, (3, n) array
+        :param fp: previous frame, (dim, n) array
+        :param f0: current frame, (dim, n) array
+        :param f1: next frame, (dim, n) array
+        :param f2: second next frame, (dim, n) array
         :param links: link for particles between fp to f0
         :return: link from f0 to f1
         """
@@ -228,7 +241,9 @@ class ActiveLinker():
 class TrackpyLinker():
     def __init__(self, max_movement, memory=0, max_subnet_size=30, **kwargs):
         """
-        unit of the movement is pixel
+        Linking positions into trajectories using Trackpy
+        Works with 2D and 3D data. High dimensional data not tested.
+        (no expiment available)
         """
         self.max_movement = max_movement
         self.memory = memory
@@ -526,15 +541,18 @@ class Movie:
             label_intersection = [l for l in label_0 if l in label_1]
 
             if label_intersection:
-                indices_0 = np.array([np.where(li == label_0)[0][0] for li in label_intersection])
-                indices_1 = np.array([np.where(li == label_1)[0][0] for li in label_intersection])
+                indices_0 = np.array([
+                    np.where(li == label_0)[0][0] for li in label_intersection
+                    ])
+                indices_1 = np.array([
+                    np.where(li == label_1)[0][0] for li in label_intersection
+                    ])
                 velocity[indices_0] = position_1[indices_1] - position_0[indices_0]
             else:
                 indices_0 = np.empty(0)
                 indices_1 = np.empty(0)
 
             return velocity, (indices_0, indices_1)
-
 
     def __getitem__(self, frame):
         if frame > self.max_frame:
@@ -556,7 +574,6 @@ class Movie:
             labels = np.array(labels)
             self.__labels.update({frame: labels})
             return positions
-
 
     def label(self, frame):
         if frame > self.max_frame:
