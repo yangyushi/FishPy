@@ -5,6 +5,7 @@ it's 2019 now come on
 import configparser
 import numpy as np
 from scipy import ndimage
+from scipy.signal import correlate2d
 
 
 class SubProperty:
@@ -88,3 +89,50 @@ def validate(images, model, fail_mark=0.25, shape=(40, 40)):
     score = model.predict(normed).ravel()
     good_indices = np.where(score > fail_mark)
     return images[good_indices]
+
+
+def draw_2d(radius: int):
+    length = 2 * radius + 1
+    canvas = np.zeros((length, length))
+    for idx in range(length):
+        for idy in range(length):
+            if (idx - radius) ** 2 + (idy - radius) ** 2 <= radius**2:
+                canvas[idx, idy] = 1
+    return canvas
+
+
+def detect_circle(image: np.array, size=50, sigma=2):
+    """
+    detect the central circle in the image
+    return the (x, y) coordinates of the centre
+    used for my fish study
+    """
+    radii = np.arange(size//5, size//2, 1)
+    zoom = min(image.shape) // size
+    scale = float(min(image.shape)) / size
+    small = image[::zoom, ::zoom].astype(np.float64)
+
+    if sigma > 0:
+        small = ndimage.gaussian_filter(small, sigma)
+
+    small[small < small.mean()] = small.mean()
+
+    positions = []
+    similarities = []
+
+    for r in radii:
+        sim = draw_2d(r)
+        corr = correlate2d(
+            small - small.mean(),
+            sim - sim.mean(),
+            mode='same'
+        )
+        pos = np.unravel_index(np.argmax(corr), corr.shape)
+        similarity = corr[pos] / sim.sum()
+        positions.append(pos)
+        similarities.append(similarity)
+
+    idx = np.argmax(similarities)
+    centre = np.array(positions[idx])
+    radius = radii[idx]
+    return centre[::-1] * scale, radius * scale
