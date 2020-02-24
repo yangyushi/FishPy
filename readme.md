@@ -6,16 +6,8 @@
 
 This is the code I wrote for my PhD project in university of Bristol.
 
-This is not meant to be used *easily* as I am the only contributer. I will work on making it more user-friendly but this is what I could do for now. Please [write me an email](mailto:yy17363@bristol.ac.uk?subject=Chatting%20about%20FishPy%20) if you are interested in anything related 3D tracking.
+This is not meant to be used *easily*. I will work on making it more user-friendly but this is what I could do for now.
 
-
-IMHO, the package is good in terms of its following functions,
-
-1. Getting 2D coordinates and orientations of a large amount of fish from a 2D video.
-2. Considering the refraction of water, correctly re-construct 3D locations from *matched* 2D coordinates from different views.
-3. Implementing some useful function to link positions into trajectories.
-4. Calculating several correlation functions from the trajectories.
-5. Fully automated scripts for above functions, being compatable with HPC.
 
 ## How to use the code
 
@@ -24,16 +16,6 @@ IMHO, the package is good in terms of its following functions,
 First of all, add the **full path** of folder `FishPy` to the `PYTHONPATH`.
 
 If you know what you are doing, you can also paste the folder to the `site-package` of the pyhton that you are using.
-
-### Use different modules
-
-Please see the readme file inside each sub-folder for further instructions. Typically,
-
-- [2D Tracking & Linking](fish_track/readme.md)
-- [3D Tracking](fish_3d/readme.md)
-- [Automated tracking](script/auto_process_linux/readme.md)
-- [Automated Analysing](script/auto_analysis/readme.md)
-- [GUI applications](fish_gui/redme.md)
 
 ### Setting up the project
 
