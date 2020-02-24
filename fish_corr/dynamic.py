@@ -13,8 +13,9 @@ from . import utility
 class Critic():
     """
     Calculate the dynamical order & correlations from a fish movie
-    movie:
-        a `Movie` instance from package `fish_track`
+
+        movie : a `Movie` instance from package `fish_track`
+
             Movie[ f ]             - the positions of all particles in frame f
             Movie.velocity( f )    - the velocities of all particles in frame f
             Movie.label( f )       - the labels of all particles in frame f, same label = same identity
@@ -23,6 +24,7 @@ class Critic():
                                      example:
                                          p0, p1 = Movie.indice_pair(f)
                                          Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
+
         flctn_not : non-translational fluctuation
                     (the collective translation is removed)
         flctn_noi : non-isometric fluctuation
@@ -250,3 +252,70 @@ class Critic():
             ), axis=0)
 
         return binned_statistic(distances_multi_frame, fluctuations_multi_frame, bins=bins)
+
+
+class AverageAnalyser():
+        """
+        Calculate the averaged properties from a movie
+            movie :
+                a `Movie` instance from package `fish_track`
+                    Movie[ f ]             - the positions of all particles in frame f
+                    Movie.velocity( f )    - the velocities of all particles in frame f
+                    Movie.label( f )       - the labels of all particles in frame f, same label = same identity
+                    Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
+                    Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_
+                                             example:
+                                                 p0, p1 = Movie.indice_pair(f)
+                                                 Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
+
+        """
+
+    def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
+        """
+        :param movie: the movie instance, contains the trajectories, positions and velocitis
+                      the movie should be interpolated
+        :param win_size: the size of the window (unit frame), in which the average will be calculated
+        :param step_size: the average window is moved along the time axis, with the step
+        """
+        self.movie = movie
+        self.start = start
+        self.win_size = win_size
+        self.step_size = step_size
+        if end = 0:
+            self.end = movie.max_frame
+        else:
+            self.end = end
+
+        self.__check_arg(self.win_size, self.start, self.end):
+
+        self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end + 1 - self.win_size, self.step_size)]
+
+
+    def __check_arg(self, win_size:int, start: int, end: int):
+        if self.start > self.end:
+            raise ValueError("Starting frame >= ending frame")
+        if self.win_size > self.end - self.start + 1:
+            raise ValueError("Window size is larger than video length")
+
+
+    def scan(self, func):
+        """
+        the data to be averaged is calculated by func(self.movie)
+        """
+        data = func(self.movie)
+        return self.scan_array(data)
+
+
+    def scan_array(self, array: np.array):
+        """
+        perform averaging along a 1D numpy array
+        """
+        if len(array) != self.start - self.end + 1:
+            raise ValueError("len(array) != len(movie)")
+
+        result = np.empty(len(self.pairs))
+
+        for i, (t0, t1) in enumerate(self.pairs):
+            result[i] = array[t0:t1].mean()
+
+        return result
