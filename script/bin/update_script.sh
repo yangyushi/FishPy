@@ -42,7 +42,7 @@ if [[ $should_update -eq 1 ]]; then
         rm "$PWD/$fn"
         cp "$fishpy/script/auto_process_$platform/$fn" $PWD
     done
-    cp "$fishpy/script/auto_process_$platform/script/collect.sh" $PWD
+    cp "$fishpy/script/auto_process_$platform/collect.sh" $PWD
     rm -rf "$PWD/script"
     cp -r "$fishpy/script/auto_process_$platform/script" $PWD
     echo "all scripts updated"
