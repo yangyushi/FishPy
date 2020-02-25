@@ -19,7 +19,7 @@ fi
 should_update=1
 needed=(
     'auto_link.sh' 'auto_track_2d.sh' 'auto_track_3d.sh'
-    'configure.sh' 'see_trajs.py' 'clean'
+    'see_trajs.py' 'clean'
 )
 for fn in "${needed[@]}"; do
     if [[ ! -e $fn ]]; then
@@ -38,17 +38,12 @@ if [[ $should_update -eq 0 ]]; then
 fi
 
 if [[ $should_update -eq 1 ]]; then
-    rm "$PWD"/*.sh
-    rm "$PWD"/*.py
-    rm "$PWD/"*.md
-    rm "$PWD/clean"
-    rm -rf "$PWD/script"
-
-    cp "$fishpy/script/auto_process_$platform/"*.sh $PWD
-    cp "$fishpy/script/auto_process_$platform/"*.py $PWD
-    cp "$fishpy/script/auto_process_$platform/"*.md $PWD
-    cp "$fishpy/script/auto_process_$platform/clean" $PWD
-    cp -r "$fishpy/script/auto_process_$platform/script" $PWD
+    for fn in "${needed[@]}"; do
+        rm "$PWD/$fn"
+        rm -rf "$PWD/script"
+        cp "$fishpy/script/auto_process_$platform/$fn" $PWD
+        cp -r "$fishpy/script/auto_process_$platform/script" $PWD
+    done
     echo "all scripts updated"
     exit 0
 fi

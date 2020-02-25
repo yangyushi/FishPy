@@ -39,5 +39,5 @@ python3 script/collect.py results
 
 if [[ $1 == "clear" ]]; then
     source configure.sh
-    rm -rf "$video_folder"
+    rm -rf $video_folder
 fi
