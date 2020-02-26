@@ -40,11 +40,11 @@ fi
 if [[ $should_update -eq 1 ]]; then
     for fn in "${needed[@]}"; do
         rm "$PWD/$fn"
-        cp "$fishpy/script/auto_process_$platform/$fn" $PWD
+        cp "$fishpy/script/auto_process_$platform/$fn" "$PWD"
     done
-    cp "$fishpy/script/auto_process_$platform/collect.sh" $PWD
+    cp "$fishpy/script/auto_process_$platform/collect.sh" "$PWD"
     rm -rf "$PWD/script"
-    cp -r "$fishpy/script/auto_process_$platform/script" $PWD
+    cp -r "$fishpy/script/auto_process_$platform/script" "$PWD"
     echo "all scripts updated"
     exit 0
 fi
