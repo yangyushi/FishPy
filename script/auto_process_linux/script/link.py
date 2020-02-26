@@ -45,8 +45,8 @@ else:
 
 if len(vanilla_trajs) > 1:
     trajs = ft.relink(vanilla_trajs, 1, 1, blur=blur)
-    for dt in range(1, dt_max + 1):
-        for dx in range(1, dx_max + 1):
+    for dt in range(2, dt_max + 2):
+        for dx in range(2, dx_max + 2):
             trajs = ft.relink(trajs, dx, dt, blur=None)
 
     trajs = [t for t in trajs if len(t['time']) > threshold]
