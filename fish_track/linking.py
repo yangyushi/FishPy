@@ -8,6 +8,7 @@ import trackpy as tp
 from typing import List
 from .nrook import solve_nrook, solve_nrook_dense
 from scipy.sparse import coo_matrix
+from numba import njit 
 
 
 class Trajectory():
@@ -115,13 +116,20 @@ class ActiveLinker():
         self.trajectories = self.__get_trajectories(self.labels, frames)
         return self.trajectories
 
-    def __predict(self, pos, prev=None):
-        if isinstance(prev, type(None)):
-            return pos
-        else:
-            return 2 * pos - prev
+    def __predict(self, x1, x0=None, xp=None):
+        """
+        predict position in frame 2 (x2)
+        according to x1, x0, and xp
+        """
+        if isinstance(x0, type(None)):
+            x0 = x1
+        if isinstance(xp, type(None)):
+            xp = 2 * x0 - x1
+        return 3 * x1 - 3 * x0 + xp
 
     def __get_link_f3(self, f0, f1, f2, links=None):
+        if len(f2) == 0:
+            return []
         if isinstance(links, type(None)):
             links = []
         new_links = []
@@ -132,13 +140,13 @@ class ActiveLinker():
             candidates_1 = f1[dist_1 < self.search_range]
             labels_1 = np.arange(len(f1))
             labels_1 = labels_1[dist_1 < self.search_range]
-            costs = []
-            for l1, p1 in zip(labels_1, candidates_1):
+            costs = np.empty(labels_1.shape)
+            for i, (l1, p1) in enumerate(zip(labels_1, candidates_1)):
                 if l1 not in [l[1] for l in links + new_links]:
                     dist_2 = cdist([self.__predict(p1, p0)], f2)[0]
-                    costs.append(np.min(dist_2))
+                    costs[i] = np.min(dist_2)
                 else:
-                    costs.append(np.inf)
+                    costs[labels_1==l1] = np.inf
             if len(costs) > 0:
                 if np.min(costs) < self.search_range * 2:
                     i1 = labels_1[np.argmin(costs)]
@@ -146,24 +154,33 @@ class ActiveLinker():
         return new_links
 
     def __get_link_f4(self, fp, f0, f1, f2, old_links):
+        if len(f2) == 0:
+            return []
         new_links = []
         for ip, i0 in old_links:
             p0 = f0[i0]
-            dist_1 = cdist([self.__predict(p0, fp[ip])], f1)[0]
+            dist_1 = np.linalg.norm(
+                    self.__predict(p0, fp[ip])[np.newaxis, :] - f1,  # (n, 3)
+                    axis=1
+                    )
             candidates_1 = f1[dist_1 < self.search_range]
-            labels_1 = np.arange(len(f1))  # indices of frame #1
-            labels_1 = labels_1[dist_1 < self.search_range]
-            costs = []
-            for l1, p1 in zip(labels_1, candidates_1):
-                if l1 not in [l[1] for l in new_links]:
-                    dist_2 = cdist([self.__predict(p1, p0)], f2)[0]
-                    costs.append(np.min(dist_2))
+            if len(candidates_1) == 0:
+                continue
+            labels_1 = np.arange(len(f1))[dist_1 < self.search_range]
+            costs = np.empty(labels_1.shape)
+            for i, (l1, p1) in enumerate(zip(labels_1, candidates_1)):
+                if l1 not in [l[1] for l in new_links]:  # if l1, p1 is not conflict with other links
+                    dist_2 = np.linalg.norm(
+                            self.__predict(p1, p0, fp[ip])[np.newaxis, :] - f2,
+                            axis=1
+                            )
+                    costs[i] = np.min(dist_2)
                 else:
-                    costs.append(np.inf)
+                    costs[labels_1==l1] = np.inf
             if (len(costs) > 0) and (np.min(costs) < self.search_range * 2):
                 i1 = labels_1[np.argmin(costs)]
                 new_links.append((i0, i1))
-        new_links += self.__get_link_f3(f0, f1, f2, new_links)
+        new_links += self.__get_link_f3(f0, f1, f2, new_links)  # get links start in frame 0
         return new_links
 
     def __get_links(self, fp, f0, f1, f2, links):
@@ -183,7 +200,7 @@ class ActiveLinker():
 
     def __get_all_links(self, frames):
         """
-        Get all possible links between different frames
+        Get all possible links between all two successive frames
         """
         frame_num = len(frames)
         links = None
