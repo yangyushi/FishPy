@@ -15,7 +15,7 @@ source configure.sh
 # Linking parameters
 link_frame_start=0
 link_frame_end=0
-link_linker="trackpy"
+link_linker="active"
 link_range=20
 link_dx_max=25
 link_dt_max=10
