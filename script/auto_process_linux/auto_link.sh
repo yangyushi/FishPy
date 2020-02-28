@@ -3,7 +3,7 @@
 #PBS -N fl-
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=24:00:00
-#PBS -l mem=128g
+#PBS -l mem=32g
 #PBS -q himem
 
 if [ $PBS_O_WORKDIR ]; then
