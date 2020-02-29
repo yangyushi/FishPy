@@ -8,7 +8,7 @@ import trackpy as tp
 from typing import List
 from .nrook import solve_nrook, solve_nrook_dense
 from scipy.sparse import coo_matrix
-from numba import njit 
+from numba import njit
 
 
 class Trajectory():
@@ -571,7 +571,7 @@ class Movie:
 
             return velocity, (indices_0, indices_1)
 
-    def __getitem__(self, frame):
+    def __get_single(self, frame):
         if frame > self.max_frame:
             raise StopIteration
         elif frame in self.movie.keys():
@@ -591,6 +591,21 @@ class Movie:
             labels = np.array(labels)
             self.__labels.update({frame: labels})
             return positions
+
+    def __get_slice(self, frame_slice):
+        start = frame_slice.start if frame_slice.start else 0
+        stop = frame_slice.stop if frame_slice.stop else self.max_frame + 1
+        step = frame_slice.step if frame_slice.step else 1
+        for frame in np.arange(start, stop, step):
+            yield self.__get_single(frame)
+
+    def __getitem__(self, frame):
+        if isinstance(frame, int):
+            return self.__get_single(frame)
+        elif isinstance(frame, slice):
+            return self.__get_slice(frame)
+        else:
+            raise KeyError(f"can't index/slice Movie with {type(frame)}")
 
     def label(self, frame):
         if frame > self.max_frame:
