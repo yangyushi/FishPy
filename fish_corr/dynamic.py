@@ -292,13 +292,11 @@ class AverageAnalyser():
         self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end - self.win_size, self.step_size)]
         self.pair_ends = [p[1] - self.start for p in self.pairs]
 
-
     def __check_arg(self):
         if self.start > self.end:
             raise ValueError("Starting frame >= ending frame")
         if self.win_size > self.end - self.start + 1:
             raise ValueError("Window size is larger than video length")
-
 
     def __scan_positions(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
         """
@@ -311,7 +309,6 @@ class AverageAnalyser():
             result.append(res)
         return np.array(result)
 
-
     def __scan_velocities(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
         """
         The data to be averaged is calculated by func(self.movie.velocities)
@@ -323,6 +320,19 @@ class AverageAnalyser():
             result.append(res)
         return np.array(result)
 
+    def scan_array(self, array: np.ndarray):
+        """
+        the array is assumed to start at frame self.start
+        """
+        last_pair = 0
+        for pe in self.pair_ends:
+            if pe <= len(array):
+                last_pair += 1
+
+        result = np.empty(last_pair)
+        for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
+            result[i] = np.nanmean(array[t0:t1])
+        return result
 
     def scan_speed(self, min_number=0) -> np.ndarray:
         """
@@ -331,17 +341,78 @@ class AverageAnalyser():
         """
         return self.__scan_velocities(
             lambda x: utility.get_mean_spd(
-                x, frame_number = self.win_size, min_number=min_number
+                x, frame_number=self.win_size, min_number=min_number
             )
         )
-
 
     def scan_gr(self, tank: 'Tank', bins: np.ndarray, number: int):
         """
         :param number: number of (posiible) particles per frame
         """
         return self.__scan_positions(
-            lambda x: utility.get_gr(
+            lambda x: utility.get_vanilla_gr(
                 x, tank=tank, bins=bins, random_size=number * self.win_size
             )
         )
+
+    def scan_biased_gr(self, tank: 'Tank', bins: np.array, number: int, space_bin_number=50):
+        """
+        :param number: number of (posiible) particles per frame
+        :param space_bin_number: number of bins to devide space to generated biased random gas
+        """
+        positions = []
+        base = tank.base.T
+        for frame in self.movie:
+            if len(frame) > 0:
+                positions.append(frame - base)
+        positions = np.vstack(positions)
+        return self.__scan_positions(
+            lambda x: utility.get_biased_gr(
+                x, positions=positions, tank=tank, bins=bins,
+                random_size=number * self.win_size, space_bin_number=space_bin_number
+            )
+        )
+
+    def scan_vicsek_order(self, min_number=0):
+        """
+        :param min_number: only take frame into consideration if len(velocity) > min_number
+                           in this frame
+        """
+        return self.__scan_velocities(
+            lambda x: utility.get_vicsek_order(
+                x, frame_number=self.win_size, min_number=min_number
+            )
+        )
+
+    def scan_rotation(self, sample_points: int):
+        """
+        :param sample_points: lag time (tau) in the acf of orientation in frame
+        """
+        result = []
+        for i, (t0, t1) in enumerate(self.pairs):
+            acfs = []
+            for traj in self.movie.trajs:
+                too_late = (traj.t_start + sample_points + 1) > t1
+                too_early = (traj.t_end - sample_points - 1) < t0
+                too_short = (len(traj) - 2) < sample_points
+                if too_late or too_early or too_short:
+                    continue
+                else:
+                    offset = max(t0 - traj.t_start, 0)
+                    stop = min(traj.t_end, t1) - traj.t_start
+                    velocities = traj.positions[offset+1 : stop] -\
+                        traj.positions[offset : stop-1]  # ∆t = 1
+                    orientations = velocities / np.linalg.norm(
+                        velocities, axis=1
+                    )[:, np.newaxis]  # (>sample_points, )
+                    acf = utility.get_acf(orientations, size=sample_points)
+                    acfs.append(acf)
+            if len(acfs) == 0:
+                result.append(np.nan)
+            else:
+                acf = np.array([
+                        np.arange(sample_points),  # lag time
+                        np.mean(acfs, axis=0)  # auto-correlation
+                ])
+                result.append(utility.fit_rot_acf(acf, delta=0.05))
+        return np.array(result)

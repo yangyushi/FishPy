@@ -258,16 +258,12 @@ def biased_discrete_nd(variables, bins, size=1):
     return random_numbers + np.random.random(random_numbers.shape) * bin_width
 
 
-def get_gr(frames, tank, bins, random_size):
+def get_gr(frames, bins, random_gas):
     """
     :param frames: positions of all particles in different frames, shape (frame, n, dim)
-    :param frame_length: -> len(list(frames))
-    :param tank: a static.Tank instance
     :param bins: the bins for the distance histogram
-    :param random_size: the number of random gas particles
-                        should be: len(frames) * particle_number_per_frame
+    :param random_gas: shape (N, 3)
     """
-    random_gas = tank.random(random_size)
     offset = 0
     distances = []
     distances_gas = []
@@ -284,6 +280,36 @@ def get_gr(frames, tank, bins, random_size):
     return hist / hist_gas
 
 
+def get_vanilla_gr(frames, tank, bins, random_size):
+    """
+    :param frames: positions of all particles in different frames, shape (frame, n, dim)
+    :param tank: a static.Tank instance
+    :param bins: the bins for the distance histogram
+    :param random_size: the number of random gas particles
+                        should be: len(frames) * particle_number_per_frame
+    """
+    random_gas = tank.random(random_size)
+    return get_gr(frames, bins, random_gas)
+
+
+def get_biased_gr(frames, positions, tank, bins, random_size, space_bin_number):
+    """
+    :param frames: positions of all particles in different frames, shape (frame, n, dim)
+    :param positions: all positions in the entire movie, shape (N, 3)
+    :param tank: a static.Tank instance
+    :param bins: the bins for the distance histogram
+    :param random_size: the number of random gas particles
+                        should be: len(frames) * particle_number_per_frame
+    """
+    bins_xyz = (
+        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(0, tank.z_max, space_bin_number+1, endpoint=True).ravel(),
+    )
+    random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
+    return get_gr(frames, bins, random_gas)
+
+
 def get_mean_spd(velocity_frames, frame_number, min_number):
     """
     :param velocity_frames: velocity in different frames,
@@ -298,3 +324,33 @@ def get_mean_spd(velocity_frames, frame_number, min_number):
         else:
             speeds[i] = np.nan
     return np.nanmean(speeds)
+
+
+def get_vicsek_order(velocity_frames, frame_number, min_number):
+    orders = np.empty(frame_number)
+    for i, velocities in enumerate(velocity_frames):
+        if len(velocities) > min_number:
+            orientations = velocities / np.linalg.norm(velocities, axis=1)[:, np.newaxis]  # shape (n, dim)
+            if False in np.logical_or(*np.isnan(orientations.T)):
+                orders[i] = np.linalg.norm(np.nanmean(orientations, axis=0))  # shape (dim,)
+            else:
+                orders[i] = np.nan
+        else:
+            orders[i] = np.nan
+    return np.nanmean(orders)
+
+
+def fit_rot_acf(acf, delta):
+    """
+    using linear fit to get the intersection of the acf function
+    and x-axis
+    :param acf: the acf function, shape (2, n)
+    :param delta: the range above/below 0, which will be fitted linearly
+    """
+    x, y = acf
+    mask = np.zeros(y.shape, dtype=bool)
+    mask[np.abs(y) < delta] = True
+    turnning_point = np.argmax(np.diff(y) > 0)  # first element where slope > 0
+    mask[turnning_point-1:] = False
+    a, b = np.polyfit(x[mask], y[mask], deg=1)   # y = a * x + b
+    return -b / a
