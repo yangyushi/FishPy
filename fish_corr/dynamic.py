@@ -7,7 +7,9 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from typing import Callable
 from . import utility
+
 
 
 class Critic():
@@ -255,21 +257,20 @@ class Critic():
 
 
 class AverageAnalyser():
-        """
-        Calculate the averaged properties from a movie
-            movie :
-                a `Movie` instance from package `fish_track`
-                    Movie[ f ]             - the positions of all particles in frame f
-                    Movie.velocity( f )    - the velocities of all particles in frame f
-                    Movie.label( f )       - the labels of all particles in frame f, same label = same identity
-                    Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
-                    Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_
-                                             example:
-                                                 p0, p1 = Movie.indice_pair(f)
-                                                 Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
+    """
+    Calculate the averaged properties from a movie
+        movie :
+            a `Movie` instance from package `fish_track`
+                Movie[ f ]             - the positions of all particles in frame f
+                Movie.velocity( f )    - the velocities of all particles in frame f
+                Movie.label( f )       - the labels of all particles in frame f, same label = same identity
+                Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
+                Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_
+                                         example:
+                                             p0, p1 = Movie.indice_pair(f)
+                                             Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
 
-        """
-
+    """
     def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
         """
         :param movie: the movie instance, contains the trajectories, positions and velocitis
@@ -281,41 +282,66 @@ class AverageAnalyser():
         self.start = start
         self.win_size = win_size
         self.step_size = step_size
-        if end = 0:
+        if end == 0:
             self.end = movie.max_frame
         else:
             self.end = end
 
-        self.__check_arg(self.win_size, self.start, self.end):
+        self.__check_arg()
 
-        self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end + 1 - self.win_size, self.step_size)]
+        self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end - self.win_size, self.step_size)]
+        self.pair_ends = [p[1] - self.start for p in self.pairs]
 
 
-    def __check_arg(self, win_size:int, start: int, end: int):
+    def __check_arg(self):
         if self.start > self.end:
             raise ValueError("Starting frame >= ending frame")
         if self.win_size > self.end - self.start + 1:
             raise ValueError("Window size is larger than video length")
 
 
-    def scan(self, func):
+    def __scan_positions(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
         """
-        the data to be averaged is calculated by func(self.movie)
+        The data to be averaged is calculated by func(self.movie)
+        The average is tanken between (t0, t1) in self.pairs
         """
-        data = func(self.movie)
-        return self.scan_array(data)
+        result = []
+        for i, pair in enumerate(self.pairs):
+            res = func(self.movie[pair[0]:pair[1]])
+            result.append(res)
+        return np.array(result)
 
 
-    def scan_array(self, array: np.array):
+    def __scan_velocities(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
         """
-        perform averaging along a 1D numpy array
+        The data to be averaged is calculated by func(self.movie.velocities)
+        The average is tanken between (t0, t1) in self.pairs
         """
-        if len(array) != self.start - self.end + 1:
-            raise ValueError("len(array) != len(movie)")
+        result = []
+        for i, pair in enumerate(self.pairs):
+            res = func(self.movie.velocity(pair))
+            result.append(res)
+        return np.array(result)
 
-        result = np.empty(len(self.pairs))
 
-        for i, (t0, t1) in enumerate(self.pairs):
-            result[i] = array[t0:t1].mean()
+    def scan_speed(self, min_number=0) -> np.ndarray:
+        """
+        :param min_number: only take frame into consideration if len(velocity) > min_number
+                           in this frame
+        """
+        return self.__scan_velocities(
+            lambda x: utility.get_mean_spd(
+                x, frame_number = self.win_size, min_number=min_number
+            )
+        )
 
-        return result
+
+    def scan_gr(self, tank: 'Tank', bins: np.ndarray, number: int):
+        """
+        :param number: number of (posiible) particles per frame
+        """
+        return self.__scan_positions(
+            lambda x: utility.get_gr(
+                x, tank=tank, bins=bins, random_size=number * self.win_size
+            )
+        )

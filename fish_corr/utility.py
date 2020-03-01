@@ -6,6 +6,7 @@ import numpy as np
 from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
 from scipy.special import gamma
+from scipy.spatial.distance import pdist
 from numba import njit
 
 
@@ -255,3 +256,45 @@ def biased_discrete_nd(variables, bins, size=1):
     random_indices = ts.tower_sampling(size, discrete_pdf.astype(np.int64))
     random_numbers = maps[random_indices]
     return random_numbers + np.random.random(random_numbers.shape) * bin_width
+
+
+def get_gr(frames, tank, bins, random_size):
+    """
+    :param frames: positions of all particles in different frames, shape (frame, n, dim)
+    :param frame_length: -> len(list(frames))
+    :param tank: a static.Tank instance
+    :param bins: the bins for the distance histogram
+    :param random_size: the number of random gas particles
+                        should be: len(frames) * particle_number_per_frame
+    """
+    random_gas = tank.random(random_size)
+    offset = 0
+    distances = []
+    distances_gas = []
+    for frame in frames:
+        if len(frame) > 2:
+            dist = pdist(frame)
+            dist_gas = pdist(random_gas[offset : offset+len(frame)] + 1)
+            offset += len(frame)
+            distances.append(dist)
+            distances_gas.append(dist_gas)
+    hist, _ = np.histogram(np.hstack(distances), bins=bins)
+    hist_gas, _ = np.histogram(np.hstack(distances_gas), bins=bins)
+    hist_gas[hist==0] = 1
+    return hist / hist_gas
+
+
+def get_mean_spd(velocity_frames, frame_number, min_number):
+    """
+    :param velocity_frames: velocity in different frames,
+                            shape (frame, n, dim)
+    :param min_number: only take frame into consideration if len(velocity) > min_number
+                       in this frame
+    """
+    speeds = np.empty(frame_number)
+    for i, velocity in enumerate(velocity_frames):
+        if len(velocity) > min_number:
+            speeds[i] = np.mean(np.linalg.norm(velocity, axis=1))
+        else:
+            speeds[i] = np.nan
+    return np.nanmean(speeds)
