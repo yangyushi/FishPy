@@ -571,7 +571,7 @@ class Movie:
 
             return velocity, (indices_0, indices_1)
 
-    def __get_single(self, frame):
+    def __get_positions_single(self, frame):
         if frame > self.max_frame:
             raise StopIteration
         elif frame in self.movie.keys():
@@ -592,20 +592,46 @@ class Movie:
             self.__labels.update({frame: labels})
             return positions
 
-    def __get_slice(self, frame_slice):
+    def __get_velocities_single(self, frame):
+        if frame > self.max_frame - 1:
+            raise IndexError(f"frame {frame} does not velocities")
+        elif frame in self.__velocities.keys():
+            return self.__velocities[frame]
+        else:
+            velocities, indice_pair = self.__process_velocities(frame)
+            self.__velocities.update({frame: velocities})
+            self.__indice_pairs.update({frame: indice_pair})
+            return velocities
+
+    def __get_slice(self, frame_slice, single_method):
+        """
+        get the the slice equilivant of single_method
+        """
         start = frame_slice.start if frame_slice.start else 0
         stop = frame_slice.stop if frame_slice.stop else self.max_frame + 1
         step = frame_slice.step if frame_slice.step else 1
         for frame in np.arange(start, stop, step):
-            yield self.__get_single(frame)
+            yield single_method(frame)
 
     def __getitem__(self, frame):
         if isinstance(frame, int):
-            return self.__get_single(frame)
+            return self.__get_positions_single(frame)
         elif isinstance(frame, slice):
-            return self.__get_slice(frame)
+            return self.__get_slice(frame, self.__get_positions_single)
         else:
             raise KeyError(f"can't index/slice Movie with {type(frame)}")
+
+    def velocity(self, frame):
+        if isinstance(frame, int):
+            return self.__get_velocities_single(frame)
+        elif isinstance(frame, tuple):
+            if len(frame) in [2, 3]:
+                frame_slice = slice(*frame)
+                return self.__get_slice(frame_slice, self.__get_velocities_single)
+            else:
+                raise IndexError(f"Invalid slice {frame}, use (start, stop) or (start, stop, step)")
+        else:
+            raise KeyError(f"can't index/slice Movie with {type(frame)}, use a Tuple")
 
     def label(self, frame):
         if frame > self.max_frame:
@@ -616,16 +642,6 @@ class Movie:
             self[frame]
             return self.__labels[frame]
 
-    def velocity(self, frame):
-        if frame > self.max_frame - 1:
-            raise IndexError(f"frame {frame} does not velocities")
-        elif frame in self.__velocities.keys():
-            return self.__velocities[frame]
-        else:
-            velocities, indice_pair = self.__process_velocities(frame)
-            self.__velocities.update({frame: velocities})
-            self.__indice_pairs.update({frame: indice_pair})
-            return velocities
 
     def indice_pair(self, frame):
         """
