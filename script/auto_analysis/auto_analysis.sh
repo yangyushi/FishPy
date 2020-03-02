@@ -7,8 +7,8 @@ if [ ! $1 ]; then
 fi
 
 traj_path=$1
-traj_name=${traj_path##*/}  # /usr/local/bin/py.cpp -> py.cpp
-traj_name=${traj_name%%.*}  # py.cpp -> py
+traj_name=${traj_path##*/}  # eg: /usr/local/bin/py.cpp -> py.cpp
+traj_name=${traj_name%%.*}  # eg: py.cpp -> py
 root="analysis-${traj_name}"
 
 if [ ! -d "${root}" ]; then
