@@ -536,8 +536,7 @@ class Movie:
         self.max_frame = max([t.time.max() for t in self.trajs])
         self.size = len(self.trajs)
 
-    def __len__(self):
-        return self.max_frame
+    def __len__(self): return self.max_frame
 
     def __process_velocities(self, frame):
         """
@@ -642,7 +641,6 @@ class Movie:
             self[frame]
             return self.__labels[frame]
 
-
     def indice_pair(self, frame):
         """
         return two indices, idx_0 & idx_1
@@ -658,18 +656,23 @@ class Movie:
             self.__indice_pairs.update({frame: indice_pair})
             return indice_pair
 
+    def make(self):
+        """
+        Go through all frames, making code faster with the object
+        """
+        for i in range(len(self)):
+            self[i]
 
-if __name__ == "__main__":
-    with open('broken_manager.pkl', 'rb') as f:
-        manager = pickle.load(f)
-    print('before relink', manager)
+    def load(self, filename):
+        with open(filename, 'rb') as f:
+            movie = pickle.load(f)
+        self.trajs = movie.trajs
+        self.movie = movie.movie
+        self.__velocities = movie.__velocities
+        self.__labels = movie.__labels
+        self.__indice_pairs = movie.__indice_pairs
+        self.__sniff()
 
-    trajs = []
-    ll = np.arange(20, 800, 20)
-    dt = 10
-    for l in ll:
-        manager.relink(l, dt)
-        print(f'after relink (dist={l}), {manager}')
-        trajs.append(len(manager))
-    plt.plot(ll, trajs, '-o', color='tomato', markeredgecolor='k')
-    plt.show()
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
