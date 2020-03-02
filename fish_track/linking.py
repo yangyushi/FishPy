@@ -614,7 +614,7 @@ class Movie:
             yield single_method(frame)
 
     def __getitem__(self, frame):
-        if isinstance(frame, int):
+        if type(frame) in [int, np.int8, np.int16, np.int32, np.int64]:
             return self.__get_positions_single(frame)
         elif isinstance(frame, slice):
             return self.__get_slice(frame, self.__get_positions_single)
