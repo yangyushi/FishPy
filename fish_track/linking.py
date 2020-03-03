@@ -531,11 +531,11 @@ def relink(trajectories: List, dist_threshold: float, time_threshold: int,
                 t[time_key], t[pos_key], blur=blur
             ) for t in trajectories if len(t[time_key]) > 1
         ]
-    elif isinstance(trajectories[0], list):
+    elif isinstance(trajectories[0], list):  # (time, positions)
         trajs = [
             Trajectory(
                 t[0], t[1], blur=blur
-            ) for t in trajectories if len(t[time_key]) > 1
+            ) for t in trajectories if len(t[0]) > 1
         ]
     else:
         return TypeError("Invalid Trajectory Data Type")
