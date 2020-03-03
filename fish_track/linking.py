@@ -8,7 +8,31 @@ import trackpy as tp
 from typing import List
 from .nrook import solve_nrook, solve_nrook_dense
 from scipy.sparse import coo_matrix
+from numba.typed import List as nList
 from numba import njit
+from joblib import delayed, Parallel
+
+
+@njit
+def get_trajectory(labels, frames, target: int):
+    time, positions = nList(), nList()
+    for t in range(len(labels)):
+        index = -1
+        label = labels[t]
+        frame = frames[t]
+        index, found = -1, False
+
+        for i, l in enumerate(label):
+            if l == target:
+                index, found = i, True
+                break
+
+        if index >= 0:
+            positions.append(frame[index])  # (xy, xy2, ..., xyn)
+            time.append(t)
+        elif found:
+            return time, positions
+    return time, positions
 
 
 class Trajectory():
@@ -232,12 +256,7 @@ class ActiveLinker():
             labels.append(new_labels)
         return labels
 
-    def __get_trajectories(self, labels, frames):
-        """
-        trajectory = [time_points, positions]
-        plot3d(*positions, time_points) --> show the trajectory in 3D
-        shape of centres: (N x dim)
-        """
+    def __get_trajectories_slow(self, labels, frames):
         frame_nums = len(labels)
         max_value = np.hstack(labels).max()
         trajectories = []
@@ -252,6 +271,29 @@ class ActiveLinker():
             traj['time'] = np.array(time)
             traj['position'] = np.array(positions)
             trajectories.append(traj)
+        return trajectories
+
+    @staticmethod
+    def __get_trajectories(labels, frames):
+        """
+        this is used in ActiveLinker
+        trajectory = [time_points, positions]
+        plot3d(*positions, time_points) --> show the trajectory in 3D
+        shape of centres: (N x dim)
+        """
+        max_value = np.hstack(labels).max()
+        labels_numba = nList()
+        frames_numba = nList()
+        [labels_numba.append(l) for l in labels]
+        [frames_numba.append(l) for l in frames]
+        trajectories = []
+        for target in range(max_value):  # find the trajectory for every label
+            result = get_trajectory(labels_numba, frames_numba, target)
+            time, positions = result
+            trajectories.append([
+                np.array(time),
+                np.array(positions)
+            ])
         return trajectories
 
 
@@ -477,15 +519,26 @@ def relink_slow(trajectories, dist_threshold, time_threshold, blur=None, pos_key
     return [{'time': t.time, 'position': t.positions} for t in new_trajs]
 
 
-def relink(trajectories: List[dict], dist_threshold: float, time_threshold: int,
+def relink(trajectories: List, dist_threshold: float, time_threshold: int,
         blur=None, pos_key='position', time_key='time') -> List[dict]:
     """
     re-link short trajectories into longer
     normal usage: relink(trajs, dx, dt, blur)
     """
-    trajs = [
-        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
-    ]
+    if isinstance(trajectories[0], dict):
+        trajs = [
+            Trajectory(
+                t[time_key], t[pos_key], blur=blur
+            ) for t in trajectories if len(t[time_key]) > 1
+        ]
+    elif isinstance(trajectories[0], list):
+        trajs = [
+            Trajectory(
+                t[0], t[1], blur=blur
+            ) for t in trajectories if len(t[time_key]) > 1
+        ]
+    else:
+        return TypeError("Invalid Trajectory Data Type")
     trajs_ordered = sort_trajectories(trajs)
 
     dist_mat, row_map, col_map = build_dist_matrix_sparse(trajs_ordered, dx=dist_threshold, dt=time_threshold)
@@ -525,8 +578,14 @@ class Movie:
                     new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
                 else:
                     new_trajs.append(t)
+            elif isinstance(t, dict):
+                new_trajs.append(
+                    Trajectory(t['time'], t['position'], blur=blur)
+                )
+            elif isinstance(t, dict):
+                new_trajs.append(Trajectory(t[0], t[1], blur=blur))
             else:
-                new_trajs.append(Trajectory(t['time'], t['position'], blur=blur))
+                raise TypeError("invalid type for trajectories")
         if interpolate:
             for traj in new_trajs:
                 traj.interpolate()
