@@ -278,7 +278,7 @@ def get_corners(image: np.array, rows: int, cols: int, camera_model=None):
     return corners
 
 
-def get_homography(image: np.array, rows: int, cols: int, camera_model=None):
+def get_homography_image(image: np.array, rows: int, cols: int, camera_model=None):
     """
     get the homography transformation
     from an image with a chess-board
@@ -300,6 +300,55 @@ def get_homography(image: np.array, rows: int, cols: int, camera_model=None):
     H_sim = get_similarity(abcd, H_aff)
 
     return H_sim @ H_aff
+
+
+def get_homography(camera: 'Camera', angle_num=10):
+    """
+    get the homography that simiarly recover the 2d image perpendicular to z-axis
+    :param camera: a Camera instance of current camera
+    :param angle_num: a virtual chessboard is rotated angle_num times for calculation
+    """
+    angles = np.linspace(0, np.pi/2, angle_num)  # rotation_angle
+
+    abcd = {
+        'A': np.empty((angle_num, 3)),
+        'B': np.empty((angle_num, 3)),
+        'C': np.empty((angle_num, 3)),
+        'D': np.empty((angle_num, 3)),
+    }
+
+    for i, t in enumerate(angles):
+        R = np.array((  # rotation matrix pp z-axis
+            (np.cos(t), -np.sin(t), 0),
+            (np.sin(t), np.cos(t), 0),
+            (0, 0, 1)
+        ), dtype=np.float32)
+
+        abcd_3d = np.array((  # shape (3 dim, 4 corners)
+            (0, 0, 0),
+            (1, 0, 0),
+            (0, 1, 0),
+            (1, 1, 0),
+        ), dtype=np.float32).T
+
+        abcd_3d[:2, :] -= abcd_3d[:2, :].mean(axis=1)[:, np.newaxis]
+
+        abcd_3d_rot = R @ abcd_3d  # shape (3 dim, 4 corners)
+
+        abcd_3d_rot_h = np.vstack((abcd_3d_rot, np.ones((1, 4))))  # shape (4 dim, 4 corners)
+
+        abcd_2dh = camera.p @ abcd_3d_rot_h
+        abcd_2dh = (abcd_2dh / abcd_2dh[-1, :]).T  # shape (4 corners, 3 dim)
+
+        abcd['A'][i] = abcd_2dh[0]
+        abcd['B'][i] = abcd_2dh[1]
+        abcd['C'][i] = abcd_2dh[2]
+        abcd['D'][i] = abcd_2dh[3]
+
+    H_aff = get_affinity(abcd)
+    H_sim = get_similarity(abcd, H_aff) @ H_aff
+
+    return H_sim
 
 
 def update_orientation(
