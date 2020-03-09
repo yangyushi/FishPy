@@ -1,8 +1,11 @@
 import cv2
-from scipy import ndimage
 import numpy as np
-import matplotlib.pyplot as plt
+from tqdm import tqdm
+from numba import njit
 from typing import List
+from joblib import Parallel, delayed
+from scipy import ndimage
+import matplotlib.pyplot as plt
 from . import ray_trace
 
 dpi = 150
@@ -401,3 +404,115 @@ def get_orient_line(locations, orientations, length=10):
         olines_x += [oline_1[0, i], oline_2[0, i], np.nan]
         olines_y += [oline_1[1, i], oline_2[1, i], np.nan]
     return np.array((olines_x, olines_y))
+
+
+@njit(fastmath=True)
+def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
+    """
+    Chop an image in the polar coordinates
+    return the chopped result as a labelled image
+    :param image: 2d image as a numpy array
+    :param H_sim: a homography (3 x 3 matrix) to similarly rectify the image
+    :param centre: origin of the polar coordinate system
+    :param radius: maximum radius in the polar coordinate system
+    :param n_angle: number of bins in terms of angle
+    :param n_radius: number of bins in terms of radius
+    :param dist_coef: distortion coefficients of the camera, shape (5, )
+                        k1, k2, p1, p2, k3 (from opencv by default)
+    :param k: camera calibration matrix (bible, P155)
+    """
+    # setting up bin edges
+    be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # bin_edge
+    r0 = np.sqrt(radius**2 / (n_angle * (n_radius-1) + 1))
+    be_radius = np.empty(n_radius+1)
+    be_radius[0] = 0
+    be_radius[1] = r0
+    for i in range(2, n_radius+1):
+        be_radius[i] = np.sqrt(((i-1) * n_angle + 1))* r0
+    be_r2 = be_radius ** 2
+
+    # getting camera parameters
+    k1, k2, p1, p2, k3 = dist_coef
+    fx, fy, cx, cy = k[0, 0], k[1, 1], k[0, 2], k[1, 2]
+
+    result = np.empty(image.shape, dtype=np.uint64)
+    for x in range(image.shape[1]):  # x -> col
+        for y in range(image.shape[0]):  # y -> row!
+            # undistort x, y
+            x0 = (x - cx) / fx
+            y0 = (y - cy) / fy
+            x_ud, y_ud = x0, y0  # ud -> undistorted
+            for _ in range(5):  # iter 5 times
+                r2 = x_ud**2 + y_ud ** 2
+                k_inv = 1 / (1 + k1 * r2 + k2 * r2**2 + k3 * r2**3)
+                delta_x = 2 * p1 * x_ud*y_ud + p2 * (r2 + 2 * x_ud**2)
+                delta_y = p1 * (r2 + 2 * y_ud**2) + 2 * p2 * x_ud*y_ud
+                x_ud = (x0 - delta_x) * k_inv
+                y_ud = (y0 - delta_y) * k_inv
+            x_ud = x_ud * fx + cx
+            y_ud = y_ud * fy + cy
+
+            # similar rectification
+            xyh = np.array([x_ud, y_ud, 1], dtype=np.float64)
+            xyh_sim = H_sim @ xyh
+            xy_sim = (xyh_sim / xyh_sim[-1])[:2]  # similar trasnformed
+            x_sim, y_sim = xy_sim - centre
+
+            # work in polar coordinates
+            t = np.arctan2(y_sim, x_sim) + np.pi  # theta
+            r2 = x_sim**2 + y_sim**2
+
+            # label the image
+            if r2 <= be_r2[1]:
+                result[y, x] = 1
+            elif r2 <= be_r2[-1]:
+                idx_angle, idx_radius = 0, 0
+                for i, a in enumerate(be_angle[1:]):
+                    if (t < a) and (t >= be_angle[i]):
+                        idx_angle = i
+                for j, r2e in enumerate(be_r2[1:]):
+                    if (r2 < r2e) and (r2 >= be_r2[j]):
+                        idx_radius = j
+                idx_group = idx_angle + (idx_radius - 1) * n_angle + 2
+                result[y, x] = idx_group
+            else:
+                result[y, x] = 0
+    return result
+
+
+def get_indices(labels):
+    indices = []
+    for val in set(np.ravel(labels)):
+        if val > 0:
+            indices.append(
+                np.array(np.where(labels.ravel() == val)[0])
+            )
+    return indices
+
+
+def box_count_polar_image(image, indices, max_intensity=255):
+    """
+    :param image: the image taken by the camera without undistortion
+    :param labels: labelled image specifying different box regions
+    """
+    invert = image.max() - image.ravel()
+    intensities = np.empty(len(indices))
+    for i, idx in enumerate(indices):
+        intensities[i] = np.mean(invert[idx])
+    return np.std(intensities), np.mean(intensities)
+
+
+def box_count_polar_video(video, labels, max_intensity=255, cores=2, report=True):
+    if report:
+        to_iter = tqdm(video)
+    else:
+        to_iter = video
+    indices = get_indices(labels)
+    results = Parallel(n_jobs=cores, require='sharedmem')(
+        delayed(
+            lambda x: box_count_polar_image(x, indices)
+        )(frame) for frame in to_iter
+    )
+    stds, means = np.array(results).T
+    return stds, means
+

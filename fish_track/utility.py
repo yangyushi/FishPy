@@ -101,7 +101,7 @@ def draw_2d(radius: int):
     return canvas
 
 
-def detect_circle(image: np.array, size=50, sigma=2):
+def detect_circle(image: np.array, size=50):
     """
     detect the central circle in the image
     return the (x, y) coordinates of the centre
@@ -112,10 +112,7 @@ def detect_circle(image: np.array, size=50, sigma=2):
     scale = float(min(image.shape)) / size
     small = image[::zoom, ::zoom].astype(np.float64)
 
-    if sigma > 0:
-        small = ndimage.gaussian_filter(small, sigma)
-
-    small[small < small.mean()] = small.mean()
+    small[small < small[small>0].mean()] = small.mean()
 
     positions = []
     similarities = []

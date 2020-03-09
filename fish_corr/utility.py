@@ -101,7 +101,7 @@ def get_best_dilatation_rotation(r1, r2, init_guess=None):
     return L, R
 
 
-def get_convex_hull(trajectories, target_num=0):
+def get_convex_hull_from_trajs(trajectories, target_num=0):
     frames = list(set(np.hstack([t.time for t in trajectories]).ravel()))
     for frame in frames:
         points = []
@@ -111,7 +111,6 @@ def get_convex_hull(trajectories, target_num=0):
         points = np.squeeze(points)
         if len(points) >= target_num:
             yield ConvexHull(np.array(points))
-
 
 def get_rg_tensor(trajectories, target_num=0):
     frames = list(set(np.hstack([t.time for t in trajectories]).ravel()))
