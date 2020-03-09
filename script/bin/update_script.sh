@@ -42,7 +42,7 @@ needed=(
 )
 for fn in "${needed[@]}"; do
     if [[ ! -e $fn ]]; then
-        update_process=0
+        update_analysis=0
     fi
 done
 if [[ ! -d script ]]; then
