@@ -1,3 +1,5 @@
-ffmpeg -i cam-1.mp4 -vframes 1 cam-1.png
-ffmpeg -i cam-2.mp4 -vframes 1 cam-2.png
-ffmpeg -i cam-3.mp4 -vframes 1 cam-3.png
+#!/usr/bin/env bash
+# Extract 1st frames of all videos
+for fn in ./*.mp4; do
+    ffmpeg -y -i ${fn} -vframes 1 ${fn%.mp4}.png  &> /dev/null
+done
