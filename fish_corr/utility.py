@@ -26,14 +26,14 @@ def get_acf(var: np.array, size=0):
     dim = var.shape[1]
     mean = np.empty((1, dim), dtype=np.float64)
     for d in range(dim):
-        mean[0, d] = var[:, d].mean()
+        mean[0, d] = np.nanmean(var[:, d])
     flctn = var - mean  # (n, dim) - (1, dim)
     result = np.empty(size, dtype=np.float64)
     for dt in range(0, size):
         stop = length - dt
         corr = np.sum(flctn[:stop] * flctn[dt:stop+dt], axis=1)
         c0   = np.sum(flctn[:stop] * flctn[:stop], axis=1)  # normalisation factor
-        result[dt] = np.sum(corr) / np.sum(c0)
+        result[dt] = np.nansum(corr) / np.nansum(c0)
     return result
 
 
@@ -330,7 +330,9 @@ def get_vicsek_order(velocity_frames, frame_number, min_number):
     orders = np.empty(frame_number)
     for i, velocities in enumerate(velocity_frames):
         if len(velocities) > min_number:
-            orientations = velocities / np.linalg.norm(velocities, axis=1)[:, np.newaxis]  # shape (n, dim)
+            norms = np.linalg.norm(velocities, axis=1)
+            norms[np.isclose(norms, 0)] = np.nan
+            orientations = velocities / norms[:, np.newaxis]  # shape (n, dim)
             if False in np.logical_or(*np.isnan(orientations.T)):
                 orders[i] = np.linalg.norm(np.nanmean(orientations, axis=0))  # shape (dim,)
             else:
@@ -352,5 +354,7 @@ def fit_rot_acf(acf, delta):
     mask[np.abs(y) < delta] = True
     turnning_point = np.argmax(np.diff(y) > 0)  # first element where slope > 0
     mask[turnning_point-1:] = False
+    if len(x[mask]) == 0:
+        return np.nan
     a, b = np.polyfit(x[mask], y[mask], deg=1)   # y = a * x + b
     return -b / a

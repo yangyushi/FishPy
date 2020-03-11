@@ -8,7 +8,7 @@ from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import Callable
-from . import utility
+from . import utility, static
 
 
 
@@ -334,6 +334,10 @@ class AverageAnalyser():
             result[i] = np.nanmean(array[t0:t1])
         return result
 
+    def scan_nn(self, no_vertices=True):
+        nn_movie = list(static.get_nn_iter(self.movie))
+        return self.scan_array(np.array(nn_movie))
+
     def scan_speed(self, min_number=0) -> np.ndarray:
         """
         :param min_number: only take frame into consideration if len(velocity) > min_number
@@ -387,6 +391,7 @@ class AverageAnalyser():
     def scan_rotation(self, sample_points: int):
         """
         :param sample_points: lag time (tau) in the acf of orientation in frame
+        :param delta: ACF range that below & above 0 for a linear fit
         """
         result = []
         for i, (t0, t1) in enumerate(self.pairs):
@@ -400,19 +405,21 @@ class AverageAnalyser():
                 else:
                     offset = max(t0 - traj.t_start, 0)
                     stop = min(traj.t_end, t1) - traj.t_start
-                    velocities = traj.positions[offset+1 : stop] -\
-                        traj.positions[offset : stop-1]  # ∆t = 1
-                    orientations = velocities / np.linalg.norm(
-                        velocities, axis=1
-                    )[:, np.newaxis]  # (>sample_points, )
+                    velocities = traj.positions[offset+1 : stop] - traj.positions[offset : stop-1]
+                    norms = np.linalg.norm(velocities, axis=1)
+                    norms[np.isclose(norms, 0)] = np.nan
+                    orientations = velocities / norms[:, np.newaxis]  # shape (n, 1)
                     acf = utility.get_acf(orientations, size=sample_points)
                     acfs.append(acf)
             if len(acfs) == 0:
                 result.append(np.nan)
             else:
-                acf = np.array([
-                        np.arange(sample_points),  # lag time
-                        np.mean(acfs, axis=0)  # auto-correlation
-                ])
-                result.append(utility.fit_rot_acf(acf, delta=0.05))
+                acf = np.mean(acfs, axis=0)  # auto-correlation
+                tau_0 = np.nan
+                for i, a in enumerate(acf):
+                    if a <= 0:
+                        da = a - acf[i-1]
+                        tau_0 = (i * da - a) / da
+                        break
+                result.append(tau_0)
         return np.array(result)
