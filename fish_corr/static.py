@@ -4,6 +4,7 @@ from scipy.optimize import root_scalar
 from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation
 from scipy.stats import binned_statistic_2d
+from numba import njit, prange
 
 
 def a2r_cost(x, c, y):
@@ -295,3 +296,51 @@ def box_density_polar(
         *polar.T, counts, statistic='count', bins=(bins_rad, bins_ang)
     )
     return np.mean(numbers), np.std(numbers)
+
+
+@njit(fastmath=True)
+def polar_chop(image, H_sim, centre, radius, n_angle, n_radius):
+    """
+    chop an image in the polar coordinates
+    :param image: 2d image as a numpy array
+    :param H_sim: a homography (3 x 3 matrix) to similarly rectify the image
+    :param centre: origin of the polar coordinate system
+    :param radius: maximum radius in the polar coordinate system
+    :param n_angle: number of bins in terms of angle
+    :param n_radius: number of bins in terms of radius
+    """
+    be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # bin_edge
+    be_radius = np.sqrt(np.arange(n_radius + 1) / n_radius) * radius
+    be_r2 = be_radius ** 2
+    result = np.empty(image.shape, dtype=np.uint64)
+    for x in range(image.shape[1]):  # x -> col
+        for y in range(image.shape[0]):  # y -> row!
+            xyh = np.array([x, y, 1], dtype=np.float64)
+            xyh_sim = H_sim @ xyh
+            xy_sim = (xyh_sim / xyh_sim[-1])[:2]  # similar trasnformed
+            x_sim, y_sim = xy_sim - centre
+            t = np.arctan2(y_sim, x_sim) + np.pi  # theta
+            r2 = x_sim**2 + y_sim**2
+            if r2 <= be_r2[-1]:
+                idx_angle, idx_radius = 0, 0
+                for i, a in enumerate(be_angle[1:]):
+                    if (t < a) and (t >= be_angle[i]):
+                        idx_angle = i
+                for j, r2e in enumerate(be_r2[1:]):
+                    if (r2 < r2e) and (r2 >= be_r2[j]):
+                        idx_radius = j
+                idx_group = idx_angle + idx_radius * n_angle + 1
+                result[y, x] = idx_group
+            else:
+                result[y, x] = 0
+    return result
+
+
+def box_count_polar_image(image, camera, centre, radius, n_angle, n_radius):
+    H_sim = f3.utility.get_homography(camera)
+    labels = fc.static.polar_chop(img, H_sim, centre, radius, n_angle, n_radius)
+    undist = camera.undistort_image(image)
+    intensities = []
+    for i in range(1, np.max(labels)):
+        intensities.append(np.mean(undist[labels==i]))
+    return np.std(intensities)
