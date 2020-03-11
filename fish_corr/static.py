@@ -214,6 +214,31 @@ def get_nn(positions, no_vertices=True):
     return nn_locations, nn_dists
 
 
+def get_nn_iter(frames, no_vertices=True):
+    for i, positions in enumerate(frames):
+        if len(positions) < 2:
+            yield np.nan
+            continue
+        if no_vertices:
+            if len(positions) < 4:
+                yield np.nan
+                continue
+            cv = ConvexHull(positions)
+            not_vertices = np.array([
+                x for x in np.arange(len(cv.points)) if x not in cv.vertices
+            ], dtype=int)
+            if len(not_vertices) == 0:
+                yield np.nan
+                continue
+            focus = cv.points[not_vertices]
+        else:
+            focus = positions
+        dist_matrix = cdist(focus, positions)
+        dist_matrix[dist_matrix == 0] = np.inf
+        nn_dists = dist_matrix.min(axis=1)
+        yield np.mean(nn_dists)
+
+
 def get_nn_with_velocity(positions, velocities, no_vertices=True):
     """
     Calculate the NN distances and relative locations of NNs
