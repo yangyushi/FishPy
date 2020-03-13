@@ -490,7 +490,7 @@ def get_indices(labels):
     return indices
 
 
-def box_count_polar_image(image, indices, max_intensity=255):
+def box_count_polar_image(image, indices):
     """
     :param image: the image taken by the camera without undistortion
     :param labels: labelled image specifying different box regions
@@ -498,11 +498,12 @@ def box_count_polar_image(image, indices, max_intensity=255):
     invert = image.max() - image.ravel()
     intensities = np.empty(len(indices))
     for i, idx in enumerate(indices):
-        intensities[i] = np.mean(invert[idx])
-    return np.std(intensities), np.mean(intensities)
+        pixels = invert[idx]
+        intensities[i] = np.mean(pixels)
+    return np.std(intensities), np.min(intensities), np.mean(intensities)
 
 
-def box_count_polar_video(video, labels, max_intensity=255, cores=2, report=True):
+def box_count_polar_video(video, labels, cores=2, report=True):
     if report:
         to_iter = tqdm(video)
     else:
@@ -513,6 +514,5 @@ def box_count_polar_video(video, labels, max_intensity=255, cores=2, report=True
             lambda x: box_count_polar_image(x, indices)
         )(frame) for frame in to_iter
     )
-    stds, means = np.array(results).T
-    return stds, means
+    return np.array(results).T  # (3, n)
 
