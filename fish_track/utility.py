@@ -101,18 +101,23 @@ def draw_2d(radius: int):
     return canvas
 
 
-def detect_circle(image: np.array, size=50):
+def detect_circle(image: np.array, size=50, upper_threshold=0.5):
     """
-    detect the central circle in the image
-    return the (x, y) coordinates of the centre
-    used for my fish study
+    Detect the central circle in the image
+    The foreground is dark
+    :param image: 2d image as numpy array
+    :return: the (x, y) coordinates of the centre
     """
-    radii = np.arange(size//5, size//2, 1)
+    radii = np.linspace(size/3, size/2, 10, dtype=int)
     zoom = min(image.shape) // size
     scale = float(min(image.shape)) / size
     small = image[::zoom, ::zoom].astype(np.float64)
 
-    small[small < small[small>0].mean()] = small.mean()
+    to_detect = small.max() - small.astype(float)
+    to_detect[small==0] = 0
+    max_val = np.max(to_detect) * upper_threshold
+    to_detect[to_detect > max_val] = max_val
+    to_detect[to_detect < np.mean(to_detect)] = np.mean(to_detect)
 
     positions = []
     similarities = []
@@ -120,16 +125,20 @@ def detect_circle(image: np.array, size=50):
     for r in radii:
         sim = draw_2d(r)
         corr = correlate2d(
-            small - small.mean(),
+            to_detect - np.min(to_detect),
             sim - sim.mean(),
             mode='same'
         )
-        pos = np.unravel_index(np.argmax(corr), corr.shape)
-        similarity = corr[pos] / sim.sum()
+        try:
+            pos = np.unravel_index(np.argmax(corr), corr.shape)
+            similarity = corr[pos] / sim.sum()
+        except ValueError:
+            pos = np.array((0, 0))
+            similarity = 0
         positions.append(pos)
         similarities.append(similarity)
 
     idx = np.argmax(similarities)
     centre = np.array(positions[idx])
     radius = radii[idx]
-    return centre[::-1] * scale, radius * scale
+    return centre[::-1] * scale, radius * scale, to_detect
