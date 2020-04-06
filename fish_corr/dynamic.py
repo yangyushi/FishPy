@@ -282,6 +282,7 @@ class AverageAnalyser():
         self.start = start
         self.win_size = win_size
         self.step_size = step_size
+        self.cache = {}
         if end == 0:
             self.end = movie.max_frame
         else:
@@ -336,6 +337,10 @@ class AverageAnalyser():
 
     def scan_nn(self, no_vertices=True):
         nn_movie = list(static.get_nn_iter(self.movie))
+        return self.scan_array(np.array(nn_movie))
+
+    def scan_nn_pbc(self, box):
+        nn_movie = list(static.get_nn_iter_pbc(self.movie, box))
         return self.scan_array(np.array(nn_movie))
 
     def scan_speed(self, min_number=0) -> np.ndarray:
@@ -405,7 +410,10 @@ class AverageAnalyser():
                 else:
                     offset = max(t0 - traj.t_start, 0)
                     stop = min(traj.t_end, t1) - traj.t_start
-                    velocities = traj.positions[offset+1 : stop] - traj.positions[offset : stop-1]
+                    if isinstance(traj.velocities, type(None)):  # for experimental data
+                        velocities = traj.positions[offset+1 : stop] - traj.positions[offset : stop-1]
+                    else:  # for simulation data
+                        velocities = traj.velocities
                     norms = np.linalg.norm(velocities, axis=1)
                     norms[np.isclose(norms, 0)] = np.nan
                     orientations = velocities / norms[:, np.newaxis]  # shape (n, 1)
@@ -423,3 +431,4 @@ class AverageAnalyser():
                         break
                 result.append(tau_0)
         return np.array(result)
+
