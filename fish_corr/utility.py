@@ -279,6 +279,26 @@ def get_gr(frames, bins, random_gas):
     return hist / hist_gas
 
 
+def get_gr_pbc(frames, bins, random_gas, box):
+    bx, by, bz = box.ravel()
+    neighbours = list(product([0, bx, -bx], [0, by, -by], [0, bz, -bz]))
+    offset = 0
+    distances = []
+    distances_gas = []
+    for frame in frames:
+        if len(frame) > 2:
+            dist_4d = [spatial.distance.cdist(frame, positions + n) for n in neighbours]
+            dist = np.triu(np.min(dist_4d, axis=0), k=1)
+            dist_gas = pdist(random_gas[offset : offset+len(frame)] + 1)
+            offset += len(frame)
+            distances.append(dist)
+            distances_gas.append(dist_gas)
+    hist, _ = np.histogram(np.hstack(distances), bins=bins)
+    hist_gas, _ = np.histogram(np.hstack(distances_gas), bins=bins)
+    hist_gas[hist==0] = 1
+    return hist / hist_gas
+
+
 def get_vanilla_gr(frames, tank, bins, random_size):
     """
     :param frames: positions of all particles in different frames, shape (frame, n, dim)
@@ -348,7 +368,11 @@ def fit_rot_acf(acf, delta):
     :param acf: the acf function, shape (2, n)
     :param delta: the range above/below 0, which will be fitted linearly
     """
-    x, y = acf
+    if acf.ndim == 1:
+        x = np.arange(len(acf))
+        y = acf
+    elif acf.ndim == 2:
+        x, y = acf
     mask = np.zeros(y.shape, dtype=bool)
     mask[np.abs(y) < delta] = True
     turnning_point = np.argmax(np.diff(y) > 0)  # first element where slope > 0
