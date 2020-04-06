@@ -15,12 +15,14 @@ help:
 .PHONY: help Makefile
 
 gh:
-	@git checkout gh-pages
 	@make html
+	@git checkout gh-pages
+	@git checkout master -- .
 	@cp -a _build/html/. ..
+	@cd ..
 	@git add *
 	@git commit -m "update documentation"
-	@git push origin gh-pages
+	@git push
 	@git checkout master
 
 # Catch-all target: route all unknown targets to Sphinx using the new
