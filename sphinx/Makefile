@@ -18,6 +18,8 @@ gh:
 	@git checkout gh-pages
 	@make html
 	@cp -a _build/html/. ..
+	@git add *
+	@git commit -m "update documentation"
 	@git push origin gh-pages
 	@git checkout master
 
