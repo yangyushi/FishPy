@@ -5,4 +5,5 @@
 **/*.pyc
 **/test.py
 !.gitignore
+!.nojekyll
 sphinx/_**
