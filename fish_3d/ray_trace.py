@@ -16,11 +16,16 @@ except ImportError:
 
 def get_intersect_of_lines_slow(lines):
     """
-    lines: a list containing many lines
-    line: a dict containing the unit vector and a base point
-    return the a point in 3D whose distances sum to all lines is minimum
+    Calculate intersecting point of many lines
+
+    Args:
+        lines (list): a list containing many lines
+        line (dict): a dict containing the unit vector and a base point
+
+    Return:
+        np.ndarray: the a point in 3D whose distances sum to all lines is minimum
+
     (I followed this answer: https://stackoverflow.com/a/48201730/4116538)
-    todo: no solve
     """
     line_num = len(lines)
     M = np.zeros((3, 3))
@@ -41,9 +46,18 @@ def get_intersect_of_lines_slow(lines):
 
 def py_get_intersect_of_lines_batch(lines):
     """
-    lines = [line, ...], shape -> (n, view, 2, 3)
-    line = [points (a), unit directions (v)]
-    M(3, 3) @ x(3, n) = b(3, n)
+
+    Args:
+        lines(np.ndarray): a collection of many matched lines, shape -> (n, view, 2, 3)
+
+    Return:
+        np.ndarray: n points in 3D as the intersect of n * view lines
+
+    .. highlight::python
+    .. code-block::python
+
+        line = [points (a), unit directions (v)]
+        M(3, 3) @ x(3, n) = b(3, n)
     """
     M = np.zeros((3, 3), dtype=np.float64)
     b = np.zeros((3,  ), dtype=np.float64)
@@ -72,8 +86,9 @@ else:
 
 def get_intersect_of_lines(lines):
     """
-    lines = [line, ...], shape -> (n, 2, 3)
-    line = [points (a), unit directions (v)]
+    Args:
+        lines (np.ndarray): a collection of different lines, ...], shape -> (n, 2, 3)
+                            line = [points (a), unit directions (v)]
     """
     M = np.zeros((3, 3), dtype=np.float64)
     b = np.zeros((3,  ), dtype=np.float64)
@@ -91,8 +106,14 @@ def get_intersect_of_lines(lines):
 
 def pl_dist(point, line):
     """
-    distance between a point and a line
-    todo: write cross product explicitly
+    Calculate distance between a point and a line in 3D
+
+    Args:
+        point (np.ndarray): shape (3, )
+        line (dict): {'unit': direction, 'base': start_point}
+
+    Return:
+        np.ndarray: the distance between a line and a point
     """
     ac = point - line['point']
     ab = line['unit']
@@ -101,8 +122,14 @@ def pl_dist(point, line):
 
 def pl_dist_faster(point, lines):
     """
-    point -> (3,)
-    line -> [point, unit_vector] (2, 3)
+    Calculate distance between a point and a line in 3D
+
+    Args:
+        point (np.ndarray): shape (3,)
+        line (dict): {'unit': direction, 'base': start_point}
+
+    Return:
+        np.ndarray: the distance between a line and a point
     """
     delta = np.array([point]) - lines[:, 0, :]  # (n, 3)
     return np.linalg.norm(np.cross(delta, lines[:, 1, :]))
@@ -110,8 +137,13 @@ def pl_dist_faster(point, lines):
 
 def pl_dist_batch(points, lines):
     """
-    points -> (n, 3,)
-    lines -> (n, view, 2, dim) [dim = 3]
+    Calculate distance between many points and many lines in 3D
+
+    Args:
+        points (np.ndarray): shape (n, 3,)
+        lines (np.ndarray): shape (n, view, 2, dim) [dim = 3]
+    Return:
+        np.array: many distances, shape (n, )
     """
     view_num = lines.shape[1]
     dists = 0
@@ -125,24 +157,32 @@ def pl_dist_batch(points, lines):
 
 def get_poi(camera: 'Camera', z: float, coordinate: np.ndarray):
     """
-    - camera: a Camera instance
-    - z: the hight of water level with respect to world origin
-    - corrdinate: the position (u, v) of object on the image, unit is pixel
+    Calculate the poi, point on interface. See the sketch for its meaning
+
+    .. highlight:: python
+    .. code-block:: python
+
+                       camera
+                      /
+                     /
+                    /
+        ---------[poi]-------- air-water interface (z = z)
+                   |
+                   |
+                   |
+                 fish
+
+    For the calculation, the equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved
+    for x, y, c knowing everything else
+
+    Args:
+        camera (Camera): a Camera instance
+        z (float): the hight of water level with respect to world origin
+        corrdinate (np.ndarray): the position (u, v) of object on the image, unit is pixel
         it can be one point or many points, but they should be undistorted
-    - poi, point on interface. See the sketch for its meaning
-    - return [X, Y, Z], shape (3, n)
 
-                   camera
-                  /
-                 /
-                /
-    ---------[poi]-------- air-water interface (z = z)
-               |
-               |
-               |
-             fish
-
-    The equation: P @ [x, y, z, 1]' = [c * v, c * u, c]' are solved for x, y, c, knowing everything else
+    Return:
+        np.ndarray: the points on interface, [X, Y, Z], shape (3, n)
     """
     p11, p12, p13, p14, p21, p22, p23, p24, p31, p32, p33, p34 = camera.p.ravel()
 
@@ -184,16 +224,22 @@ def get_poi_cluster(camera, z, coordinate):
 def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
     """
     get the unit vector of transmitted ray from air to water
-    the refractive index of water is 1.33 @ 25°C
-    the normal vector facing up, the coordinate is looks like
 
-            ^ +z
-    air     |
-            |
-    ------------------>
-            |
-    water   |
-            |
+    Args:
+        incident_vec(np.ndarray): the vector representing the incident ray
+        refractive_index (float): the refractive index of water is 1.33 @ 25°C
+        normal (np.ndarray): the normal vector facing up, the coordinate is looks like
+
+    .. highlight:: python
+    .. code-block:: python
+
+                ^ +z
+        air     |
+                |
+        ------------------>
+                |
+        water   |
+                |
 
     """
     rri = 1 / refractive_index
@@ -207,18 +253,23 @@ def get_trans_vec(incident_vec, refractive_index=1.33, normal=(0, 0, 1)):
 
 def get_trans_vecs(incident_vecs, refractive_index=1.33, normal=(0, 0, 1)):
     """
-    get the *unit vector* of transmitted ray from air to water
-    the refractive index of water is 1.33 @ 25°C
-    the normal vector facing up, the coordinate is looks like
-    :param incident_vecs: vectors representing many incident rays, shape (n, 3)
+    Get the many *unit vectors* of transmitted rays from air to water
 
-            ^ +z
-    air     |
-            |
-    ------------------>
-            |
-    water   |
-            |
+    Args:
+        incident_vecs (np.ndarray): vectors representing many incident rays, shape (n, 3)
+        refractive_index (float): the refractive index of water is 1.33 @ 25°C
+        normal (np.ndarray): the normal vector facing up, the coordinate is looks like
+
+    .. highlight:: python
+    .. code-block:: python
+
+                ^ +z
+        air     |
+                |
+        ------------------>
+                |
+        water   |
+                |
 
     """
     rri = 1 / refractive_index
