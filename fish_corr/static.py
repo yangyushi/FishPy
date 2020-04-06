@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 from scipy.spatial import ConvexHull
 from scipy.optimize import root_scalar
 from scipy.spatial.distance import cdist
@@ -219,6 +220,9 @@ def get_nn(positions, no_vertices=True):
 
 
 def get_nn_iter(frames, no_vertices=True):
+    """
+    get an iteractive objectable that yields nn distances in different frames
+    """
     for i, positions in enumerate(frames):
         if len(positions) < 2:
             yield np.nan
@@ -238,6 +242,24 @@ def get_nn_iter(frames, no_vertices=True):
         else:
             focus = positions
         dist_matrix = cdist(focus, positions)
+        dist_matrix[dist_matrix == 0] = np.inf
+        nn_dists = dist_matrix.min(axis=1)
+        yield np.mean(nn_dists)
+
+
+def get_nn_iter_pbc(frames, box):
+    """
+    get an iteractive objectable that yields nn distances in different frames
+    """
+    bx, by, bz = box.ravel()
+    neighbours = list(product([0, bx, -bx], [0, by, -by], [0, bz, -bz]))
+    for i, positions in enumerate(frames):
+        if len(positions) < 2:
+            yield np.nan
+            continue
+        focus = positions
+        dist_matrix_4d = [cdist(focus, positions + n) for n in neighbours]
+        dist_matrix = np.min(dist_matrix_4d, axis=0)
         dist_matrix[dist_matrix == 0] = np.inf
         nn_dists = dist_matrix.min(axis=1)
         yield np.mean(nn_dists)
