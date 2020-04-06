@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-import numpy as np
-from scipy import ndimage
-from scipy.spatial.distance import cdist
+import os
 import pickle
-import matplotlib.pyplot as plt
+import numpy as np
 import trackpy as tp
-from typing import List
-from .nrook import solve_nrook, solve_nrook_dense
-from scipy.sparse import coo_matrix
-from numba.typed import List as nList
 from numba import njit
+from typing import List
+from scipy import ndimage
+import matplotlib.pyplot as plt
+from scipy.sparse import coo_matrix
 from joblib import delayed, Parallel
+from numba.typed import List as nList
+from scipy.spatial.distance import cdist
+from .nrook import solve_nrook, solve_nrook_dense
 
 
 @njit
@@ -36,12 +37,13 @@ def get_trajectory(labels, frames, target: int):
 
 
 class Trajectory():
-    def __init__(self, time: np.array, positions: np.array, blur=None):
+    def __init__(self, time: np.array, positions: np.array, blur=None, velocities=None):
         """
         bundle handy methods with trajectory data
         :param time: frame number for each positon, dtype=int
         :param positions: shape is (n_time, n_dimension)
         :param blur: applying gaussian_filter on each dimension along time axis
+        :param velocities: velocities at each time points, this is possible for simulation data
         """
         if len(time) != len(positions):
             raise ValueError("Time points do not match the position number")
@@ -55,15 +57,18 @@ class Trajectory():
         self.p_end = self.positions[-1]
         self.t_start = self.time[0]
         self.t_end = self.time[-1]
-        self.spd_start = (self.positions[1] - self.positions[0]) / (self.time[1] - self.time[0])
-        self.spd_end = (self.positions[-1] - self.positions[-2]) / (self.time[-1] - self.time[-2])
+        self.velocities = velocities
+        if not isinstance(self.velocities, type(None)):
+            self.v_end = self.velocities[-1]
+        else:
+            self.v_end = (self.positions[-1] - self.positions[-2]) / (self.time[-1] - self.time[-2])
 
     def predict(self, t):
         """
         predict the position of the particle at time t
         """
         assert t > self.t_end, "We predict the future, not the past"
-        pos_predict = self.p_end + self.spd_end * (t - self.t_end)
+        pos_predict = self.p_end + self.v_end * (t - self.t_end)
         return pos_predict
 
     def __len__(self):
@@ -735,3 +740,57 @@ class Movie:
     def save(self, filename):
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
+
+
+class SimMovie:
+    def __init__(self, positions, velocities):
+        """
+        Args:
+            positions(np.ndarray): positions of all particles in all frames, shape (frame, number, dimension)
+            velocities(np.ndarray): velocities of all particles in all frames, shape (frame, number, dimension)
+        """
+        self.positions = positions
+        self.velocities = velocities
+        time = np.arange(positions.shape[0])
+        self.trajs = [Trajectory(time, pos, velocities=vol) for pos, vol in zip(
+            np.transpose(positions, (1, 0, 2)),
+            np.transpose(velocities, (1, 0, 2)),
+        )]
+        self.__labels = np.arange(self.positions.shape[1])
+        self.max_frame = self.positions.shape[0]
+
+    def __len__(self): return self.positions.shape[0]
+
+    def __getitem__(self, frame): return self.positions[frame]
+
+    def velocity(self, frame):
+        if isinstance(frame, tuple):
+            return self.velocities[slice(*frame)]
+        else:
+            return self.velocities[frame]
+
+    def label(self, frame): return self.__labels
+
+    def indice_pair(self, frame): return (self.__labels, self.__labels)
+
+    def make(self): pass
+
+    def load(self, filename):
+        with open(filename, 'rb') as f:
+            movie = pickle.load(f)
+        self.positions = movie.positions
+        self.velocities = movie.velocities
+
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+
+    def export_xyz(self, filename, comment='none'):
+        f = open(filename, 'w')
+        for frame in self.positions:
+            x, y, z = frame.T
+            f.write('{}\n'.format(len(x)))
+            f.write('{}\n'.format(comment))
+            for i in range(len(x)):
+                f.write('A\t{:.8e}\t{:.8e}\t{:.8e}\n'.format(x[i], y[i], z[i]))
+        f.close()
