@@ -11,11 +11,11 @@ from numba import njit
 
 
 @njit
-def get_acf(var: np.array, size=0):
+def get_acf(var: np.ndarray, size=0):
     r"""
     Calculate the auto-correlation function for a n-dimensional variable
     Y[\tau] = \left< \sum_i{X[t, i] \cdot X[t+\tau, i]} \right>
-    :param var: a continual 1D variable.
+    :param var: a continual nD variable.
                 the shape is (number, dimension)
                 there should be no 'np.nan' inside.
     :param size: the maximum size of \tau, by default \tau == len(var)
@@ -26,15 +26,35 @@ def get_acf(var: np.array, size=0):
     dim = var.shape[1]
     mean = np.empty((1, dim), dtype=np.float64)
     for d in range(dim):
-        mean[0, d] = np.nanmean(var[:, d])
+        mean[0, d] = np.mean(var[:, d])
     flctn = var - mean  # (n, dim) - (1, dim)
     result = np.empty(size, dtype=np.float64)
     for dt in range(0, size):
         stop = length - dt
         corr = np.sum(flctn[:stop] * flctn[dt:stop+dt], axis=1)
         c0   = np.sum(flctn[:stop] * flctn[:stop], axis=1)  # normalisation factor
-        result[dt] = np.nansum(corr) / np.nansum(c0)
+        result[dt] = np.sum(corr) / np.sum(c0)
     return result
+
+
+def get_acf_fft(var: np.ndarray, size, nstep, nt):
+    """
+    not finished
+    """
+    fft_len = 2 * size # Actual length of FFT data
+
+    # Prepare data for FFT
+    fft_inp = np.zeros(fft_len, dtype=np.complex_)
+    fft_inp[0:nstep] = v
+
+    fft_out = np.fft.fft(fft_inp) # Forward FFT
+    fft_out = fft_out * np.conj ( fft_out ) # Square modulus
+    fft_inp = np.fft.ifft(fft_out) # Backward FFT (the factor of 1/fft_len is built in)
+    # Normalization factors associated with number of time origins
+    n = np.linspace(nstep, nstep - nt, nt + 1, dtype=np.float_)
+    assert np.all(n > 0.5), 'Normalization array error' # Should never happen
+    c_fft = fft_inp[0 : nt + 1].real / n
+    return
 
 
 def get_centre(trajectories, frame):
@@ -363,10 +383,23 @@ def get_vicsek_order(velocity_frames, frame_number, min_number):
 
 def fit_rot_acf(acf, delta):
     """
-    using linear fit to get the intersection of the acf function
-    and x-axis
-    :param acf: the acf function, shape (2, n)
-    :param delta: the range above/below 0, which will be fitted linearly
+    Using linear fit to get the intersection of the acf function and x-axis
+
+    Pars:
+        acf (np.ndarray): the acf function, shape (2, n)
+        delta (float): the range above/below 0, which will be fitted linearly
+
+    Return:
+        float: the relaxation time
+
+    Example:
+        >>> tau = np.arange(101)
+        >>> acf = 1 - np.linspace(0, 2, 101)
+        >>> data = np.array((tau, acf))
+        >>> np.isclose(fit_rot_acf(acf, 0.1), 50)
+        True
+        >>> np.isclose(fit_rot_acf(data, 0.1), 50)
+        True
     """
     if acf.ndim == 1:
         x = np.arange(len(acf))
@@ -381,3 +414,38 @@ def fit_rot_acf(acf, delta):
         return np.nan
     a, b = np.polyfit(x[mask], y[mask], deg=1)   # y = a * x + b
     return -b / a
+
+
+def fit_acf_exp(data):
+    """
+    Use function y = exp(-x / a) * b to fit the acf data
+    The fitting result a is a proxy to relaxation time
+
+    Pars:
+        data (np.ndarray): the data to be fit, it can be either (tau, acf) or just acf
+                           shape, (2, n) or (n,)
+
+    Return:
+        float: fitting parameter a, relaxation time
+
+    Example:
+        >>> tau = np.arange(100)
+        >>> acf = np.exp(-tau / 10)
+        >>> data = np.array((tau, acf))
+        >>> np.isclose(fit_acf_exp(acf), 10)
+        True
+        >>> np.isclose(fit_acf_exp(data), 10)
+        True
+    """
+    if data.ndim == 2:
+        lag_time, acf = data
+    elif data.ndim == 1:
+        acf = data
+        lag_time = np.arange(len(acf))
+    popt, pcov = curve_fit(
+        lambda x, a, b: np.exp(-x / a) * b,
+        xdata = lag_time[1:],
+        ydata = acf[1:],
+        sigma = 1 / acf[1:]
+    )
+    return popt[0]

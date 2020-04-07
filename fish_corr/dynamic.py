@@ -396,7 +396,6 @@ class AverageAnalyser():
     def scan_rotation(self, sample_points: int):
         """
         :param sample_points: lag time (tau) in the acf of orientation in frame
-        :param delta: ACF range that below & above 0 for a linear fit
         """
         result = []
         for i, (t0, t1) in enumerate(self.pairs):
@@ -423,12 +422,6 @@ class AverageAnalyser():
                 result.append(np.nan)
             else:
                 acf = np.mean(acfs, axis=0)  # auto-correlation
-                tau_0 = np.nan
-                for i, a in enumerate(acf):
-                    if a <= 0:
-                        da = a - acf[i-1]
-                        tau_0 = (i * da - a) / da
-                        break
-                result.append(tau_0)
+                tau = utility.fit_acf_exp(acf)
+                result.append(tau)
         return np.array(result)
-
