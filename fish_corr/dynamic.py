@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
+import types
 import pickle
 from scipy.stats import binned_statistic
 from scipy.optimize import least_squares
@@ -307,6 +308,8 @@ class AverageAnalyser():
         result = []
         for i, pair in enumerate(self.pairs):
             res = func(self.movie[pair[0]:pair[1]])
+            if type(res) == types.GeneratorType:
+                res = np.fromiter(res, dtype=np.float64)
             result.append(res)
         return np.array(result)
 
@@ -336,12 +339,22 @@ class AverageAnalyser():
         return result
 
     def scan_nn(self, no_vertices=True):
-        nn_movie = list(static.get_nn_iter(self.movie))
-        return self.scan_array(np.array(nn_movie))
+        if self.win_size >= self.step_size:
+            nn_movie = list(static.get_nn_iter(self.movie))
+            return self.scan_array(np.array(nn_movie))
+        else:
+            return self.__scan_positions(
+                lambda x: static.get_nn_iter(x, no_vertices=no_vertices),
+            )
 
     def scan_nn_pbc(self, box):
-        nn_movie = list(static.get_nn_iter_pbc(self.movie, box))
-        return self.scan_array(np.array(nn_movie))
+        if self.win_size >= self.step_size:
+            nn_movie = list(static.get_nn_iter_pbc(self.movie, box))
+            return self.scan_array(np.array(nn_movie))
+        else:
+            return self.__scan_positions(
+                lambda x: static.get_nn_iter_pbc(x, box=box),
+            )
 
     def scan_speed(self, min_number=0) -> np.ndarray:
         """
