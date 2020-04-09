@@ -11,14 +11,18 @@ from numba import njit
 
 
 @njit
-def get_acf(var: np.ndarray, size=0):
+def get_acf(var: np.ndarray, size=0, step=1):
     r"""
     Calculate the auto-correlation function for a n-dimensional variable
     Y[\tau] = \left< \sum_i{X[t, i] \cdot X[t+\tau, i]} \right>
-    :param var: a continual nD variable.
-                the shape is (number, dimension)
-                there should be no 'np.nan' inside.
-    :param size: the maximum size of \tau, by default \tau == len(var)
+
+    Pars:
+        var (np.ndarray): a continual nD variable.  the shape is (number, dimension)
+        size (int): the maximum size of \tau, by default \tau == len(var)
+        step (int): every ``step`` points in time were chosen as t0 in the calculation
+
+    Return:
+        np.ndarray: The auto-correlation function of the variable
     """
     length = len(var)
     if size == 0:
@@ -26,14 +30,14 @@ def get_acf(var: np.ndarray, size=0):
     dim = var.shape[1]
     mean = np.empty((1, dim), dtype=np.float64)
     for d in range(dim):
-        mean[0, d] = np.mean(var[:, d])
+        mean[0, d] = np.nanmean(var[:, d])
     flctn = var - mean  # (n, dim) - (1, dim)
     result = np.empty(size, dtype=np.float64)
     for dt in range(0, size):
         stop = length - dt
-        corr = np.sum(flctn[:stop] * flctn[dt:stop+dt], axis=1)
-        c0   = np.sum(flctn[:stop] * flctn[:stop], axis=1)  # normalisation factor
-        result[dt] = np.sum(corr) / np.sum(c0)
+        corr = np.sum(flctn[: stop : step] * flctn[dt : stop + dt : step], axis=1)
+        c0   = np.sum(flctn[: stop : step] * flctn[: stop : step], axis=1)  # normalisation factor
+        result[dt] = np.nansum(corr) / np.nansum(c0)
     return result
 
 
