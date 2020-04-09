@@ -741,6 +741,15 @@ class Movie:
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
 
+    def update_trajs(self, blur=0, interpolate=False):
+        new_trajs = []
+        for t in self.trajs:
+            new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
+        if interpolate:
+            for traj in new_trajs:
+                traj.interpolate()
+        self.trajs = new_trajs
+
 
 class SimMovie:
     def __init__(self, positions, velocities):
