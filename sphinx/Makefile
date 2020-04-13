@@ -20,9 +20,8 @@ gh:
 	@git checkout gh-pages
 	@git checkout master -- .
 	@cp -a _build/html/. ..
-	@git add ../**
-	@rm ../tags
-	@git commit -am "update documentation"
+	@git add ../** 2>/dev/null
+	@git commit -m "update documentation"
 	@git push
 	@git checkout master
 
