@@ -21,7 +21,8 @@ gh:
 	@git checkout master -- .
 	@cp -a _build/html/. ..
 	@git add ../**
-	@git commit -m "update documentation"
+	@git add **
+	@git commit -am "update documentation"
 	@git push
 	@git checkout master
 
