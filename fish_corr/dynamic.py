@@ -260,16 +260,14 @@ class Critic():
 class AverageAnalyser():
     """
     Calculate the averaged properties from a movie
-        movie :
-            a `Movie` instance from package `fish_track`
-                Movie[ f ]             - the positions of all particles in frame f
-                Movie.velocity( f )    - the velocities of all particles in frame f
-                Movie.label( f )       - the labels of all particles in frame f, same label = same identity
-                Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
-                Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_
-                                         example:
-                                             p0, p1 = Movie.indice_pair(f)
-                                             Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
+
+    Attributes:
+        movie (Movie): movie instance with following features,
+
+            Movie[ ``f`` ]         - the positions of all particles in frame f
+            Movie.velocity( f )    - the velocities of all particles in frame f
+            p0, p1 = Movie.indice_pair(f)
+            Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
 
     """
     def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
@@ -293,6 +291,7 @@ class AverageAnalyser():
 
         self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end - self.win_size, self.step_size)]
         self.pair_ends = [p[1] - self.start for p in self.pairs]
+        self.time = np.array([p[0] + win_size//2 for p in self.pairs], dtype=int)
 
     def __check_arg(self):
         if self.start > self.end:
@@ -397,14 +396,22 @@ class AverageAnalyser():
 
     def scan_vicsek_order(self, min_number=0):
         """
-        :param min_number: only take frame into consideration if len(velocity) > min_number
-                           in this frame
+        Pars:
+            min_number (int): only take frame into consideration if len(velocity) > min_number
+                              in this frame
+        Return:
+            np.ndarray: The moving-average of the Vicsek order parameter
         """
-        return self.__scan_velocities(
-            lambda x: utility.get_vicsek_order(
-                x, frame_number=self.win_size, min_number=min_number
+        if self.win_size >= self.step_size:
+            velocities = self.movie.velocity((self.start, self.end))
+            vicsek_movie = utility.get_vicsek_order(
+                velocities, min_number=min_number
             )
-        )
+            return self.scan_array(vicsek_movie)
+        else:
+            return self.__scan_velocities(
+                lambda x: np.nanmean(utility.get_vicsek_order(x, min_number=min_number))
+            )
 
     def scan_rotation(self, sample_points: int):
         """

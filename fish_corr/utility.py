@@ -11,14 +11,17 @@ from numba import njit
 
 
 @njit
-def get_acf(var: np.ndarray, size=0, step=1):
+def get_acf(var, size=0, step=1):
     r"""
     Calculate the auto-correlation function for a n-dimensional variable
-    Y[\tau] = \left< \sum_i{X[t, i] \cdot X[t+\tau, i]} \right>
 
-    Pars:
+    .. math::
+
+        Y[\tau] = \left\langle \sum_i^\text{ndim}{X\left[t, i\right] \cdot X\left[t+\tau, i\right]} \right\rangle
+
+    Args:
         var (np.ndarray): a continual nD variable.  the shape is (number, dimension)
-        size (int): the maximum size of \tau, by default \tau == len(var)
+        size (int): the maximum size of :math:`\tau`, by default :math:`\tau` == len(var)
         step (int): every ``step`` points in time were chosen as t0 in the calculation
 
     Return:
@@ -355,10 +358,15 @@ def get_biased_gr(frames, positions, tank, bins, random_size, space_bin_number):
 
 def get_mean_spd(velocity_frames, frame_number, min_number):
     """
-    :param velocity_frames: velocity in different frames,
-                            shape (frame, n, dim)
-    :param min_number: only take frame into consideration if len(velocity) > min_number
-                       in this frame
+    Calculate the average speed in one frame, given the velocities
+    The calculation is done over many frames
+
+    Args:
+        velocity_frames (np.ndarray): velocity in different frames, shape (frame, n, dim)
+        min_number (np.ndarray): only include frames if its particle number> min_number
+
+    Return:
+        np.ndarray: the average speed in each frame, shape (n, )
     """
     speeds = np.empty(frame_number)
     for i, velocity in enumerate(velocity_frames):
@@ -369,8 +377,16 @@ def get_mean_spd(velocity_frames, frame_number, min_number):
     return np.nanmean(speeds)
 
 
-def get_vicsek_order(velocity_frames, frame_number, min_number):
-    orders = np.empty(frame_number)
+def get_vicsek_order(velocity_frames, min_number):
+    """
+    Calculate the average Vicsek order parameters across different frames
+
+    Args:
+        velocity_frames (:obj:`list`): the velocity of particles at different frames
+                                       "shape" (frame_num, particle_num, dimension)
+                                       it is not a numpy array because `particle_num` in each frame is different
+    """
+    orders = np.empty(len(velocity_frames))
     for i, velocities in enumerate(velocity_frames):
         if len(velocities) > min_number:
             norms = np.linalg.norm(velocities, axis=1)
@@ -382,15 +398,15 @@ def get_vicsek_order(velocity_frames, frame_number, min_number):
                 orders[i] = np.nan
         else:
             orders[i] = np.nan
-    return np.nanmean(orders)
+    return orders
 
 
 def fit_rot_acf(acf, delta):
     """
     Using linear fit to get the intersection of the acf function and x-axis
 
-    Pars:
-        acf (np.ndarray): the acf function, shape (2, n)
+    Args:
+        acf (np.ndarray): the acf function, shape (2, n) or (n, )
         delta (float): the range above/below 0, which will be fitted linearly
 
     Return:
@@ -422,10 +438,10 @@ def fit_rot_acf(acf, delta):
 
 def fit_acf_exp(data):
     """
-    Use function y = exp(-x / a) * b to fit the acf data
+    Use function :math:`y = exp(-x / a) \cdot b` to fit the acf data
     The fitting result a is a proxy to relaxation time
 
-    Pars:
+    Args:
         data (np.ndarray): the data to be fit, it can be either (tau, acf) or just acf
                            shape, (2, n) or (n,)
 
