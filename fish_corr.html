@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+    <title>fish_corr package &#8212; FishPy  documentation</title>
+
+    <link rel="stylesheet" href="_static/material-icons.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/notosanscjkjp.css" type="text/css" />
+    <link rel="stylesheet" href="_static/roboto.css" type="text/css" />
+    <link rel="stylesheet" href="_static/material-design-lite-1.3.0/material.teal-pink.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx_materialdesign_theme.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src="_static/sphinx_materialdesign_theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fish_gui package" href="fish_gui.html" />
+    <link rel="prev" title="fish_3d package" href="fish_3d.html" /> 
+  </head>
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer"><header class="mdl-layout__header mdl-layout__header--waterfall ">
+    <div class="mdl-layout__header-row">
+        
+        <nav class="mdl-navigation breadcrumb">
+            <a class="mdl-navigation__link" href="modules.html">FishPy</a><i class="material-icons">navigate_next</i>
+            <a class="mdl-navigation__link is-active">fish_corr package</a>
+        </nav>
+        <div class="mdl-layout-spacer"></div>
+        <nav class="mdl-navigation">
+        
+<form class="form-inline pull-sm-right" action="search.html" method="get">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
+        <label id="quick-search-icon" class="mdl-button mdl-js-button mdl-button--icon"  for="waterfall-exp">
+            <i class="material-icons">search</i>
+        </label>
+        <div class="mdl-textfield__expandable-holder">
+          <input class="mdl-textfield__input" type="text" name="q"  id="waterfall-exp" placeholder="Search" />
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+        </div>
+      </div>
+      <div class="mdl-tooltip" data-mdl-for="quick-search-icon">
+      Quick search
+      </div>
+</form>
+        
+<a id="button-show-source"
+    class="mdl-button mdl-js-button mdl-button--icon"
+    href="_sources/fish_corr.rst.txt" rel="nofollow">
+<i class="material-icons">code</i>
+</a>
+<div class="mdl-tooltip" data-mdl-for="button-show-source">
+Show Source
+</div>
+        </nav>
+    </div>
+    <div class="mdl-layout__header-row header-links">
+      <div class="mdl-layout-spacer"></div>
+      <nav class="mdl-navigation">
+          <a  class="mdl-navigation__link" href="index.html">
+                  <i class="material-icons navigation-link-icon">home</i>
+                  Home
+              </a>
+          
+              <a  class="mdl-navigation__link" href="https://github.com/yangyushi/FishPy">
+                  <i class="material-icons navigation-link-icon">link</i>
+                  GitHub
+              </a>
+          
+              <a  class="mdl-navigation__link" href="https://yangyushi.github.io">
+                  <i class="material-icons navigation-link-icon">launch</i>
+                  About Me
+              </a>
+      </nav>
+    </div>
+</header><header class="mdl-layout__drawer">
+    
+          <!-- Title -->
+      <span class="mdl-layout-title">
+          <a class="title" href="index.html">
+              <span class="title-text">
+                  FishPy
+              </span>
+          </a>
+      </span>
+    
+    
+      <div class="globaltoc">
+        <span class="mdl-layout-title toc">Table Of Contents</span>
+        
+        
+            
+            <nav class="mdl-navigation">
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fish_3d.html">fish_3d package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fish_corr package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_gui.html">fish_gui package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_track.html">fish_track package</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        
+        </div>
+    
+</header>
+        <main class="mdl-layout__content" tabIndex="0">
+<header class="mdl-layout__drawer">
+    
+          <!-- Title -->
+      <span class="mdl-layout-title">
+          <a class="title" href="index.html">
+              <span class="title-text">
+                  FishPy
+              </span>
+          </a>
+      </span>
+    
+    
+      <div class="globaltoc">
+        <span class="mdl-layout-title toc">Table Of Contents</span>
+        
+        
+            
+            <nav class="mdl-navigation">
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fish_3d.html">fish_3d package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fish_corr package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_gui.html">fish_gui package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_track.html">fish_track package</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        
+        </div>
+    
+</header>
+
+    <div class="document">
+        <div class="page-content">
+        
+  <div class="section" id="fish-corr-package">
+<h1>fish_corr package<a class="headerlink" href="#fish-corr-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-fish_corr.dynamic">
+<span id="fish-corr-dynamic-module"></span><h2>fish_corr.dynamic module<a class="headerlink" href="#module-fish_corr.dynamic" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_corr.dynamic.AverageAnalyser">
+<em class="property">class </em><code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">AverageAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">movie</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">step_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">start</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">end</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Calculate the averaged properties from a movie</p>
+<dl class="py attribute">
+<dt id="fish_corr.dynamic.AverageAnalyser.movie">
+<code class="sig-name descname">movie</code><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>movie instance with following features,</p>
+<p>Movie[ <code class="docutils literal notranslate"><span class="pre">f</span></code> ]         - the positions of all particles in frame f
+Movie.velocity( f )    - the velocities of all particles in frame f
+p0, p1 = Movie.indice_pair(f)
+Movie[f][p0] &amp; Movie[f+1][p1] correspond to the same particles</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="fish_track.html#fish_track.linking.Movie" title="fish_track.linking.Movie">Movie</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_array">
+<code class="sig-name descname">scan_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>the array is assumed to start at frame self.start</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_biased_gr">
+<code class="sig-name descname">scan_biased_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span><span class="p">:</span> <span class="n">Tank</span></em>, <em class="sig-param"><span class="n">bins</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">number</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">space_bin_number</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_biased_gr" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number</strong> – number of (posiible) particles per frame</p></li>
+<li><p><strong>space_bin_number</strong> – number of bins to devide space to generated biased random gas</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_gr">
+<code class="sig-name descname">scan_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span><span class="p">:</span> <span class="n">Tank</span></em>, <em class="sig-param"><span class="n">bins</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">number</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_gr" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>number</strong> – number of (posiible) particles per frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_nn">
+<code class="sig-name descname">scan_nn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_nn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_nn_pbc">
+<code class="sig-name descname">scan_nn_pbc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">box</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_nn_pbc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_rotation">
+<code class="sig-name descname">scan_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_points</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_points</strong> – lag time (tau) in the acf of orientation in frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_speed">
+<code class="sig-name descname">scan_speed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_speed" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>min_number</strong> – only take frame into consideration if len(velocity) &gt; min_number
+in this frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.scan_vicsek_order">
+<code class="sig-name descname">scan_vicsek_order</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_vicsek_order" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Pars:</dt><dd><dl class="simple">
+<dt>min_number (int): only take frame into consideration if len(velocity) &gt; min_number</dt><dd><p>in this frame</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The moving-average of the Vicsek order parameter</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_corr.dynamic.Critic">
+<em class="property">class </em><code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">Critic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">movie</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Calculate the dynamical order &amp; correlations from a fish movie</p>
+<blockquote>
+<div><p>movie : a <cite>Movie</cite> instance from package <cite>fish_track</cite></p>
+<blockquote>
+<div><p>Movie[ f ]             - the positions of all particles in frame f
+Movie.velocity( f )    - the velocities of all particles in frame f
+Movie.label( f )       - the labels of all particles in frame f, same label = same identity
+Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
+Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_</p>
+<blockquote>
+<div><dl class="simple">
+<dt>example:</dt><dd><p>p0, p1 = Movie.indice_pair(f)
+Movie[f][p0] &amp; Movie[f+1][p1] correspond to the same particles</p>
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+<dl class="simple">
+<dt>flctn_not<span class="classifier">non-translational fluctuation</span></dt><dd><p>(the collective translation is removed)</p>
+</dd>
+<dt>flctn_noi<span class="classifier">non-isometric fluctuation</span></dt><dd><p>(the collective translation &amp; rotaton is removed)</p>
+</dd>
+<dt>flctn_nos<span class="classifier">non-similar fluctuation</span></dt><dd><p>(the collective translation &amp; rotation &amp; isotropic scaling is removed)</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt id="fish_corr.dynamic.Critic.get_corr_flctn">
+<code class="sig-name descname">get_corr_flctn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">start</span></em>, <em class="sig-param"><span class="n">stop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">'T'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_corr_flctn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the time-average connected correlation function of the fluctuation
+transform:</p>
+<blockquote>
+<div><p>T - corr of non-translational fluctuations
+I - corr of non-isometric fluctuations
+S - corr of non-similar fluctuations</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.Critic.get_isometry">
+<code class="sig-name descname">get_isometry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_isometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the best isometric transformation (rotation)
+to transform points in _frame_ to _frame+1_</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.Critic.get_orders">
+<code class="sig-name descname">get_orders</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">stop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size_threshold</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">report</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_orders" title="Permalink to this definition">¶</a></dt>
+<dd><p>return nan for one frame if the matched pair in that frame is smaller than size_threshold</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.Critic.get_position_pair">
+<code class="sig-name descname">get_position_pair</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_position_pair" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the same points in _frame_ and _frame+1_
+the centres were substrated for both frames</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.Critic.get_similarity">
+<code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_similarity" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the best similar transformation (rotation + dilation)
+to transform points in _frame_ to _frame+1_</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_corr.static">
+<span id="fish-corr-static-module"></span><h2>fish_corr.static module<a class="headerlink" href="#module-fish_corr.static" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_corr.static.Tank">
+<em class="property">class </em><code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">Tank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">surface</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="fish_corr.static.Tank.curvilinear_2_cylindar">
+<code class="sig-name descname">curvilinear_2_cylindar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">L</span></em>, <em class="sig-param"><span class="n">D</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.curvilinear_2_cylindar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.get_curvilinear">
+<code class="sig-name descname">get_curvilinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_curvilinear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.get_cylinder">
+<code class="sig-name descname">get_cylinder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_cylinder" title="Permalink to this definition">¶</a></dt>
+<dd><p>points: shape is (n, 3)
+output: shape is (3, n)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.get_projection">
+<code class="sig-name descname">get_projection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_projection" title="Permalink to this definition">¶</a></dt>
+<dd><p>input shape (n, 3)
+output shape (3, n)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.get_xyz">
+<code class="sig-name descname">get_xyz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>return shape: (3, n)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.random">
+<code class="sig-name descname">random</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>random points inside tank
+use rejection method to generate random points inside the tank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.random_curvilinear">
+<code class="sig-name descname">random_curvilinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.random_curvilinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate random points in a box in the curvilinear coordinate (L, θ, D)
+L - curvilinear length
+θ - azimuth angle
+D - cloest distance from fish to tank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.static.Tank.z">
+<code class="sig-name descname">z</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.z" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the z coordinate on the hyprobolic function z = self.c * r^2
+given r
+the input/output unit is mm</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.a2r_cost">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">a2r_cost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">c</span></em>, <em class="sig-param"><span class="n">y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.a2r_cost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.box_density_polar">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">box_density_polar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">centre</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">radius</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">n_radical</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">n_angular</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.box_density_polar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate mesh in a polar coordinate, each box has the same area
+Calculate the mean &amp; std of number points in each bin</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> – particle positions (n, 2)</p></li>
+<li><p><strong>centre</strong> – boundary centre, shape (2, )</p></li>
+<li><p><strong>radius</strong> – the radius of the boundary</p></li>
+<li><p><strong>n_radical</strong> – number of bins radically</p></li>
+<li><p><strong>n_angular</strong> – number of bins for the angles</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.get_nn">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the NN distances and relative locations of NNs
+if no_vertices is True, ignore the vertices</p>
+<blockquote>
+<div><p>of the convex hull generated by positoins</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.get_nn_iter">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn_iter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>get an iteractive objectable that yields nn distances in different frames</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.get_nn_iter_pbc">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn_iter_pbc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">box</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn_iter_pbc" title="Permalink to this definition">¶</a></dt>
+<dd><p>get an iteractive objectable that yields nn distances in different frames</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.get_nn_with_velocity">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn_with_velocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">velocities</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn_with_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the NN distances and relative locations of NNs
+The distances were rotated so that the <em>x-axis</em> is aligned</p>
+<blockquote>
+<div><p>with the <em>velocity</em> of different particles</p>
+</div></blockquote>
+<p>If no_vertices is True, ignore the vertices of the convex hull</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.static.reduce_angle_gap">
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">reduce_angle_gap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angles</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.reduce_angle_gap" title="Permalink to this definition">¶</a></dt>
+<dd><p>angles should be in between 0 to 2pi</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_corr.tower_sample">
+<span id="fish-corr-tower-sample-module"></span><h2>fish_corr.tower_sample module<a class="headerlink" href="#module-fish_corr.tower_sample" title="Permalink to this headline">¶</a></h2>
+<p>use tower sampling to generate random numbers</p>
+<dl class="py function">
+<dt id="fish_corr.tower_sample.bisection_search">
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">bisection_search</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#fish_corr.tower_sample.bisection_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>bisection search</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.tower_sample.build_tower">
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">build_tower</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.build_tower" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate discrete CDF</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.tower_sample.tower_sampling">
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">tower_sampling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.tower_sampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>using tower sampling</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_corr.utility">
+<span id="fish-corr-utility-module"></span><h2>fish_corr.utility module<a class="headerlink" href="#module-fish_corr.utility" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_corr.utility.GCE">
+<em class="property">class </em><code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">GCE</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajs</span></em>, <em class="sig-param"><span class="n">good_frames</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.GCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.biased_discrete_nd">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">biased_discrete_nd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.biased_discrete_nd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate random numbers that have the joint distribution of many variables
+Using tower sampling
+:param variabels:</p>
+<blockquote>
+<div><p>a iterable of random variables, each variable is a numpy array
+shape: (Number, Dimension)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bins</strong> – the bin for generating the discrete distribution, it can be either
+shape: (Dimension, bin_number)</p></li>
+<li><p><strong>size</strong> – the number of generated random numbers</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.fit_acf_exp">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">fit_acf_exp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.fit_acf_exp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use function <span class="math notranslate nohighlight">\(y = exp(-x / a) \cdot b\)</span> to fit the acf data
+The fitting result a is a proxy to relaxation time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em>) – the data to be fit, it can be either (tau, acf) or just acf
+shape, (2, n) or (n,)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>fitting parameter a, relaxation time</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">tau</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">tau</span><span class="p">,</span> <span class="n">acf</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">fit_acf_exp</span><span class="p">(</span><span class="n">acf</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">fit_acf_exp</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.fit_maxwell_boltzmann">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">fit_maxwell_boltzmann</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">speed</span></em>, <em class="sig-param"><span class="n">bins</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.fit_maxwell_boltzmann" title="Permalink to this definition">¶</a></dt>
+<dd><p>fit the speed distribution with maxwell boltzmann distribution
+the average of the energy (&lt; speed ** 2&gt; is fixed)
+return: the dimension &amp; fitting function</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.fit_rot_acf">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">fit_rot_acf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acf</span></em>, <em class="sig-param"><span class="n">delta</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.fit_rot_acf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using linear fit to get the intersection of the acf function and x-axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acf</strong> (<em>np.ndarray</em>) – the acf function, shape (2, n) or (n, )</p></li>
+<li><p><strong>delta</strong> (<em>float</em>) – the range above/below 0, which will be fitted linearly</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the relaxation time</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">101</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acf</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">tau</span><span class="p">,</span> <span class="n">acf</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">fit_rot_acf</span><span class="p">(</span><span class="n">acf</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mi">50</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">fit_rot_acf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mi">50</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_acf">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_acf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">var</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_acf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the auto-correlation function for a n-dimensional variable</p>
+<div class="math notranslate nohighlight">
+\[Y[\tau] = \left\langle \sum_i^\text{ndim}{X\left[t, i\right] \cdot X\left[t+\tau, i\right]} \right\rangle\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var</strong> (<em>np.ndarray</em>) – a continual nD variable.  the shape is (number, dimension)</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – the maximum size of <span class="math notranslate nohighlight">\(\tau\)</span>, by default <span class="math notranslate nohighlight">\(\tau\)</span> == len(var)</p></li>
+<li><p><strong>step</strong> (<em>int</em>) – every <code class="docutils literal notranslate"><span class="pre">step</span></code> points in time were chosen as t0 in the calculation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The auto-correlation function of the variable</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_acf_fft">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_acf_fft</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">var</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">nstep</span></em>, <em class="sig-param"><span class="n">nt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_acf_fft" title="Permalink to this definition">¶</a></dt>
+<dd><p>not finished</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_best_dilatation_rotation">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_best_dilatation_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r1</span></em>, <em class="sig-param"><span class="n">r2</span></em>, <em class="sig-param"><span class="n">init_guess</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_best_dilatation_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate numeratically
+(r1 &#64; Lambda) &#64; Rotation = r2, hopefully</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_best_rotation">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_best_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r1</span></em>, <em class="sig-param"><span class="n">r2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_best_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the best rotation to relate two sets of vectors
+see the paper [A solution for the best rotation to relate two sets of vectors] for detail
+all the points were treated equally, which means w_n = 0 (in the paper)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_biased_gr">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_biased_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">tank</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">random_size</span></em>, <em class="sig-param"><span class="n">space_bin_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_biased_gr" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – positions of all particles in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>positions</strong> – all positions in the entire movie, shape (N, 3)</p></li>
+<li><p><strong>tank</strong> – a static.Tank instance</p></li>
+<li><p><strong>bins</strong> – the bins for the distance histogram</p></li>
+<li><p><strong>random_size</strong> – the number of random gas particles
+should be: len(frames) * particle_number_per_frame</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_centre">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_centre</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_centre" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_centre_move">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_centre_move</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_centre_move" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the movement of the centre from [frame] to [frame + 1]
+only the trajectories who has foodsteps in both frames were used</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_centres">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_centres</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">frames</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_centres" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_convex_hull_from_trajs">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_convex_hull_from_trajs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">target_num</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_convex_hull_from_trajs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_gr">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">random_gas</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_gr" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – positions of all particles in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>bins</strong> – the bins for the distance histogram</p></li>
+<li><p><strong>random_gas</strong> – shape (N, 3)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_gr_pbc">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_gr_pbc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">random_gas</span></em>, <em class="sig-param"><span class="n">box</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_gr_pbc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_mean_spd">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_mean_spd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">velocity_frames</span></em>, <em class="sig-param"><span class="n">frame_number</span></em>, <em class="sig-param"><span class="n">min_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_mean_spd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the average speed in one frame, given the velocities
+The calculation is done over many frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>velocity_frames</strong> (<em>np.ndarray</em>) – velocity in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>min_number</strong> (<em>np.ndarray</em>) – only include frames if its particle number&gt; min_number</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the average speed in each frame, shape (n, )</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_rg_tensor">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_rg_tensor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">target_num</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_rg_tensor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_vanilla_gr">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_vanilla_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">tank</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">random_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_vanilla_gr" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – positions of all particles in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>tank</strong> – a static.Tank instance</p></li>
+<li><p><strong>bins</strong> – the bins for the distance histogram</p></li>
+<li><p><strong>random_size</strong> – the number of random gas particles
+should be: len(frames) * particle_number_per_frame</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.get_vicsek_order">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_vicsek_order</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">velocity_frames</span></em>, <em class="sig-param"><span class="n">min_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_vicsek_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the average Vicsek order parameters across different frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>velocity_frames</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – the velocity of particles at different frames
+“shape” (frame_num, particle_num, dimension)
+it is not a numpy array because <cite>particle_num</cite> in each frame is different</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.utility.maxwell_boltzmann_nd">
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">maxwell_boltzmann_nd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">v_sq_mean</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.maxwell_boltzmann_nd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-fish_corr.voro">
+<span id="fish-corr-voro-module"></span><h2>fish_corr.voro module<a class="headerlink" href="#module-fish_corr.voro" title="Permalink to this headline">¶</a></h2>
+<p>Voronoi analysis using voro++ in 3D</p>
+<dl class="py function">
+<dt id="fish_corr.voro.get_indices_with_voro_volumes_select">
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_indices_with_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_indices_with_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
+<dd><p>getting the indices with voronoi cells volumes in a confined parbobla gemetry, given indices of points inside the convex hull</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.voro.get_voro_volumes">
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes" title="Permalink to this definition">¶</a></dt>
+<dd><p>getting the voronoi cells volumes in a confined parbobla gemetry</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.voro.get_voro_volumes_select">
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
+<dd><p>getting the voronoi cells volumes in a confined parbobla gemetry, given indices of points inside the convex hull</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_corr">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fish_corr" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+        </div>
+        <div class="side-doc-outline">
+            <div class="side-doc-outline--content"> 
+<div class="localtoc">
+    <p class="caption">
+      <span class="caption-text">Table Of Contents</span>
+    </p>
+    <ul>
+<li><a class="reference internal" href="#">fish_corr package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-fish_corr.dynamic">fish_corr.dynamic module</a></li>
+<li><a class="reference internal" href="#module-fish_corr.static">fish_corr.static module</a></li>
+<li><a class="reference internal" href="#module-fish_corr.tower_sample">fish_corr.tower_sample module</a></li>
+<li><a class="reference internal" href="#module-fish_corr.utility">fish_corr.utility module</a></li>
+<li><a class="reference internal" href="#module-fish_corr.voro">fish_corr.voro module</a></li>
+<li><a class="reference internal" href="#module-fish_corr">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+            </div>
+        </div>
+
+      <div class="clearer"></div>
+    </div><div class="pagenation">
+     <a id="button-prev" href="fish_3d.html" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--colored" role="botton" accesskey="P">
+         <i class="pagenation-arrow-L material-icons">arrow_back</i>
+         <div class="pagenation-text">
+            <span class="pagenation-direction">Previous</span>
+            <div>fish_3d package</div>
+         </div>
+     </a>
+     <a id="button-next" href="fish_gui.html" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--colored" role="botton" accesskey="N">
+        <i class="pagenation-arrow-R material-icons">arrow_forward</i>
+        <div class="pagenation-text">
+            <span class="pagenation-direction">Next</span>
+            <div>fish_gui package</div>
+        </div>
+     </a>
+  </div>
+        <footer class="mdl-mini-footer">
+    <div class="mdl-mini-footer__left-section">
+      <div class="mdl-logo">FishPy</div>
+      <div>
+        
+        <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a></li>
+</ul>
+
+      </div>
+    </div>
+
+    <div class="mdl-mini-footer__right-section">
+        <div>&copy; Copyright 2020, Yushi Yang.</div>
+      <div>Generated by <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.0.1 using <a href="https://github.com/myyasuda/sphinx_materialdesign_theme">sphinx_materialdesign_theme</a>.</div>
+    </div>
+</footer>
+        </main>
+    </div>
+  </body>
+</html>

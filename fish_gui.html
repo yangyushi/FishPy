@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+    <title>fish_gui package &#8212; FishPy  documentation</title>
+
+    <link rel="stylesheet" href="_static/material-icons.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/notosanscjkjp.css" type="text/css" />
+    <link rel="stylesheet" href="_static/roboto.css" type="text/css" />
+    <link rel="stylesheet" href="_static/material-design-lite-1.3.0/material.teal-pink.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx_materialdesign_theme.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src="_static/sphinx_materialdesign_theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fish_track package" href="fish_track.html" />
+    <link rel="prev" title="fish_corr package" href="fish_corr.html" /> 
+  </head>
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-drawer"><header class="mdl-layout__header mdl-layout__header--waterfall ">
+    <div class="mdl-layout__header-row">
+        
+        <nav class="mdl-navigation breadcrumb">
+            <a class="mdl-navigation__link" href="modules.html">FishPy</a><i class="material-icons">navigate_next</i>
+            <a class="mdl-navigation__link is-active">fish_gui package</a>
+        </nav>
+        <div class="mdl-layout-spacer"></div>
+        <nav class="mdl-navigation">
+        
+<form class="form-inline pull-sm-right" action="search.html" method="get">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
+        <label id="quick-search-icon" class="mdl-button mdl-js-button mdl-button--icon"  for="waterfall-exp">
+            <i class="material-icons">search</i>
+        </label>
+        <div class="mdl-textfield__expandable-holder">
+          <input class="mdl-textfield__input" type="text" name="q"  id="waterfall-exp" placeholder="Search" />
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+        </div>
+      </div>
+      <div class="mdl-tooltip" data-mdl-for="quick-search-icon">
+      Quick search
+      </div>
+</form>
+        
+<a id="button-show-source"
+    class="mdl-button mdl-js-button mdl-button--icon"
+    href="_sources/fish_gui.rst.txt" rel="nofollow">
+<i class="material-icons">code</i>
+</a>
+<div class="mdl-tooltip" data-mdl-for="button-show-source">
+Show Source
+</div>
+        </nav>
+    </div>
+    <div class="mdl-layout__header-row header-links">
+      <div class="mdl-layout-spacer"></div>
+      <nav class="mdl-navigation">
+          <a  class="mdl-navigation__link" href="index.html">
+                  <i class="material-icons navigation-link-icon">home</i>
+                  Home
+              </a>
+          
+              <a  class="mdl-navigation__link" href="https://github.com/yangyushi/FishPy">
+                  <i class="material-icons navigation-link-icon">link</i>
+                  GitHub
+              </a>
+          
+              <a  class="mdl-navigation__link" href="https://yangyushi.github.io">
+                  <i class="material-icons navigation-link-icon">launch</i>
+                  About Me
+              </a>
+      </nav>
+    </div>
+</header><header class="mdl-layout__drawer">
+    
+          <!-- Title -->
+      <span class="mdl-layout-title">
+          <a class="title" href="index.html">
+              <span class="title-text">
+                  FishPy
+              </span>
+          </a>
+      </span>
+    
+    
+      <div class="globaltoc">
+        <span class="mdl-layout-title toc">Table Of Contents</span>
+        
+        
+            
+            <nav class="mdl-navigation">
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fish_3d.html">fish_3d package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_corr.html">fish_corr package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fish_gui package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_track.html">fish_track package</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        
+        </div>
+    
+</header>
+        <main class="mdl-layout__content" tabIndex="0">
+<header class="mdl-layout__drawer">
+    
+          <!-- Title -->
+      <span class="mdl-layout-title">
+          <a class="title" href="index.html">
+              <span class="title-text">
+                  FishPy
+              </span>
+          </a>
+      </span>
+    
+    
+      <div class="globaltoc">
+        <span class="mdl-layout-title toc">Table Of Contents</span>
+        
+        
+            
+            <nav class="mdl-navigation">
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fish_3d.html">fish_3d package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_corr.html">fish_corr package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fish_gui package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fish_track.html">fish_track package</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        
+        </div>
+    
+</header>
+
+    <div class="document">
+        <div class="page-content">
+        
+  <div class="section" id="fish-gui-package">
+<h1>fish_gui package<a class="headerlink" href="#fish-gui-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-fish_gui.brightness">
+<span id="fish-gui-brightness-module"></span><h2>fish_gui.brightness module<a class="headerlink" href="#module-fish_gui.brightness" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.brightness.Controller">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.brightness.</code><code class="sig-name descname">Controller</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ip</span><span class="o">=</span><span class="default_value">'192.168.0.1'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.brightness.Controller" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.brightness.Controller.brightness">
+<code class="sig-name descname">brightness</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.brightness.Controller.brightness" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.calib_order">
+<span id="fish-gui-calib-order-module"></span><h2>fish_gui.calib_order module<a class="headerlink" href="#module-fish_gui.calib_order" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.calib_order.Model">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.calib_order.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>int<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.calib_order.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.calib_order.Viewer">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.calib_order.</code><code class="sig-name descname">Viewer</code><a class="headerlink" href="#fish_gui.calib_order.Viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.calib_order.Viewer.dragEnterEvent">
+<code class="sig-name descname">dragEnterEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">QDragEnterEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.calib_order.Viewer.dragEnterEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.calib_order.Viewer.dropEvent">
+<code class="sig-name descname">dropEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">QDropEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.calib_order.Viewer.dropEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.calib_order.check_order">
+<code class="sig-prename descclassname">fish_gui.calib_order.</code><code class="sig-name descname">check_order</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.calib_order.check_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the position and size of the ROI</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.calib_order.warn">
+<code class="sig-prename descclassname">fish_gui.calib_order.</code><code class="sig-name descname">warn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.calib_order.warn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.decrypt">
+<span id="fish-gui-decrypt-module"></span><h2>fish_gui.decrypt module<a class="headerlink" href="#module-fish_gui.decrypt" title="Permalink to this headline">¶</a></h2>
+<p>Test script for decrypting data from the TP-Link RBG wireless light</p>
+<dl class="py function">
+<dt id="fish_gui.decrypt.decrypt">
+<code class="sig-prename descclassname">fish_gui.decrypt.</code><code class="sig-name descname">decrypt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.decrypt.decrypt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decrypt the command string</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.decrypt.encrypt">
+<code class="sig-prename descclassname">fish_gui.decrypt.</code><code class="sig-name descname">encrypt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.decrypt.encrypt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encrypt the command string</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.decrypt.main">
+<code class="sig-prename descclassname">fish_gui.decrypt.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.decrypt.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main program function</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.epipolar">
+<span id="fish-gui-epipolar-module"></span><h2>fish_gui.epipolar module<a class="headerlink" href="#module-fish_gui.epipolar" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.epipolar.Model">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.epipolar.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">environment</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.depth">
+<em class="property">property </em><code class="sig-name descname">depth</code><a class="headerlink" href="#fish_gui.epipolar.Model.depth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.get_ep12">
+<code class="sig-name descname">get_ep12</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uv</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.Model.get_ep12" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.get_ep21">
+<code class="sig-name descname">get_ep21</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uv</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.Model.get_ep21" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.is_valid">
+<em class="property">property </em><code class="sig-name descname">is_valid</code><a class="headerlink" href="#fish_gui.epipolar.Model.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.normal">
+<em class="property">property </em><code class="sig-name descname">normal</code><a class="headerlink" href="#fish_gui.epipolar.Model.normal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.Model.water_level">
+<em class="property">property </em><code class="sig-name descname">water_level</code><a class="headerlink" href="#fish_gui.epipolar.Model.water_level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.epipolar.StereoImageItem">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.epipolar.</code><code class="sig-name descname">StereoImageItem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">label</span></em>, <em class="sig-param"><span class="n">plot</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.StereoImageItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyqtgraph.graphicsItems.ImageItem.ImageItem</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.epipolar.StereoImageItem.accept_buddy">
+<code class="sig-name descname">accept_buddy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">buddy</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.StereoImageItem.accept_buddy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.epipolar.StereoImageItem.mouseClickEvent">
+<code class="sig-name descname">mouseClickEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.StereoImageItem.mouseClickEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.epipolar.Viewer">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.epipolar.</code><code class="sig-name descname">Viewer</code><a class="headerlink" href="#fish_gui.epipolar.Viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.epipolar.epipolar_app">
+<code class="sig-prename descclassname">fish_gui.epipolar.</code><code class="sig-name descname">epipolar_app</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.epipolar.epipolar_app" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the position and size of the ROI</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.roi">
+<span id="fish-gui-roi-module"></span><h2>fish_gui.roi module<a class="headerlink" href="#module-fish_gui.roi" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.roi.Model">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.roi.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.roi.Model.back">
+<em class="property">property </em><code class="sig-name descname">back</code><a class="headerlink" href="#fish_gui.roi.Model.back" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Model.max">
+<em class="property">property </em><code class="sig-name descname">max</code><a class="headerlink" href="#fish_gui.roi.Model.max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Model.min">
+<em class="property">property </em><code class="sig-name descname">min</code><a class="headerlink" href="#fish_gui.roi.Model.min" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Model.next">
+<em class="property">property </em><code class="sig-name descname">next</code><a class="headerlink" href="#fish_gui.roi.Model.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Model.rand_max">
+<em class="property">property </em><code class="sig-name descname">rand_max</code><a class="headerlink" href="#fish_gui.roi.Model.rand_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>randomly overlapping 10 images</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Model.rand_min">
+<em class="property">property </em><code class="sig-name descname">rand_min</code><a class="headerlink" href="#fish_gui.roi.Model.rand_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>randomly overlapping 10 images</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.roi.Viewer">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.roi.</code><code class="sig-name descname">Viewer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">roi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.roi.Viewer.get_max">
+<code class="sig-name descname">get_max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Viewer.get_max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Viewer.get_min">
+<code class="sig-name descname">get_min</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Viewer.get_min" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Viewer.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Viewer.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.roi.Viewer.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.Viewer.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.roi.iter_video">
+<code class="sig-prename descclassname">fish_gui.roi.</code><code class="sig-name descname">iter_video</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_name</span></em>, <em class="sig-param"><span class="n">roi</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.iter_video" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.roi.measure_roi">
+<code class="sig-prename descclassname">fish_gui.roi.</code><code class="sig-name descname">measure_roi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">roi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.roi.measure_roi" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the position and size of the ROI</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.shape_gallery">
+<span id="fish-gui-shape-gallery-module"></span><h2>fish_gui.shape_gallery module<a class="headerlink" href="#module-fish_gui.shape_gallery" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.shape_gallery.Model">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.shape_gallery.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">36</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Model.back">
+<code class="sig-name descname">back</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Model.back" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Model.cursor">
+<em class="property">property </em><code class="sig-name descname">cursor</code><a class="headerlink" href="#fish_gui.shape_gallery.Model.cursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Model.mark">
+<code class="sig-name descname">mark</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Model.mark" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Model.next">
+<code class="sig-name descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Model.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.shape_gallery.Photo">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.shape_gallery.</code><code class="sig-name descname">Photo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">index</span></em>, <em class="sig-param"><span class="n">mother</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Photo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyqtgraph.graphicsItems.ImageItem.ImageItem</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Photo.label">
+<em class="property">property </em><code class="sig-name descname">label</code><a class="headerlink" href="#fish_gui.shape_gallery.Photo.label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Photo.mouseClickEvent">
+<code class="sig-name descname">mouseClickEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Photo.mouseClickEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Photo.update_color">
+<code class="sig-name descname">update_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Photo.update_color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.shape_gallery.Viewer">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.shape_gallery.</code><code class="sig-name descname">Viewer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.back">
+<code class="sig-name descname">back</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.back" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.dragEnterEvent">
+<code class="sig-name descname">dragEnterEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">QDragEnterEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.dragEnterEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.dropEvent">
+<code class="sig-name descname">dropEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">QDropEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.dropEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.keyPressEvent">
+<code class="sig-name descname">keyPressEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">QKeyEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.keyPressEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.next">
+<code class="sig-name descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.shape_gallery.Viewer.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.Viewer.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>update(self, QRect)
+update(self, QRegion)
+update(self, int, int, int, int)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.shape_gallery.shape_gallery">
+<code class="sig-prename descclassname">fish_gui.shape_gallery.</code><code class="sig-name descname">shape_gallery</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.shape_gallery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.shape_gallery.warn">
+<code class="sig-prename descclassname">fish_gui.shape_gallery.</code><code class="sig-name descname">warn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.shape_gallery.warn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.threshold">
+<span id="fish-gui-threshold-module"></span><h2>fish_gui.threshold module<a class="headerlink" href="#module-fish_gui.threshold" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="fish_gui.threshold.Model">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.threshold.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">config_file</span></em>, <em class="sig-param"><span class="n">background</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>showing images at different frames</p>
+<dl class="py method">
+<dt id="fish_gui.threshold.Model.back">
+<em class="property">property </em><code class="sig-name descname">back</code><a class="headerlink" href="#fish_gui.threshold.Model.back" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Model.label">
+<em class="property">property </em><code class="sig-name descname">label</code><a class="headerlink" href="#fish_gui.threshold.Model.label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Model.next">
+<em class="property">property </em><code class="sig-name descname">next</code><a class="headerlink" href="#fish_gui.threshold.Model.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="fish_gui.threshold.Viewer">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.threshold.</code><code class="sig-name descname">Viewer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">config_path</span></em>, <em class="sig-param"><span class="n">background</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QMainWindow</span></code></p>
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.back">
+<code class="sig-name descname">back</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.back" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.get_background">
+<code class="sig-name descname">get_background</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.get_background" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.next">
+<code class="sig-name descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>update(self, QRect)
+update(self, QRegion)
+update(self, int, int, int, int)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.threshold.Viewer.update_text">
+<code class="sig-name descname">update_text</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.Viewer.update_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.threshold.get_fg_color">
+<code class="sig-prename descclassname">fish_gui.threshold.</code><code class="sig-name descname">get_fg_color</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.get_fg_color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_gui.threshold.get_threshold">
+<code class="sig-prename descclassname">fish_gui.threshold.</code><code class="sig-name descname">get_threshold</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">background</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.threshold.get_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a proper threshold value by manually measurement</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui.tplight">
+<span id="fish-gui-tplight-module"></span><h2>fish_gui.tplight module<a class="headerlink" href="#module-fish_gui.tplight" title="Permalink to this headline">¶</a></h2>
+<p>Control class for TP-Link A19-LB130 RBGW WiFi bulb</p>
+<dl class="py class">
+<dt id="fish_gui.tplight.LB130">
+<em class="property">class </em><code class="sig-prename descclassname">fish_gui.tplight.</code><code class="sig-name descname">LB130</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ip_address</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Methods for controlling the LB130 bulb</p>
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.alias">
+<em class="property">property </em><code class="sig-name descname">alias</code><a class="headerlink" href="#fish_gui.tplight.LB130.alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the device alias</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.brightness">
+<em class="property">property </em><code class="sig-name descname">brightness</code><a class="headerlink" href="#fish_gui.tplight.LB130.brightness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb brightness</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.color_rendering_index">
+<code class="sig-name descname">color_rendering_index</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.color_rendering_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.device_id">
+<code class="sig-name descname">device_id</code><em class="property"> = ''</em><a class="headerlink" href="#fish_gui.tplight.LB130.device_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.encryption_key">
+<code class="sig-name descname">encryption_key</code><em class="property"> = 171</em><a class="headerlink" href="#fish_gui.tplight.LB130.encryption_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.hsb">
+<em class="property">property </em><code class="sig-name descname">hsb</code><a class="headerlink" href="#fish_gui.tplight.LB130.hsb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb hue, saturation, and brightness</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.hue">
+<em class="property">property </em><code class="sig-name descname">hue</code><a class="headerlink" href="#fish_gui.tplight.LB130.hue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb hue</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.incandescent_equivalent">
+<code class="sig-name descname">incandescent_equivalent</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.incandescent_equivalent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.lamp_beam_angle">
+<code class="sig-name descname">lamp_beam_angle</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.lamp_beam_angle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.light_details">
+<code class="sig-name descname">light_details</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130.light_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the light details from the bulb</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.max_lumens">
+<code class="sig-name descname">max_lumens</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.max_lumens" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.max_voltage">
+<code class="sig-name descname">max_voltage</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.max_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.min_voltage">
+<code class="sig-name descname">min_voltage</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.min_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.off">
+<code class="sig-name descname">off</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130.off" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the bulb to an off state</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.on">
+<code class="sig-name descname">on</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130.on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the bulb to an on state</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.reboot">
+<code class="sig-name descname">reboot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130.reboot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reboot the bulb</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.saturation">
+<em class="property">property </em><code class="sig-name descname">saturation</code><a class="headerlink" href="#fish_gui.tplight.LB130.saturation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb saturation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.status">
+<code class="sig-name descname">status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fish_gui.tplight.LB130.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the connection status from the bulb</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.temperature">
+<em class="property">property </em><code class="sig-name descname">temperature</code><a class="headerlink" href="#fish_gui.tplight.LB130.temperature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb color temperature</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.time">
+<em class="property">property </em><code class="sig-name descname">time</code><a class="headerlink" href="#fish_gui.tplight.LB130.time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the date and time from the device</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.timezone">
+<em class="property">property </em><code class="sig-name descname">timezone</code><a class="headerlink" href="#fish_gui.tplight.LB130.timezone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the timezone from the device</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_gui.tplight.LB130.transition_period">
+<em class="property">property </em><code class="sig-name descname">transition_period</code><a class="headerlink" href="#fish_gui.tplight.LB130.transition_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bulb transition period</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_gui.tplight.LB130.wattage">
+<code class="sig-name descname">wattage</code><em class="property"> = 0</em><a class="headerlink" href="#fish_gui.tplight.LB130.wattage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-fish_gui">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fish_gui" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+        </div>
+        <div class="side-doc-outline">
+            <div class="side-doc-outline--content"> 
+<div class="localtoc">
+    <p class="caption">
+      <span class="caption-text">Table Of Contents</span>
+    </p>
+    <ul>
+<li><a class="reference internal" href="#">fish_gui package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-fish_gui.brightness">fish_gui.brightness module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.calib_order">fish_gui.calib_order module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.decrypt">fish_gui.decrypt module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.epipolar">fish_gui.epipolar module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.roi">fish_gui.roi module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.shape_gallery">fish_gui.shape_gallery module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.threshold">fish_gui.threshold module</a></li>
+<li><a class="reference internal" href="#module-fish_gui.tplight">fish_gui.tplight module</a></li>
+<li><a class="reference internal" href="#module-fish_gui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+            </div>
+        </div>
+
+      <div class="clearer"></div>
+    </div><div class="pagenation">
+     <a id="button-prev" href="fish_corr.html" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--colored" role="botton" accesskey="P">
+         <i class="pagenation-arrow-L material-icons">arrow_back</i>
+         <div class="pagenation-text">
+            <span class="pagenation-direction">Previous</span>
+            <div>fish_corr package</div>
+         </div>
+     </a>
+     <a id="button-next" href="fish_track.html" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--colored" role="botton" accesskey="N">
+        <i class="pagenation-arrow-R material-icons">arrow_forward</i>
+        <div class="pagenation-text">
+            <span class="pagenation-direction">Next</span>
+            <div>fish_track package</div>
+        </div>
+     </a>
+  </div>
+        <footer class="mdl-mini-footer">
+    <div class="mdl-mini-footer__left-section">
+      <div class="mdl-logo">FishPy</div>
+      <div>
+        
+        <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FishPy</a></li>
+</ul>
+
+      </div>
+    </div>
+
+    <div class="mdl-mini-footer__right-section">
+        <div>&copy; Copyright 2020, Yushi Yang.</div>
+      <div>Generated by <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.0.1 using <a href="https://github.com/myyasuda/sphinx_materialdesign_theme">sphinx_materialdesign_theme</a>.</div>
+    </div>
+</footer>
+        </main>
+    </div>
+  </body>
+</html>
