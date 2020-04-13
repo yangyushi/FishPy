@@ -15,15 +15,15 @@ help:
 .PHONY: help Makefile
 
 gh:
-	@sphinx-apidoc .. -o .
-	@make html
-	@git checkout gh-pages
-	@git checkout master -- .
-	@cp -a _build/html/. ..
-	@git add ../** 2>/dev/null
-	@git commit -m "update documentation"
-	@git push
-	@git checkout master
+	sphinx-apidoc .. -o .
+	make html
+	git checkout gh-pages
+	git checkout master -- .
+	cp -a _build/html/. ..
+	git add ../** 2>/dev/null
+	git commit -m "update documentation"
+	git push
+	git checkout master
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
