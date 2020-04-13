@@ -20,7 +20,7 @@ gh:
 	git checkout gh-pages
 	git checkout master -- .
 	cp -a _build/html/. ..
-	git add ../** 2>/dev/null
+	git add ..
 	git commit -m "update documentation"
 	git push
 	git checkout master
