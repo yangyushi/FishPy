@@ -14,7 +14,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'FishPy'
@@ -28,12 +27,11 @@ author = 'Yushi Yang'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'm2r',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinx.ext.mathjax',
 ]
-
-source_suffix = ['.rst', '.md']
+mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +48,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'sphinx_materialdesign_theme'
-
 html_theme_options = {
     # Specify a list of menu in Header.
     # Tuples forms:

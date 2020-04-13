@@ -15,6 +15,7 @@ help:
 .PHONY: help Makefile
 
 gh:
+	@sphinx-apidoc .. -o .
 	@make html
 	@git checkout gh-pages
 	@git checkout master -- .
