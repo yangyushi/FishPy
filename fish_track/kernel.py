@@ -5,10 +5,13 @@ from scipy.cluster import vq
 import matplotlib.pyplot as plt
 
 
-def vanilla_pca(images: np.ndarray) -> tuple:
+def vanilla_pca(images):
     """
-    :param images: collection of nd images
-    :return: the projection matrix
+    Args:
+        images (np.ndarray): a collections of images to perform PCA
+
+    Return:
+        tuple: the projection matrix, the variance and mean
     """
     image_num, dimension = images.shape
     mean = images.mean(axis=0)
@@ -47,7 +50,7 @@ def plot_pca(dim, mean, pcs, name='pca'):
 
 def add_shadow(x, sigma):
     """
-    effectively add a negative zone around image x where x > x.mean
+    Effectively add a negative zone around image x where x > x.mean
     """
     mask = (ndimage.grey_dilation(x, 3) > 0) * (x < x.max() * 0.1)
     diff = ndimage.gaussian_filter(x, sigma)
@@ -56,7 +59,7 @@ def add_shadow(x, sigma):
     return result / result.max()
 
 
-def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=True, sigma=0) -> list:
+def get_kernels(images, indices, cluster_num, plot=True, sigma=0):
     """
     1. calculate the principle component of different images
     2. project images on some principles
@@ -64,9 +67,11 @@ def get_kernels(images: np.ndarray, indices: np.ndarray, cluster_num: int, plot=
     4. calculate average for each cluster
     5. return the averaged images
 
-    :param shapes: different images obtained from measure_shape.get_shapes :param indices: indices of the principle components
-    :param cluster_num  : the number of clusters (k)
-    :parame sigma: the sigma of the "shadow" add around the kernel
+    Args:
+        images (np.ndarray): images obtained from :meth:`fish_track.shape.get_shapes`
+        indices (np.ndarray): indices of the principle components
+        cluster_num (int): the number of clusters (k)
+        sigma (float): the sigma of the "shadow" add around the kernel
     """
     number, dim, dim = images.shape
 

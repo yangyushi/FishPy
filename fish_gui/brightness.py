@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 import sys
-from tplight import LB130
+from .tplight import LB130
 from PyQt5.QtWidgets import QWidget, QApplication,\
     QMainWindow, QLabel, QSlider, QHBoxLayout
 from PyQt5.QtCore import Qt

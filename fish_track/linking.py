@@ -37,13 +37,17 @@ def get_trajectory(labels, frames, target: int):
 
 
 class Trajectory():
-    def __init__(self, time: np.array, positions: np.array, blur=None, velocities=None):
+    """
+    Bundle handy methods with trajectory data
+    """
+    def __init__(self, time, positions, blur=None, velocities=None):
         """
-        bundle handy methods with trajectory data
-        :param time: frame number for each positon, dtype=int
-        :param positions: shape is (n_time, n_dimension)
-        :param blur: applying gaussian_filter on each dimension along time axis
-        :param velocities: velocities at each time points, this is possible for simulation data
+        Args:
+            time (np.ndarray): frame number for each positon, dtype=int
+            positions (np.ndarray): shape is (n_time, n_dimension)
+            blur (float): applying gaussian_filter on each dimension along time axis
+            velocities (np.ndarray): velocities at each time points
+                                     this is ONLY possible for simulation data
         """
         if len(time) != len(positions):
             raise ValueError("Time points do not match the position number")
@@ -82,7 +86,9 @@ class Trajectory():
 
     def __add__(self, another_traj):
         """
-        t1 + t2 == t2 + t1 == early + late
+        .. code-block::
+
+            t1 + t2 == t2 + t1 == early + late
         """
         assert type(another_traj) == Trajectory, "Only Fish Trajectories can be added together"
         if self.t_start <= another_traj.t_end:  # self is earlier
@@ -131,11 +137,11 @@ class Trajectory():
 
 
 class ActiveLinker():
+    """
+    Link positions into trajectories following 10.1007/s00348-005-0068-7
+    Works with n-dimensional data in Euclidean space
+    """
     def __init__(self, search_range):
-        """
-        Link positions into trajectories following 10.1007/s00348-005-0068-7
-        Works with n-dimensional data in Euclidean space
-        """
         self.search_range = search_range
         self.labels = None
         self.trajectories = None
@@ -215,12 +221,16 @@ class ActiveLinker():
     def __get_links(self, fp, f0, f1, f2, links):
         """
         Get links in two successive frames
-        :param fp: previous frame, (dim, n) array
-        :param f0: current frame, (dim, n) array
-        :param f1: next frame, (dim, n) array
-        :param f2: second next frame, (dim, n) array
-        :param links: link for particles between fp to f0
-        :return: link from f0 to f1
+
+        Args:
+            fp (np.ndarray): previous frame, (dim, n)
+            f0 (np.ndarray): current frame, (dim, n)
+            f1 (np.ndarray): next frame, (dim, n)
+            f2 (np.ndarray): second next frame, (dim, n)
+            links (list): link for particles between fp to f0
+
+        Return:
+            list: link from f0 to f1
         """
         if isinstance(fp, type(None)):
             return self.__get_link_f3(f0, f1, f2)
@@ -235,7 +245,8 @@ class ActiveLinker():
         links = None
         for n in range(frame_num - 2):
             if n == 0:
-                fp, f0, f1, f2 = None, frames[n], frames[n+1], frames[n+2]  # fp = previous frame
+                # fp = previous frame
+                fp, f0, f1, f2 = None, frames[n], frames[n+1], frames[n+2]
             else:
                 fp, f0, f1, f2 = f0, f1, f2, frames[n+2]
             links = self.__get_links(fp, f0, f1, f2, links)
@@ -281,9 +292,12 @@ class ActiveLinker():
     @staticmethod
     def __get_trajectories(labels, frames):
         """
-        this is used in ActiveLinker
-        trajectory = [time_points, positions]
-        plot3d(*positions, time_points) --> show the trajectory in 3D
+        This is used in ActiveLinker
+
+        .. code-block::
+            trajectory = [time_points, positions]
+            plot3d(*positions, time_points) --> show the trajectory in 3D
+
         shape of centres: (N x dim)
         """
         max_value = np.hstack(labels).max()
@@ -303,12 +317,12 @@ class ActiveLinker():
 
 
 class TrackpyLinker():
+    """
+    Linking positions into trajectories using Trackpy
+    Works with 2D and 3D data. High dimensional data not tested.
+    (no expiment available)
+    """
     def __init__(self, max_movement, memory=0, max_subnet_size=30, **kwargs):
-        """
-        Linking positions into trajectories using Trackpy
-        Works with 2D and 3D data. High dimensional data not tested.
-        (no expiment available)
-        """
         self.max_movement = max_movement
         self.memory = memory
         self.max_subnet_size = max_subnet_size
@@ -317,8 +331,7 @@ class TrackpyLinker():
     @staticmethod
     def _check_input(positions, time_points, labels):
         """
-        make sure the input is proper
-        and sequence in time_points are ordered
+        Make sure the input is proper and sequence in time_points are ordered
         """
         assert len(positions) == len(time_points), "Lengths are not consistent"
         if not isinstance(labels, type(None)):
@@ -363,15 +376,12 @@ class TrackpyLinker():
 
     def link(self, positions, time_points=None, labels=None):
         """
-        positions: (time, number_of_individuals, dimensions)
-        time_points: (time, )
-        labels: (time, number_of_individuals)
-        * if labels were given, the returned trajecotory will have a 'label' attribute
-          which specifies the label values of the individual in different frames
-        * time_points may not be continues
-        * The unit of time is NOT converted, do the conversion before running
-
-        labels: [(frame_index, [labels, ... ]), ...]
+        Args:
+            positions (np.ndarray): shape (time, num, dim)
+            time_points (np.ndarray): shape (time, ), time_points may not be continues
+            labels (np.ndarray): if given, the result will have a 'label' attribute
+                                 which specifies the label values in different frames
+                                 [(frame_index, [labels, ... ]), ...], shape (time, num)
         """
         if isinstance(time_points, type(None)):
             time_points = np.arange(len(positions))
@@ -381,7 +391,16 @@ class TrackpyLinker():
         return self.__get_trajectories(list(link_result), pos, time, labels)
 
 
-def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
+def sort_trajectories(trajectories):
+    """
+    Sort trajectories according to the first time point in each traj
+
+    Args:
+        trajectories (List[Trajectory]): a collection of :class:`Trajectory`
+
+    Return:
+        List[Trajectory]: the sorted trajectories
+    """
     start_time_points = np.empty(len(trajectories))
     for i, traj in enumerate(trajectories):
         start_time_points[i] = traj.t_start
@@ -389,12 +408,19 @@ def sort_trajectories(trajectories: List['Trajectory']) -> List['Trajectory']:
     return [trajectories[si] for si in sorted_indices]
 
 
-def build_dist_matrix(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
+def build_dist_matrix(trajs_sorted, dt, dx):
     """
-    :param dt: if the last time point  of trajectory #1 + dt > first time point of trajectory #2, consider a link being possible
-    :param dx: if within dt, the distance between trajectory #1's prediction and trajectory #2's first point is smaller than dx, assign a link
-    :return: a matrix records the distance (cost) of the link, if such link is possible
-    todo: this funciton needs test
+    Args:
+        trajs_sorted (list): trajectories obtained from :meth:`sort_trajectories`
+        dt (int): if the time[-1] of traj #1 + dt > time[0] of traj #2
+                  consider a link being possible
+        dx (float): if within dt, the distance between
+                    traj #1's prediction and
+                    traj #2's first point
+                    is smaller than dx, assign a link
+
+    Return:
+        np.ndarray: the distance (cost) of the link, if such link is possible
     """
     traj_num = len(trajs_sorted)
     dist_matrix = np.zeros((traj_num, traj_num), dtype=float)
@@ -412,8 +438,11 @@ def build_dist_matrix(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> n
 def squeeze_sparse(array: np.array) -> np.array:
     """
     Given the indices in a row or column from a sparse matrix
-    remove the blank rows/columns
-    * array[i + 1] >= array[i]
+    Remove the blank rows/columns
+
+    .. code-block::
+
+        array[i + 1] >= array[i]
     """
     sort_indices = np.argsort(array)
     remap = np.argsort(sort_indices)
@@ -432,13 +461,23 @@ def squeeze_sparse(array: np.array) -> np.array:
     return result[remap]
 
 
-def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: float) -> np.ndarray:
+def build_dist_matrix_sparse(trajs_sorted, dt, dx):
     """
-    build the distance matrix as a sparse matrix
-    :param dt: if the last time point  of trajectory #1 + dt > first time point of trajectory #2, consider a link being possible
-    :param dx: if within dt, the distance between trajectory #1's prediction and trajectory #2's first point is smaller than dx, assign a link
-    :return: the squeezed rows & columns for constructing a compact matrix
-             and the origional rows & columns for retriving the indices of trajectories
+    Build a sparse distance matrix, then squeeze it
+
+    Args:
+        trajs_sorted (list): trajectories obtained from :meth:`sort_trajectories`
+        dt (int): if the time[-1] of traj #1 + dt > time[0] of traj #2
+                  consider a link being possible
+        dx (float): if within dt, the distance between
+                    * trajectory #1's prediction and
+                    * trajectory #2's first point
+                    is smaller than dx, assign a link
+
+    Return:
+        tuple: (distance matrix (scipy.sparse.coo_matrix), row_map, col_map)
+               The ``row_map`` and ``col_map`` are used to map
+               from squeezed distance matrix to origional distance matrix
     """
     values, rows, cols = [], [], []
     for i, traj_1 in enumerate(trajs_sorted):
@@ -465,12 +504,22 @@ def build_dist_matrix_sparse(trajs_sorted: List['Trajectory'], dt: int, dx: floa
     return dist_mat, row_map, col_map
 
 
-def reduce_network(network: np.ndarray) -> List[np.ndarray]:
+def reduce_network(network) -> List[np.ndarray]:
     """
-    network is compose of [(i_1, j_1), (i_2, j_2) ...] links
-    the network is *sorted* with i_n > ... > i_2 > i_1
-    example: input  ([0, 1], [1, 3], [3, 5], [4, 5], [6, 7], [7, 8])
-             output [(0, 1, 3, 5), (4, 5), (6, 7, 8)]
+    Network is compose of [(i_1, j_1), (i_2, j_2) ...] links
+    The network is *sorted* with i_n > ... > i_2 > i_1
+
+    Args:
+        network (np.ndarray): a collection of links
+
+    Return:
+        np.ndarray: the reduced network
+
+    Example:
+        >>> input = np.array([(0, 1), (1, 3), (3, 5), (4, 5), (6, 7), (7, 8)])
+        >>> output = np.array([(0, 1, 3, 5), (4, 5), (6, 7, 8)])
+        >>> [np.allclose(i, o) for i, o in zip(reduce_network(input), output)]
+        [True, True, True]
     """
     reduced, to_skip = [], []
     for i, link in enumerate(network):
@@ -483,7 +532,7 @@ def reduce_network(network: np.ndarray) -> List[np.ndarray]:
             new_link = np.hstack((new_link, network[ll[0], 1]))
             ll = np.where(new_link[-1] == network[:, 0])[0]
         reduced.append(new_link)
-    return np.array(reduced)
+    return reduced
 
 
 def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> np.ndarray:
@@ -495,7 +544,15 @@ def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> np.ndar
     return networks[np.argmin(distances)]
 
 
-def apply_network(trajectories: List['Trajectory'], network: List[np.ndarray]) -> List['Trajectory']:
+def apply_network(trajectories, network):
+    """
+    Args:
+        trajectories (List[Trajectory]):
+        network (List[np.ndarray]):
+
+    Return:
+        List[Trajectory]: a collection of trajectories
+    """
     new_trajs = []
     to_modify = np.hstack(network)
     for link in network:
@@ -527,7 +584,7 @@ def relink_slow(trajectories, dist_threshold, time_threshold, blur=None, pos_key
 def relink(trajectories: List, dist_threshold: float, time_threshold: int,
         blur=None, pos_key='position', time_key='time') -> List[dict]:
     """
-    re-link short trajectories into longer
+    Re-link short trajectories into longer
     normal usage: relink(trajs, dx, dt, blur)
     """
     if isinstance(trajectories[0], dict):
@@ -546,7 +603,9 @@ def relink(trajectories: List, dist_threshold: float, time_threshold: int,
         return TypeError("Invalid Trajectory Data Type")
     trajs_ordered = sort_trajectories(trajs)
 
-    dist_mat, row_map, col_map = build_dist_matrix_sparse(trajs_ordered, dx=dist_threshold, dt=time_threshold)
+    dist_mat, row_map, col_map = build_dist_matrix_sparse(
+        trajs_ordered, dx=dist_threshold, dt=time_threshold
+    )
 
     if len(dist_mat) == 0:
         return trajectories
@@ -567,6 +626,32 @@ def relink(trajectories: List, dist_threshold: float, time_threshold: int,
 
 
 class Movie:
+    """
+    Store both the trajectories and positions of experimental data
+
+    Attributes:
+        trajs (:obj:`list` of :class:`Trajectory`)
+        movie (:obj:`dict` of np.ndarray): hold the positions of particle in different frames
+        __labels (:obj:`dict` of np.ndarray): hold the ID of particle in different frames
+                                              label ``i`` corresponds to ``trajs[i]``
+        __indice_pairs (:obj:`dict` of np.ndarray): the paired indices of frame ``i`` and frame ``i+1``
+
+    Example:
+        >>> def rand_traj(): return (np.arange(100), np.random.random((100, 3)))  # 3D, 100 frames
+        >>> trajs = [rand_traj() for _ in range(5)]  # 5 random trajectories
+        >>> movie = Movie(trajs)
+        >>> movie[0].shape  # movie[f] = positions of frame f
+        (5, 3)
+        >>> movie.velocity(0).shape  # movie.velocity(f) = velocities of frame f
+        (5, 3)
+        >>> pairs = movie.indice_pair(0)  # movie.indice_pairs(f) = (labels in frame f, labels in frame f+1)
+        >>> np.allclose(pairs[0], np.arange(5))
+        True
+        >>> np.allclose(pairs[1], np.arange(5))
+        True
+        >>> movie[0][pairs[0]].shape  # movie[f][pairs[0]] corresponds to movie[f+1][pairs[1]]
+        (5, 3)
+    """
     def __init__(self, trajs, blur=None, interpolate=False):
         self.trajs = self.__pre_process(trajs, blur, interpolate)
         self.__sniff()
@@ -587,7 +672,7 @@ class Movie:
                 new_trajs.append(
                     Trajectory(t['time'], t['position'], blur=blur)
                 )
-            elif isinstance(t, dict):
+            elif type(t) in (tuple, np.ndarray, list):
                 new_trajs.append(Trajectory(t[0], t[1], blur=blur))
             else:
                 raise TypeError("invalid type for trajectories")
@@ -605,7 +690,14 @@ class Movie:
     def __process_velocities(self, frame):
         """
         Calculate *velocities* at different frames
-        if particle i does not have a position in frame+1, its velocity is nan
+        if particle ``i`` does not have a position in ``frame+1``, its velocity is ``np.nan``
+
+        Args:
+            frame (int): the specific frame to process
+
+        Return:
+            tuple: (velocity, (indices_0, indices_1))
+                   velocity stores all velocity in ``frame``
         """
         if frame > self.max_frame - 1:
             raise IndexError("frame ", frame, "does not have velocities")
@@ -668,7 +760,7 @@ class Movie:
 
     def __get_slice(self, frame_slice, single_method):
         """
-        get the the slice equilivant of single_method
+        Get the the slice equilivant of single_method
         """
         start = frame_slice.start if frame_slice.start else 0
         stop = frame_slice.stop if frame_slice.stop else self.max_frame + 1
@@ -685,12 +777,24 @@ class Movie:
             raise KeyError(f"can't index/slice Movie with {type(frame)}")
 
     def velocity(self, frame):
+        """
+        Retireve velocity at given frame
+
+        Args:
+            frame (int / tuple): specifying a frame number or a range of frames
+
+        Return:
+            :obj:`list`: velocities of all particle in one frame or many frames,
+                         the "shape" is (frame_num, particle_num, dimension)
+                         it is not a numpy array because `particle_num` in each frame is different
+        """
         if isinstance(frame, int):
             return self.__get_velocities_single(frame)
         elif isinstance(frame, tuple):
             if len(frame) in [2, 3]:
                 frame_slice = slice(*frame)
-                return self.__get_slice(frame_slice, self.__get_velocities_single)
+                velocities = list(self.__get_slice(frame_slice, self.__get_velocities_single))
+                return velocities
             else:
                 raise IndexError(f"Invalid slice {frame}, use (start, stop) or (start, stop, step)")
         else:
@@ -707,8 +811,14 @@ class Movie:
 
     def indice_pair(self, frame):
         """
-        return two indices, idx_0 & idx_1
-        self[frame][idx_0] corresponds to self[frame + 1][idx_1]
+        Return two set of indices, idx_0 & idx_1
+        ``Movie[frame][idx_0]`` corresponds to ``Movie[frame + 1][idx_1]``
+
+        Args:
+            frame (int): the frame number
+
+        Return:
+            :obj:`tuple` of np.ndarray: the indices in ``frame`` and ``frame + 1``
         """
         if frame > self.max_frame - 1:
             raise IndexError(f"frame {frame} does not have a indices pair")
@@ -727,7 +837,10 @@ class Movie:
         for i in range(len(self)):
             self[i]
 
-    def load(self, filename):
+    def load(self, filename: str):
+        """
+        Load a saved file in the hard drive
+        """
         with open(filename, 'rb') as f:
             movie = pickle.load(f)
         self.trajs = movie.trajs
@@ -737,11 +850,17 @@ class Movie:
         self.__indice_pairs = movie.__indice_pairs
         self.__sniff()
 
-    def save(self, filename):
+    def save(self, filename: str):
+        """
+        Save all data using picle
+        """
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
 
     def update_trajs(self, blur=0, interpolate=False):
+        """
+        Reconstruct ``self.trajs``, typically used if :class:`Trajectory` is modified
+        """
         new_trajs = []
         for t in self.trajs:
             new_trajs.append(Trajectory(t.time, t.positions, blur=blur))
