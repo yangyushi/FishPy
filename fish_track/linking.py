@@ -629,6 +629,13 @@ class Movie:
     """
     Store both the trajectories and positions of experimental data
 
+    .. code-block::
+
+        Movie[f]             - the positions of all particles in frame f
+        Movie.velocity(f)    - the velocities of all particles in frame f
+        p0, p1 = Movie.indice_pair(f)
+        Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
+
     Attributes:
         trajs (:obj:`list` of :class:`Trajectory`)
         movie (:obj:`dict` of np.ndarray): hold the positions of particle in different frames

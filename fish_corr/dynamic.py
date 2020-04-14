@@ -12,28 +12,18 @@ from typing import Callable
 from . import utility, static
 
 
-
 class Critic():
     """
     Calculate the dynamical order & correlations from a fish movie
 
-        movie : a `Movie` instance from package `fish_track`
+    Attributes:
+        movie (:obj:`fish_track.linking.Movie`): a :obj:`fish_track.linking.Movie` instance
+        trajs (:obj:`list` of :obj:`fish_track.linking.Trajectory`): a list of trajectories
 
-            Movie[ f ]             - the positions of all particles in frame f
-            Movie.velocity( f )    - the velocities of all particles in frame f
-            Movie.label( f )       - the labels of all particles in frame f, same label = same identity
-            Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
-            Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_
-                                     example:
-                                         p0, p1 = Movie.indice_pair(f)
-                                         Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
-
-        flctn_not : non-translational fluctuation
-                    (the collective translation is removed)
-        flctn_noi : non-isometric fluctuation
-                    (the collective translation & rotaton is removed)
-        flctn_nos : non-similar fluctuation
-                    (the collective translation & rotation & isotropic scaling is removed)
+    Abbrs:
+        1. flctn_not: non-translational fluctuation (the collective translation is removed)
+        2. flctn_noi: non-isometric fluctuation (the collective translation & rotaton is removed)
+        3. flctn_nos: non-similar fluctuation (the collective translation & rotation & isotropic scaling is removed)
     """
     def __init__(self, movie):
         self.movie = movie
@@ -146,10 +136,6 @@ class Critic():
         return t_orders, r_orders, d_orders
 
     def __get_flctn_not(self, frame):
-        """
-        flctn_not : non-translational fluctuation
-                    (the collective translation is removed)
-        """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no fluctuation in frame {frame}")
         elif frame in self.__flctn_not.keys():
@@ -161,10 +147,6 @@ class Critic():
         return flctn_not
 
     def __get_flctn_noi(self, frame):
-        """
-        flctn_noi : non-isometric fluctuation
-                    (the collective translation & rotaton is removed)
-        """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no fluctuation in frame {frame}")
         elif frame in self.__flctn_noi.keys():
@@ -180,10 +162,6 @@ class Critic():
         return flctn_noi
 
     def __get_flctn_nos(self, frame):
-        """
-        flctn_nos : non-similar fluctuation
-                    (the collective translation & rotation & isotropic scaling is removed)
-        """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no fluctuation in frame {frame}")
         elif frame in self.__flctn_nos.keys():
@@ -200,11 +178,15 @@ class Critic():
 
     def get_corr_flctn(self, bins, start, stop=None, transform="T"):
         """
-        get the time-average connected correlation function of the fluctuation
-        transform:
-            T - corr of non-translational fluctuations
-            I - corr of non-isometric fluctuations
-            S - corr of non-similar fluctuations
+        Get the time-average connected correlation function of the fluctuation
+
+        Args:
+            transform (:obj:`str`): here are possible options
+
+                1. ``T`` - corr of non-translational fluctuations
+                2. ``I`` - corr of non-isometric fluctuations
+                3. ``S`` - corr of non-similar fluctuations
+
         """
         if not stop:
             stop = len(self.movie) - 2
@@ -262,20 +244,14 @@ class AverageAnalyser():
     Calculate the averaged properties from a movie
 
     Attributes:
-        movie (Movie): movie instance with following features,
-
-            Movie[ ``f`` ]         - the positions of all particles in frame f
-            Movie.velocity( f )    - the velocities of all particles in frame f
-            p0, p1 = Movie.indice_pair(f)
-            Movie[f][p0] & Movie[f+1][p1] correspond to the same particles
-
+        movie (:obj:`fish_track.linking.Movie`): movie instance with following features,
     """
     def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
         """
-        :param movie: the movie instance, contains the trajectories, positions and velocitis
-                      the movie should be interpolated
-        :param win_size: the size of the window (unit frame), in which the average will be calculated
-        :param step_size: the average window is moved along the time axis, with the step
+        Args:
+            movie (:obj:`fish_track.linking.Movie`): the :obj:`fish_track.linking.Movie` instance should be interpolated
+            win_size (:obj:`int`): the size of the window (unit frame), in which the average will be calculated
+            step_size (:obj:`int`): the average window is moved along the time axis, with the step
         """
         self.movie = movie
         self.start = start
@@ -357,8 +333,8 @@ class AverageAnalyser():
 
     def scan_speed(self, min_number=0) -> np.ndarray:
         """
-        :param min_number: only take frame into consideration if len(velocity) > min_number
-                           in this frame
+        Args:
+            min_number (:obj:`int`): only take frame into consideration if len(velocity) > min_number in this frame
         """
         return self.__scan_velocities(
             lambda x: utility.get_mean_spd(
@@ -366,9 +342,15 @@ class AverageAnalyser():
             )
         )
 
-    def scan_gr(self, tank: 'Tank', bins: np.ndarray, number: int):
+    def scan_gr(self, tank, bins, number):
         """
-        :param number: number of (posiible) particles per frame
+        Args:
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank` to perform random sampling
+            bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
+            number (:obj:`int`): number of (posiible) particles per frame
+
+        Return:
+            :obj:`numpy.ndarray`: The radial distribution function
         """
         return self.__scan_positions(
             lambda x: utility.get_vanilla_gr(
@@ -376,10 +358,17 @@ class AverageAnalyser():
             )
         )
 
-    def scan_biased_gr(self, tank: 'Tank', bins: np.array, number: int, space_bin_number=50):
+    def scan_biased_gr(self, tank, bins, number, space_bin_number=50):
         """
         :param number: number of (posiible) particles per frame
-        :param space_bin_number: number of bins to devide space to generated biased random gas
+        Args:
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank` to perform random sampling
+            bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
+            number (:obj:`int`): number of (posiible) particles per frame
+            space_bin_number (:obj:`int`): number of bins to devide space to generated biased random gas
+
+        Return:
+            :obj:`numpy.ndarray`: The radial distribution function assuming biased density distribution
         """
         positions = []
         base = tank.base.T
@@ -396,11 +385,11 @@ class AverageAnalyser():
 
     def scan_vicsek_order(self, min_number=0):
         """
-        Pars:
-            min_number (int): only take frame into consideration if len(velocity) > min_number
-                              in this frame
+        Args:
+            min_number (:obj:`int`): only take frame into consideration
+                                     if ``len(velocity) > min_number`` in this frame
         Return:
-            np.ndarray: The moving-average of the Vicsek order parameter
+            :obj:`numpy.ndarray`: The moving-average of the Vicsek order parameter
         """
         if self.win_size >= self.step_size:
             velocities = self.movie.velocity((self.start, self.end))
@@ -414,8 +403,11 @@ class AverageAnalyser():
             )
 
     def scan_rotation(self, sample_points: int):
-        """
-        :param sample_points: lag time (tau) in the acf of orientation in frame
+        r"""
+        Calculate the averaged rotational relaxation time for the movie
+
+        Args:
+            sample_points (:obj:`int`): the maximum lag time (:math:`\tau`) in the ACF calculation (:func:`get_acf`)
         """
         result = []
         for i, (t0, t1) in enumerate(self.pairs):

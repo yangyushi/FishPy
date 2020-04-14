@@ -20,12 +20,12 @@ def get_acf(var, size=0, step=1):
         Y[\tau] = \left\langle \sum_i^\text{ndim}{X\left[t, i\right] \cdot X\left[t+\tau, i\right]} \right\rangle
 
     Args:
-        var (np.ndarray): a continual nD variable.  the shape is (number, dimension)
-        size (int): the maximum size of :math:`\tau`, by default :math:`\tau` == len(var)
-        step (int): every ``step`` points in time were chosen as t0 in the calculation
+        var (:obj:`numpy.ndarray`): a continual nD variable.  the shape is (number, dimension)
+        size (:obj:`int`): the maximum size of :math:`\tau`, by default :math:`\tau` == len(var)
+        step (:obj:`int`): every ``step`` points in time were chosen as t0 in the calculation
 
     Return:
-        np.ndarray: The auto-correlation function of the variable
+        :obj:`numpy.ndarray`: The auto-correlation function of the variable
     """
     length = len(var)
     if size == 0:
@@ -44,7 +44,7 @@ def get_acf(var, size=0, step=1):
     return result
 
 
-def get_acf_fft(var: np.ndarray, size, nstep, nt):
+def get_acf_fft(var, size, nstep, nt):
     """
     not finished
     """
@@ -78,7 +78,7 @@ def get_centre(trajectories, frame):
 
 def get_centre_move(trajectories, frame):
     """
-    calculate the movement of the centre from [frame] to [frame + 1]
+    calculate the movement of the centre from ``[frame]`` to ``[frame + 1]``
     only the trajectories who has foodsteps in both frames were used
     """
     movements = []
@@ -112,7 +112,10 @@ def get_best_rotation(r1, r2):
 def get_best_dilatation_rotation(r1, r2, init_guess=None):
     """
     calculate numeratically
-    (r1 @ Lambda) @ Rotation = r2, hopefully
+
+    .. code-block::
+
+        (r1 @ Lambda) @ Rotation = r2
     """
     if isinstance(init_guess, type(None)):
         init_guess = np.ones(r1.shape[1])
@@ -152,15 +155,15 @@ def get_rg_tensor(trajectories, target_num=0):
 
 
 class GCE:
+    """
+    Estimating the Group Centre, trying to use knowledge of good frames to reduce the error
+    """
     def __init__(self, trajs, good_frames=None):
         """
-        Estimating the Group Centre, trying to use knowledge of good frames to reduce the error
-        param: trajs:
-            a list/tuple of many [trajectory] objects
-        param: trajectory:
-            a dict with {'positions': (frames, dimension) numpy array, 'time': (frames,) numpy array}
-        param: good_frames:
-            *frame number* that the group centre can be well estimated
+        Args:
+            trajs (:obj:`list` or :obj:`tuple`): a list/tuple of many Trajectory objects
+            trajectory: content ``{'positions': (frames, dimension) [:obj:`numpy.ndarray`], 'time': (frames,) [:obj:`numpy.ndarray`]}``
+            good_frames: frame number that the group centre can be well estimated
         """
         self.trajs = trajs
         self.frames = list(set(np.hstack([t.time for t in self.trajs]).ravel()))
@@ -198,15 +201,21 @@ class GCE:
         inside each region, the centres is calculated by summing δ(centres) to reduce the error
 
         say i, j, k are good frames
-        -             frames < (j+i)//2 --> i
-        - (j+i)//2 <= frames < (j+k)//2 --> j
-        - (j+k)//2 <= frames            --> k
+
+        .. code-block::
+
+            -             frames < (j+i)//2 --> i
+            - (j+i)//2 <= frames < (j+k)//2 --> j
+            - (j+k)//2 <= frames            --> k
 
         here are the graphical illustration, dashed lines are boundaries
 
-        ┊<-- i ->┊<-- j --->┊<--- k -->┊
-        ┊        ┊          ┊          ┊
-        ┊────┴───┊────┴─────┊─────┴────┊
+        .. code-block::
+
+
+            ┊<-- i ->┊<-- j --->┊<--- k -->┊
+            ┊        ┊          ┊          ┊
+            ┊────┴───┊────┴─────┊─────┴────┊
         """
         boundaries = [0]
         boundaries += [(i+j)//2 for (i, j) in zip(self.good_frames[:-1], self.good_frames[1:])]
@@ -266,14 +275,15 @@ def biased_discrete_nd(variables, bins, size=1):
     """
     Generate random numbers that have the joint distribution of many variables
     Using tower sampling
-    :param variabels:
-        a iterable of random variables, each variable is a numpy array
-        shape: (Number, Dimension)
-    :param bins:
-        the bin for generating the discrete distribution, it can be either
-        shape: (Dimension, bin_number)
-    :param size:
-        the number of generated random numbers
+
+    Args:
+        variabels (:obj:`numpy.ndarray`):
+            a iterable of random variables, each variable is a numpy array
+            shape: (Number, Dimension)
+        bins (:obj:`numpy.ndarray`):
+            the bin for generating the discrete distribution, it can be either
+            shape: (Dimension, bin_number)
+        size (:obj:`int`): the number of generated random numbers
     """
     discrete_pdf, bin_edges = np.histogramdd(variables, bins=bins)
     bin_centres = np.array([(be[1:] + be[:-1]) / 2 for be in bin_edges])
@@ -286,9 +296,10 @@ def biased_discrete_nd(variables, bins, size=1):
 
 def get_gr(frames, bins, random_gas):
     """
-    :param frames: positions of all particles in different frames, shape (frame, n, dim)
-    :param bins: the bins for the distance histogram
-    :param random_gas: shape (N, 3)
+    Args:
+        frames (:obj:`numpy.ndarray`): positions of particles in different frames, shape (frame, n, dim)
+        bins (:obj:`numpy.ndarray` or int): the bins for the distance histogram
+        random_gas (:obj:`numpy.ndarray`): shape (N, 3)
     """
     offset = 0
     distances = []
@@ -362,11 +373,11 @@ def get_mean_spd(velocity_frames, frame_number, min_number):
     The calculation is done over many frames
 
     Args:
-        velocity_frames (np.ndarray): velocity in different frames, shape (frame, n, dim)
-        min_number (np.ndarray): only include frames if its particle number> min_number
+        velocity_frames (:obj:`numpy.ndarray`): velocity in different frames, shape (frame, n, dim)
+        min_number (:obj:`numpy.ndarray`): only include frames if its particle number> min_number
 
     Return:
-        np.ndarray: the average speed in each frame, shape (n, )
+        :obj:`numpy.ndarray`: the average speed in each frame, shape (n, )
     """
     speeds = np.empty(frame_number)
     for i, velocity in enumerate(velocity_frames):
@@ -406,8 +417,8 @@ def fit_rot_acf(acf, delta):
     Using linear fit to get the intersection of the acf function and x-axis
 
     Args:
-        acf (np.ndarray): the acf function, shape (2, n) or (n, )
-        delta (float): the range above/below 0, which will be fitted linearly
+        acf (:obj:`numpy.ndarray`): the acf function, shape (2, n) or (n, )
+        delta (:obj:`float`): the range above/below 0, which will be fitted linearly
 
     Return:
         float: the relaxation time
@@ -442,7 +453,7 @@ def fit_acf_exp(data):
     The fitting result a is a proxy to relaxation time
 
     Args:
-        data (np.ndarray): the data to be fit, it can be either (tau, acf) or just acf
+        data (:obj:`numpy.ndarray`): the data to be fit, it can be either (tau, acf) or just acf
                            shape, (2, n) or (n,)
 
     Return:

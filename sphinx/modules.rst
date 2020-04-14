@@ -1,5 +1,5 @@
-FishPy
-======
+FishPy Modules
+==============
 
 .. toctree::
    :maxdepth: 4
