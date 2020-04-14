@@ -15,7 +15,7 @@
     <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="FishPy" href="modules.html" /> 
+    <link rel="next" title="Tracking in 2D: OISHI features" href="oishi.html" /> 
   </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="#">
           <span>FishPy  documentation</span></a></h1>
@@ -26,7 +26,7 @@
         <p>
         <a class="uplink" href="#">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="modules.html">FishPy</a>&#160;&#160;»
+        <a href="oishi.html">Tracking in 2D: OISHI features</a>&#160;&#160;»
         </p>
 
       </div>
@@ -35,10 +35,40 @@
         
   <div class="section" id="welcome-to-fishpy-s-documentation">
 <h1>Welcome to FishPy’s documentation!<a class="headerlink" href="#welcome-to-fishpy-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://github.com/yangyushi/FishPy">FishPy on Github</a></p>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">FishPy</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="oishi.html">Tracking in 2D: OISHI features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="oishi.html#find-a-shape-in-a-image">Find a Shape in a Image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oishi.html#finding-reprsentative-shapes">Finding reprsentative Shapes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oishi.html#rotate-the-kernels">Rotate the Kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oishi.html#getting-the-oishi-features">Getting the OISHI features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="oishi.html#refining-the-oishi-features">Refining the OISHI features</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruct.html">Tracking in 3D: Computer Vision</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reconstruct.html#synchronised-cameras">Synchronised Cameras</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reconstruct.html#epipolar-geometry">Epipolar Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reconstruct.html#camera-distortion">Camera Distortion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reconstruct.html#water-refraction">Water refraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reconstruct.html#cost-function">Cost function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="link.html">Tracking in nD: Linking</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="link.html#the-paradox-of-linking">The Paradox of Linking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="link.html#the-colloidal-linker">The Colloidal Linker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="link.html#the-active-linker">The Active Linker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="link.html#making-trajectories-longer">Making Trajectories Longer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="misc.html">Miscellaneous Topics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="misc.html#preprocess-videos">Preprocess videos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc.html#analysing-results">Analysing results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc.html#gui-applications">GUI applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FishPy Modules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="fish_3d.html">fish_3d package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fish_corr.html">fish_corr package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fish_gui.html">fish_gui package</a></li>
@@ -56,6 +86,12 @@
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div>
+<div class="section" id="the-author">
+<h1>The Author<a class="headerlink" href="#the-author" title="Permalink to this headline">¶</a></h1>
+<p>Very unfortunately I wrote the entire package, quite often in a desperate manner. If you find anyting useful related to <a class="reference external" href="https://github.com/yangyushi/FishPy">FishPy</a> or to this documentation, you are making me very happy.</p>
+<p>Anyway, this is my email: <a class="reference external" href="mailto:yushi&#46;yang&#37;&#52;&#48;bristol&#46;ac&#46;uk">yushi<span>&#46;</span>yang<span>&#64;</span>bristol<span>&#46;</span>ac<span>&#46;</span>uk</a>.</p>
+<p>I even got a <a class="reference external" href="https://yangyushi.github.io">website</a>.</p>
+</div>
 
 
       </div>
@@ -64,7 +100,7 @@
         <p>
         <a class="uplink" href="#">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="modules.html">FishPy</a>&#160;&#160;»
+        <a href="oishi.html">Tracking in 2D: OISHI features</a>&#160;&#160;»
         </p>
 
       </div>

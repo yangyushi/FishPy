@@ -46,7 +46,7 @@
 <dl class="py class">
 <dt id="fish_3d.camera.Camera">
 <em class="property">class </em><code class="sig-prename descclassname">fish_3d.camera.</code><code class="sig-name descname">Camera</code><a class="headerlink" href="#fish_3d.camera.Camera" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>This class holds intrinsic/extrinsic parameters of a camera, with some handy functions</p>
 <dl class="py attribute">
 <dt id="fish_3d.camera.Camera.self.r">
@@ -74,7 +74,7 @@
 
 <dl class="py method">
 <dt id="fish_3d.camera.Camera.calibrate">
-<code class="sig-name descname">calibrate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">int_images</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">ext_image</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">order</span><span class="o">=</span><span class="default_value">'x123'</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calibrate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">int_images</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)">list</a></span></em>, <em class="sig-param"><span class="n">ext_image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">order</span><span class="o">=</span><span class="default_value">'x123'</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate" title="Permalink to this definition">¶</a></dt>
 <dd><p>update intrinsic and extrinsic camera matrix using opencv’s chessboard detector
 the distortion coefficients are also being detected
 the corner number should be in the format of (row, column)</p>
@@ -82,7 +82,7 @@ the corner number should be in the format of (row, column)</p>
 
 <dl class="py method">
 <dt id="fish_3d.camera.Camera.calibrate_ext">
-<code class="sig-name descname">calibrate_ext</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ext_image</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">order</span><span class="o">=</span><span class="default_value">'x123'</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate_ext" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calibrate_ext</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ext_image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">order</span><span class="o">=</span><span class="default_value">'x123'</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate_ext" title="Permalink to this definition">¶</a></dt>
 <dd><p>update EXTRINSIC camera matrix using opencv’s chessboard detector
 the distortion coefficients are also being detected
 the corner number should be in the format of (row, column)</p>
@@ -90,7 +90,7 @@ the corner number should be in the format of (row, column)</p>
 
 <dl class="py method">
 <dt id="fish_3d.camera.Camera.calibrate_int">
-<code class="sig-name descname">calibrate_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">int_images</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate_int" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calibrate_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">int_images</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)">list</a></span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="o">=</span><span class="default_value">6, 6</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">5, 5</span></em>, <em class="sig-param"><span class="n">show</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.calibrate_int" title="Permalink to this definition">¶</a></dt>
 <dd><p>update INTERINSIC camera matrix using opencv’s chessboard detector
 the distortion coefficients are also being detected
 the corner number should be in the format of (row, column)</p>
@@ -104,7 +104,7 @@ the corner number should be in the format of (row, column)</p>
 
 <dl class="py method">
 <dt id="fish_3d.camera.Camera.read_calibration">
-<code class="sig-name descname">read_calibration</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mat_file</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.read_calibration" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read_calibration</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mat_file</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.read_calibration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read calibration result from TOOLBOX_calib
 The calibration result is generated by following Matlab script:</p>
 <div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;fc&#39;</span><span class="p">,</span> <span class="s">&#39;cc&#39;</span><span class="p">,</span> <span class="s">&#39;Tc_ext&#39;</span><span class="p">,</span> <span class="s">&#39;Rc_ext&#39;</span><span class="p">);</span>
@@ -114,7 +114,7 @@ The calibration result is generated by following Matlab script:</p>
 
 <dl class="py method">
 <dt id="fish_3d.camera.Camera.read_int">
-<code class="sig-name descname">read_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkl_file</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.read_int" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkl_file</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.read_int" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -141,7 +141,7 @@ The calibration result is generated by following Matlab script:</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>point</strong> (<em>np.ndarray</em>) – the points to be undistorted</p></li>
-<li><p><strong>want_uv</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>want_uv</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -195,7 +195,7 @@ The calibration result is generated by following Matlab script:</p>
 
 <dl class="py function">
 <dt id="fish_3d.camera.calib_mult_ext">
-<code class="sig-prename descclassname">fish_3d.camera.</code><code class="sig-name descname">calib_mult_ext</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cam_1</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">cam_2</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">cam_3</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">images_v1</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">images_v2</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">images_v3</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v1</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v2</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v3</span><span class="p">:</span> <span class="n">List<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>int<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">10, 10</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#fish_3d.camera.calib_mult_ext" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.camera.</code><code class="sig-name descname">calib_mult_ext</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cam_1</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">cam_2</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">cam_3</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera">fish_3d.camera.Camera</a></span></em>, <em class="sig-param"><span class="n">images_v1</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">images_v2</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">images_v3</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v1</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v2</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">orders_v3</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">corner_number</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">win_size</span><span class="o">=</span><span class="default_value">10, 10</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a><a class="headerlink" href="#fish_3d.camera.calib_mult_ext" title="Permalink to this definition">¶</a></dt>
 <dd><p>Do extrinsic calibrations multiple times, calculate average <em>relative displacement &amp; angle</em>
 Then use the last calibration image as world coordinate</p>
 <dl class="field-list simple">
@@ -204,16 +204,16 @@ Then use the last calibration image as world coordinate</p>
 <li><p><strong>cam_1</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – The internal parameters should be correct</p></li>
 <li><p><strong>cam_2</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – The internal parameters should be correct</p></li>
 <li><p><strong>cam_3</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – The internal parameters should be correct</p></li>
-<li><p><strong>images_v1</strong> (<em>list</em>) – calibrations image filenames for camera 1</p></li>
-<li><p><strong>images_v2</strong> (<em>list</em>) – calibrations image filenames for camera 2</p></li>
-<li><p><strong>images_v3</strong> (<em>list</em>) – calibrations image filenames for camera 3</p></li>
-<li><p><strong>orders_v1</strong> (<em>list</em>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 1</p></li>
-<li><p><strong>orders_v2</strong> (<em>list</em>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 2</p></li>
-<li><p><strong>orders_v3</strong> (<em>list</em>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 3</p></li>
-<li><p><strong>grid_size</strong> (<em>float</em>) – size of a single grid in chessboard, only support square grids</p></li>
-<li><p><strong>corner_number</strong> (<em>tuple</em>) – (horizontal, vertical), specifying the number of corners in each direction
+<li><p><strong>images_v1</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – calibrations image filenames for camera 1</p></li>
+<li><p><strong>images_v2</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – calibrations image filenames for camera 2</p></li>
+<li><p><strong>images_v3</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – calibrations image filenames for camera 3</p></li>
+<li><p><strong>orders_v1</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 1</p></li>
+<li><p><strong>orders_v2</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 2</p></li>
+<li><p><strong>orders_v3</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – The order of ‘x123’ or ‘321x’ for each calibration imags for camera 3</p></li>
+<li><p><strong>grid_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – size of a single grid in chessboard, only support square grids</p></li>
+<li><p><strong>corner_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a>) – (horizontal, vertical), specifying the number of corners in each direction
 corner_number = grid_number - 1</p></li>
-<li><p><strong>win_size</strong> (<em>tuple</em>) – Search parameter in the opencv</p></li>
+<li><p><strong>win_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a>) – Search parameter in the opencv</p></li>
 </ul>
 </dd>
 </dl>
@@ -312,7 +312,7 @@ corner_number = grid_number - 1</p></li>
 
 <dl class="py function">
 <dt id="fish_3d.cray_trace.get_intersect_of_lines">
-<code class="sig-prename descclassname">fish_3d.cray_trace.</code><code class="sig-name descname">get_intersect_of_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_3d.cray_trace.get_intersect_of_lines" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.cray_trace.</code><code class="sig-name descname">get_intersect_of_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_3d.cray_trace.get_intersect_of_lines" title="Permalink to this definition">¶</a></dt>
 <dd><p>calculate the point that are closest to multiple lines</p>
 </dd></dl>
 
@@ -327,7 +327,7 @@ corner_number = grid_number - 1</p></li>
 <span id="fish-3d-ellipse-module"></span><h2>fish_3d.ellipse module<a class="headerlink" href="#module-fish_3d.ellipse" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="fish_3d.ellipse.draw_ellipse">
-<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">draw_ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">ellipse</span><span class="p">:</span> <span class="n">List<span class="p">[</span>float<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#fish_3d.ellipse.draw_ellipse" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">draw_ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">ellipse</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><a class="headerlink" href="#fish_3d.ellipse.draw_ellipse" title="Permalink to this definition">¶</a></dt>
 <dd><p>return (u, v) coordinates for plotting
 no need to use <cite>np.flip</cite> to plot with figure</p>
 </dd></dl>
@@ -343,7 +343,7 @@ I am sorry for the inconsistent notations</p>
 
 <dl class="py function">
 <dt id="fish_3d.ellipse.get_conic_coef">
-<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">get_conic_coef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">xc</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">yc</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">rotation</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>float<span class="p">]</span><a class="headerlink" href="#fish_3d.ellipse.get_conic_coef" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">get_conic_coef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">xc</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">yc</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">rotation</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span><a class="headerlink" href="#fish_3d.ellipse.get_conic_coef" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represent an ellipse from geometric form (a, b, x_centre, y_centre, rotation)
 to the algebraic form (α x^2 + β x y + γ y^2 + δ x + ε y + η)</p>
 </dd></dl>
@@ -359,7 +359,7 @@ to the algebraic form (α x^2 + β x y + γ y^2 + δ x + ε y + η)</p>
 
 <dl class="py function">
 <dt id="fish_3d.ellipse.match_ellipse_sloopy">
-<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">match_ellipse_sloopy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">ellipses</span><span class="p">:</span> <span class="n">List<span class="p">[</span>List<span class="p">[</span>float<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">N</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">min_diff</span><span class="o">=</span><span class="default_value">250</span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ellipse.match_ellipse_sloopy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">match_ellipse_sloopy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">ellipses</span><span class="p">:</span> <span class="n">List<span class="p">[</span>List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">N</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">min_diff</span><span class="o">=</span><span class="default_value">250</span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ellipse.match_ellipse_sloopy" title="Permalink to this definition">¶</a></dt>
 <dd><p>1. Randomly choose N points in view 1
 3. For every chosen point (P1)</p>
 <blockquote>
@@ -484,8 +484,8 @@ line = [points (a), unit directions (v)]</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lines</strong> (<em>list</em>) – a list containing many lines</p></li>
-<li><p><strong>line</strong> (<em>dict</em>) – a dict containing the unit vector and a base point</p></li>
+<li><p><strong>lines</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – a list containing many lines</p></li>
+<li><p><strong>line</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – a dict containing the unit vector and a base point</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -500,7 +500,7 @@ line = [points (a), unit directions (v)]</p>
 
 <dl class="py function">
 <dt id="fish_3d.ray_trace.get_poi">
-<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">get_poi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">coordinate</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.get_poi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">get_poi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">coordinate</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.get_poi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the poi, point on interface. See the sketch for its meaning</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>               <span class="n">camera</span>
               <span class="o">/</span>
@@ -519,7 +519,7 @@ for x, y, c knowing everything else</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>camera</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – a Camera instance</p></li>
-<li><p><strong>z</strong> (<em>float</em>) – the hight of water level with respect to world origin</p></li>
+<li><p><strong>z</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – the hight of water level with respect to world origin</p></li>
 <li><p><strong>corrdinate</strong> (<em>np.ndarray</em>) – the position (u, v) of object on the image, unit is pixel</p></li>
 <li><p><strong>can be one point</strong><strong> or </strong><strong>many points</strong><strong>, </strong><strong>but they should be undistorted</strong> (<em>it</em>) – </p></li>
 </ul>
@@ -551,7 +551,7 @@ for x, y, c knowing everything else</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>incident_vec</strong> (<em>np.ndarray</em>) – the vector representing the incident ray</p></li>
-<li><p><strong>refractive_index</strong> (<em>float</em>) – the refractive index of water is 1.33 &#64; 25°C</p></li>
+<li><p><strong>refractive_index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – the refractive index of water is 1.33 &#64; 25°C</p></li>
 <li><p><strong>normal</strong> (<em>np.ndarray</em>) – the normal vector facing up, the coordinate is looks like</p></li>
 </ul>
 </dd>
@@ -575,7 +575,7 @@ for x, y, c knowing everything else</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>incident_vecs</strong> (<em>np.ndarray</em>) – vectors representing many incident rays, shape (n, 3)</p></li>
-<li><p><strong>refractive_index</strong> (<em>float</em>) – the refractive index of water is 1.33 &#64; 25°C</p></li>
+<li><p><strong>refractive_index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – the refractive index of water is 1.33 &#64; 25°C</p></li>
 <li><p><strong>normal</strong> (<em>np.ndarray</em>) – the normal vector facing up, the coordinate is looks like</p></li>
 </ul>
 </dd>
@@ -611,7 +611,7 @@ d, x, z - length in mm</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>point</strong> (<em>np.ndarray</em>) – shape (3, )</p></li>
-<li><p><strong>line</strong> (<em>dict</em>) – {‘unit’: direction, ‘base’: start_point}</p></li>
+<li><p><strong>line</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – {‘unit’: direction, ‘base’: start_point}</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -651,7 +651,7 @@ d, x, z - length in mm</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>point</strong> (<em>np.ndarray</em>) – shape (3,)</p></li>
-<li><p><strong>line</strong> (<em>dict</em>) – {‘unit’: direction, ‘base’: start_point}</p></li>
+<li><p><strong>line</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – {‘unit’: direction, ‘base’: start_point}</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -714,7 +714,7 @@ d, x, z - length in mm</p>
 
 <dl class="py function">
 <dt id="fish_3d.ray_trace.ray_trace_refractive_trajectory">
-<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">ray_trace_refractive_trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span><span class="p">:</span> <span class="n">List<span class="p">[</span>numpy.ndarray<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">refractive_index</span><span class="o">=</span><span class="default_value">1.33</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.ray_trace_refractive_trajectory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">ray_trace_refractive_trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">refractive_index</span><span class="o">=</span><span class="default_value">1.33</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.ray_trace_refractive_trajectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>reconstruct a trajectory from many views
 :param trajectories: list of positions belonging to the same individual at different time points, shape (time_points, dim)</p>
 </dd></dl>
@@ -740,7 +740,7 @@ d, x, z - length in mm</p>
 <span id="fish-3d-stereolink-module"></span><h2>fish_3d.stereolink module<a class="headerlink" href="#module-fish_3d.stereolink" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="fish_3d.stereolink.extra_three_view_cluster_match">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">extra_three_view_cluster_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matched_indices</span></em>, <em class="sig-param"><span class="n">clusters_multi_view</span></em>, <em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">tol_2d</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">sample_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">depth</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">report</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">water_level</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.extra_three_view_cluster_match" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">extra_three_view_cluster_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matched_indices</span></em>, <em class="sig-param"><span class="n">clusters_multi_view</span></em>, <em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">tol_2d</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">sample_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">depth</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">report</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">water_level</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.extra_three_view_cluster_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>match clusters tanking simutaneously by three cameras
 pretending only features that DID NOT correspond to indices in
 <cite>matched_indices</cite> appear in the view
@@ -821,7 +821,7 @@ unit is mm</p>
 
 <dl class="py function">
 <dt id="fish_3d.stereolink.match_points_v3">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">match_points_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span>numpy.ndarray<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.match_points_v3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">match_points_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.match_points_v3" title="Permalink to this definition">¶</a></dt>
 <dd><p>match points in three views
 no refractions were considered
 :param cameras: a list of three cameras
@@ -860,14 +860,14 @@ overlap = convex hull overlap; vertices of ch1 goes into ch2</p>
 
 <dl class="py function">
 <dt id="fish_3d.stereolink.three_view_cluster_match">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">three_view_cluster_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clusters_multi_view</span></em>, <em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">tol_2d</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">sample_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">depth</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">report</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">water_level</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.three_view_cluster_match" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">three_view_cluster_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clusters_multi_view</span></em>, <em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">tol_2d</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">sample_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">depth</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">report</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">water_level</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.three_view_cluster_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>match clusters tanking simutaneously by three cameras
 the clusters were assumed to be in water, n = 1.333</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.stereolink.triangulation_v3">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">triangulation_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.triangulation_v3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">triangulation_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.triangulation_v3" title="Permalink to this definition">¶</a></dt>
 <dd><p>the positions in different views should be undistorted</p>
 </dd></dl>
 
@@ -894,7 +894,7 @@ the clusters were assumed to be in water, n = 1.333</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_ABCD">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_ABCD</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corners</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">width</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">excess_rows</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#fish_3d.utility.get_ABCD" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_ABCD</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corners</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">width</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">excess_rows</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a><a class="headerlink" href="#fish_3d.utility.get_ABCD" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -921,7 +921,7 @@ C +——-+ D</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_affinity">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_affinity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n">dict</span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_affinity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_affinity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_affinity" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the affinity matrix from a set of corners measured from
 a chessboard image
 :param abcd: a dict storing the measured coordinates of chessboard corners
@@ -947,7 +947,7 @@ the coordinates of labels were returned, shape: (label_number, 3)</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_corners">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_corners</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">rows</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">cols</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_corners" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_corners</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">rows</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">cols</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_corners" title="Permalink to this definition">¶</a></dt>
 <dd><p>use findChessboardCorners in opencv to get coordinates of corners</p>
 </dd></dl>
 
@@ -961,7 +961,7 @@ the coordinates of labels were returned, shape: (label_number, 3)</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_homography_image">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">rows</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">cols</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">rows</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">cols</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the homography transformation
 from an image with a chess-board
 image: 2d numpy array
@@ -988,7 +988,7 @@ camera_model: (optional) a Camera instance that stores the</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_similarity">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n">dict</span></em>, <em class="sig-param"><span class="n">H_aff</span><span class="p">:</span> <span class="n">numpy.array</span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_similarity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></span></em>, <em class="sig-param"><span class="n">H_aff</span><span class="p">:</span> <span class="n">numpy.array</span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_similarity" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the similarity matrix from a set of corners measured from
 a chessboard image
 :param abcd: a dict storing the measured coordinates of chessboard corners
@@ -1007,7 +1007,7 @@ C +——-+ D</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.plot_epl">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">plot_epl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span><span class="p">:</span> <span class="n">List<span class="p">[</span>float<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.plot_epl" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">plot_epl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.plot_epl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the scatters of an epipolar line <em>inside</em> an image
 The images is considered as being stored in (row [y], column [x])</p>
 </dd></dl>

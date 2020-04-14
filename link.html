@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tracking in nD: Linking &#8212; FishPy  documentation</title>
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Miscellaneous Topics" href="misc.html" />
+    <link rel="prev" title="Tracking in 3D: Computer Vision" href="reconstruct.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>FishPy  documentation</span></a></h1>
+        <h2 class="heading"><span>Tracking in nD: Linking</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="reconstruct.html">Tracking in 3D: Computer Vision</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="misc.html">Miscellaneous Topics</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <div class="section" id="tracking-in-nd-linking">
+<h1>Tracking in nD: Linking<a class="headerlink" href="#tracking-in-nd-linking" title="Permalink to this headline">¶</a></h1>
+<p>Using whatever trick you have in your notebook, finally you get some coordinates. Then you want the <em>trajectories</em> of the agents/fish/particles. How would you convert a collection of positions into trajectories?</p>
+<p>Very briefly, I would write a script like below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">fish_track</span> <span class="kn">as</span> <span class="nn">ft</span>
+
+<span class="n">linker</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">ActiveLinker</span><span class="p">(</span><span class="n">linker_range</span><span class="p">)</span>  <span class="c1"># alternatively, use ft.TrackpyLinker</span>
+<span class="n">trajectories</span> <span class="o">=</span> <span class="n">linker</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+<span class="n">trajectories_longer</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">relink</span><span class="p">(</span><span class="n">trajectories</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">blur</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the end, we get <code class="docutils literal notranslate"><span class="pre">trajectories_longer</span></code> which are long trajectories. The above code works very nicely in any dimension. (If you have experimental data for particles in 4 or higher dimension, please send me an email so I can worsihp your techniques.)</p>
+<p>But what is happening? What are the meanings of those variables? What is the business happening inside the code?</p>
+<div class="section" id="the-paradox-of-linking">
+<h2>The Paradox of Linking<a class="headerlink" href="#the-paradox-of-linking" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="the-colloidal-linker">
+<h2>The Colloidal Linker<a class="headerlink" href="#the-colloidal-linker" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="the-active-linker">
+<h2>The Active Linker<a class="headerlink" href="#the-active-linker" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="making-trajectories-longer">
+<h2>Making Trajectories Longer<a class="headerlink" href="#making-trajectories-longer" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="reconstruct.html">Tracking in 3D: Computer Vision</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="misc.html">Miscellaneous Topics</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Yushi Yang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

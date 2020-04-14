@@ -45,49 +45,64 @@
 <span id="fish-corr-dynamic-module"></span><h2>fish_corr.dynamic module<a class="headerlink" href="#module-fish_corr.dynamic" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="fish_corr.dynamic.AverageAnalyser">
-<em class="property">class </em><code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">AverageAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">movie</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">step_size</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">start</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">end</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">AverageAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">movie</span></em>, <em class="sig-param"><span class="n">win_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">step_size</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">start</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">end</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Calculate the averaged properties from a movie</p>
 <dl class="py attribute">
 <dt id="fish_corr.dynamic.AverageAnalyser.movie">
 <code class="sig-name descname">movie</code><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.movie" title="Permalink to this definition">¶</a></dt>
 <dd><p>movie instance with following features,</p>
-<p>Movie[ <code class="docutils literal notranslate"><span class="pre">f</span></code> ]         - the positions of all particles in frame f
-Movie.velocity( f )    - the velocities of all particles in frame f
-p0, p1 = Movie.indice_pair(f)
-Movie[f][p0] &amp; Movie[f+1][p1] correspond to the same particles</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="fish_track.html#fish_track.linking.Movie" title="fish_track.linking.Movie">Movie</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="fish_track.html#fish_track.linking.Movie" title="fish_track.linking.Movie"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_track.linking.Movie</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_array">
-<code class="sig-name descname">scan_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">scan_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>the array is assumed to start at frame self.start</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_biased_gr">
-<code class="sig-name descname">scan_biased_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span><span class="p">:</span> <span class="n">Tank</span></em>, <em class="sig-param"><span class="n">bins</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">number</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">space_bin_number</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_biased_gr" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">scan_biased_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">number</span></em>, <em class="sig-param"><span class="n">space_bin_number</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_biased_gr" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of (posiible) particles per frame</p></li>
+<li><p><strong>tank</strong> (<a class="reference internal" href="#fish_corr.static.Tank" title="fish_corr.static.Tank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_corr.static.Tank</span></code></a>) – a instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">Tank</span></code> to perform random sampling</p></li>
+<li><p><strong>bins</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the bins for <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html#numpy.histogram" title="(in NumPy v1.17)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.histogram()</span></code></a></p></li>
 <li><p><strong>number</strong> – number of (posiible) particles per frame</p></li>
-<li><p><strong>space_bin_number</strong> – number of bins to devide space to generated biased random gas</p></li>
+<li><p><strong>space_bin_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of bins to devide space to generated biased random gas</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The radial distribution function assuming biased density distribution</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_gr">
-<code class="sig-name descname">scan_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span><span class="p">:</span> <span class="n">Tank</span></em>, <em class="sig-param"><span class="n">bins</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">number</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_gr" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">scan_gr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tank</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_gr" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>number</strong> – number of (posiible) particles per frame</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tank</strong> (<a class="reference internal" href="#fish_corr.static.Tank" title="fish_corr.static.Tank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_corr.static.Tank</span></code></a>) – a instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">Tank</span></code> to perform random sampling</p></li>
+<li><p><strong>bins</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the bins for <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html#numpy.histogram" title="(in NumPy v1.17)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.histogram()</span></code></a></p></li>
+<li><p><strong>number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of (posiible) particles per frame</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The radial distribution function</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -104,21 +119,21 @@ Movie[f][p0] &amp; Movie[f+1][p1] correspond to the same particles</p>
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_rotation">
-<code class="sig-name descname">scan_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_points</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_rotation" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<code class="sig-name descname">scan_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_points</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the averaged rotational relaxation time for the movie</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sample_points</strong> – lag time (tau) in the acf of orientation in frame</p>
+<dd class="field-odd"><p><strong>sample_points</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum lag time (<span class="math notranslate nohighlight">\(\tau\)</span>) in the ACF calculation (<code class="xref py py-func docutils literal notranslate"><span class="pre">get_acf()</span></code>)</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_speed">
-<code class="sig-name descname">scan_speed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_speed" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">scan_speed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_speed" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>min_number</strong> – only take frame into consideration if len(velocity) &gt; min_number
-in this frame</p>
+<dd class="field-odd"><p><strong>min_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – only take frame into consideration if len(velocity) &gt; min_number in this frame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -126,19 +141,16 @@ in this frame</p>
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_vicsek_order">
 <code class="sig-name descname">scan_vicsek_order</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_vicsek_order" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Pars:</dt><dd><dl class="simple">
-<dt>min_number (int): only take frame into consideration if len(velocity) &gt; min_number</dt><dd><p>in this frame</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>min_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – only take frame into consideration
+if <code class="docutils literal notranslate"><span class="pre">len(velocity)</span> <span class="pre">&gt;</span> <span class="pre">min_number</span></code> in this frame</p>
 </dd>
-</dl>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The moving-average of the Vicsek order parameter</p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The moving-average of the Vicsek order parameter</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>np.ndarray</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -148,43 +160,53 @@ in this frame</p>
 <dl class="py class">
 <dt id="fish_corr.dynamic.Critic">
 <em class="property">class </em><code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">Critic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">movie</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Calculate the dynamical order &amp; correlations from a fish movie</p>
-<blockquote>
-<div><p>movie : a <cite>Movie</cite> instance from package <cite>fish_track</cite></p>
-<blockquote>
-<div><p>Movie[ f ]             - the positions of all particles in frame f
-Movie.velocity( f )    - the velocities of all particles in frame f
-Movie.label( f )       - the labels of all particles in frame f, same label = same identity
-Movie.trajs[ i ]       - the positions of trajectory i. Here _i_ is the _label_ for these positions
-Movie.indice_pair( f ) - the paried indices of frame _f_ and frame _f+1_</p>
-<blockquote>
-<div><dl class="simple">
-<dt>example:</dt><dd><p>p0, p1 = Movie.indice_pair(f)
-Movie[f][p0] &amp; Movie[f+1][p1] correspond to the same particles</p>
+<dl class="py attribute">
+<dt id="fish_corr.dynamic.Critic.movie">
+<code class="sig-name descname">movie</code><a class="headerlink" href="#fish_corr.dynamic.Critic.movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>a <a class="reference internal" href="fish_track.html#fish_track.linking.Movie" title="fish_track.linking.Movie"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_track.linking.Movie</span></code></a> instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="fish_track.html#fish_track.linking.Movie" title="fish_track.linking.Movie"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_track.linking.Movie</span></code></a></p>
 </dd>
 </dl>
-</div></blockquote>
-</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="fish_corr.dynamic.Critic.trajs">
+<code class="sig-name descname">trajs</code><a class="headerlink" href="#fish_corr.dynamic.Critic.trajs" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of trajectories</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference internal" href="fish_track.html#fish_track.linking.Trajectory" title="fish_track.linking.Trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fish_track.linking.Trajectory</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="simple">
-<dt>flctn_not<span class="classifier">non-translational fluctuation</span></dt><dd><p>(the collective translation is removed)</p>
-</dd>
-<dt>flctn_noi<span class="classifier">non-isometric fluctuation</span></dt><dd><p>(the collective translation &amp; rotaton is removed)</p>
-</dd>
-<dt>flctn_nos<span class="classifier">non-similar fluctuation</span></dt><dd><p>(the collective translation &amp; rotation &amp; isotropic scaling is removed)</p>
+<dt>Abbrs:</dt><dd><ol class="arabic simple">
+<li><p>flctn_not: non-translational fluctuation (the collective translation is removed)</p></li>
+<li><p>flctn_noi: non-isometric fluctuation (the collective translation &amp; rotaton is removed)</p></li>
+<li><p>flctn_nos: non-similar fluctuation (the collective translation &amp; rotation &amp; isotropic scaling is removed)</p></li>
+</ol>
 </dd>
 </dl>
-</div></blockquote>
 <dl class="py method">
 <dt id="fish_corr.dynamic.Critic.get_corr_flctn">
 <code class="sig-name descname">get_corr_flctn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">start</span></em>, <em class="sig-param"><span class="n">stop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transform</span><span class="o">=</span><span class="default_value">'T'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.Critic.get_corr_flctn" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the time-average connected correlation function of the fluctuation
-transform:</p>
-<blockquote>
-<div><p>T - corr of non-translational fluctuations
-I - corr of non-isometric fluctuations
-S - corr of non-similar fluctuations</p>
-</div></blockquote>
+<dd><p>Get the time-average connected correlation function of the fluctuation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>transform</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>here are possible options</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">T</span></code> - corr of non-translational fluctuations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I</span></code> - corr of non-isometric fluctuations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">S</span></code> - corr of non-similar fluctuations</p></li>
+</ol>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -222,7 +244,11 @@ to transform points in _frame_ to _frame+1_</p>
 <dl class="py class">
 <dt id="fish_corr.static.Tank">
 <em class="property">class </em><code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">Tank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">surface</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A fish tank in 3D, whose surface can be described by</p>
+<div class="math notranslate nohighlight">
+\[z = c \cdot r ^ 2\]</div>
+<p>where <span class="math notranslate nohighlight">\(c = 0.7340428\)</span>, and the length unit for the equation is m [meter]</p>
 <dl class="py method">
 <dt id="fish_corr.static.Tank.curvilinear_2_cylindar">
 <code class="sig-name descname">curvilinear_2_cylindar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">L</span></em>, <em class="sig-param"><span class="n">D</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.curvilinear_2_cylindar" title="Permalink to this definition">¶</a></dt>
@@ -236,15 +262,33 @@ to transform points in _frame_ to _frame+1_</p>
 <dl class="py method">
 <dt id="fish_corr.static.Tank.get_cylinder">
 <code class="sig-name descname">get_cylinder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_cylinder" title="Permalink to this definition">¶</a></dt>
-<dd><p>points: shape is (n, 3)
-output: shape is (3, n)</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>points</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – positions, shape (n, 3)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>positions in cylinder coordinate system, shape (3, n)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.static.Tank.get_projection">
 <code class="sig-name descname">get_projection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.get_projection" title="Permalink to this definition">¶</a></dt>
-<dd><p>input shape (n, 3)
-output shape (3, n)</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>points</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – positions, shape (n, 3)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>projected positions, shape (3, n)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -256,25 +300,37 @@ output shape (3, n)</p>
 <dl class="py method">
 <dt id="fish_corr.static.Tank.random">
 <code class="sig-name descname">random</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.random" title="Permalink to this definition">¶</a></dt>
-<dd><p>random points inside tank
+<dd><p>Random points inside tank
 use rejection method to generate random points inside the tank</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.static.Tank.random_curvilinear">
 <code class="sig-name descname">random_curvilinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.random_curvilinear" title="Permalink to this definition">¶</a></dt>
-<dd><p>generate random points in a box in the curvilinear coordinate (L, θ, D)
-L - curvilinear length
-θ - azimuth angle
-D - cloest distance from fish to tank</p>
+<dd><p>Generate random points in a box in the curvilinear coordinate <code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">θ,</span> <span class="pre">D)</span></code>
+<code class="docutils literal notranslate"><span class="pre">L</span></code> - curvilinear length
+<code class="docutils literal notranslate"><span class="pre">θ</span></code> - azimuth angle
+<code class="docutils literal notranslate"><span class="pre">D</span></code> - cloest distance from fish to tank</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="fish_corr.static.Tank.z">
 <code class="sig-name descname">z</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.Tank.z" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculate the z coordinate on the hyprobolic function z = self.c * r^2
-given r
-the input/output unit is mm</p>
+<dd><p>calculate the z coordinate on the hyprobolic function</p>
+<div class="math notranslate nohighlight">
+\[z = \textsf{self.c} * r^2\]</div>
+<p>the input/output unit is mm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(z = f(r)\)</span></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -286,18 +342,24 @@ the input/output unit is mm</p>
 
 <dl class="py function">
 <dt id="fish_corr.static.box_density_polar">
-<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">box_density_polar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">centre</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">radius</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">n_radical</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">n_angular</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.box_density_polar" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">box_density_polar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">centre</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">n_radical</span></em>, <em class="sig-param"><span class="n">n_angular</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.box_density_polar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate mesh in a polar coordinate, each box has the same area
 Calculate the mean &amp; std of number points in each bin</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>positions</strong> – particle positions (n, 2)</p></li>
-<li><p><strong>centre</strong> – boundary centre, shape (2, )</p></li>
-<li><p><strong>radius</strong> – the radius of the boundary</p></li>
-<li><p><strong>n_radical</strong> – number of bins radically</p></li>
-<li><p><strong>n_angular</strong> – number of bins for the angles</p></li>
+<li><p><strong>positions</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – particle positions (n, 2)</p></li>
+<li><p><strong>centre</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – boundary centre, shape (2, )</p></li>
+<li><p><strong>radius</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the radius of the boundary</p></li>
+<li><p><strong>n_radical</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of bins radically</p></li>
+<li><p><strong>n_angular</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of bins for the angles</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The average and standard deviation of numbers in different boxes</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -305,17 +367,22 @@ Calculate the mean &amp; std of number points in each bin</p>
 <dl class="py function">
 <dt id="fish_corr.static.get_nn">
 <code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculate the NN distances and relative locations of NNs
-if no_vertices is True, ignore the vertices</p>
-<blockquote>
-<div><p>of the convex hull generated by positoins</p>
-</div></blockquote>
+<dd><p>Calculate the NN distances and relative locations of NNs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – positions of all particles in one frame</p></li>
+<li><p><strong>no_vertices</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – if being True, ignore the vertices
+of the convex hull generated by positoins</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.static.get_nn_iter">
 <code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn_iter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn_iter" title="Permalink to this definition">¶</a></dt>
-<dd><p>get an iteractive objectable that yields nn distances in different frames</p>
+<dd><p>Get an iteractive objectable that yields nn distances in different frames</p>
 </dd></dl>
 
 <dl class="py function">
@@ -328,17 +395,22 @@ if no_vertices is True, ignore the vertices</p>
 <dt id="fish_corr.static.get_nn_with_velocity">
 <code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">get_nn_with_velocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">velocities</span></em>, <em class="sig-param"><span class="n">no_vertices</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.get_nn_with_velocity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the NN distances and relative locations of NNs
-The distances were rotated so that the <em>x-axis</em> is aligned</p>
-<blockquote>
-<div><p>with the <em>velocity</em> of different particles</p>
-</div></blockquote>
-<p>If no_vertices is True, ignore the vertices of the convex hull</p>
+The distances were rotated so that the <em>x-axis</em> is aligned with the <em>velocity</em> of different particles</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – positions of all particles in one frame</p></li>
+<li><p><strong>velocities</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – velocities of all particles in one frame</p></li>
+<li><p><strong>no_vertices</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – if being True, ignore the vertices</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.static.reduce_angle_gap">
 <code class="sig-prename descclassname">fish_corr.static.</code><code class="sig-name descname">reduce_angle_gap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angles</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.static.reduce_angle_gap" title="Permalink to this definition">¶</a></dt>
-<dd><p>angles should be in between 0 to 2pi</p>
+<dd><p>Angles should be in between 0 to 2pi</p>
 </dd></dl>
 
 </div>
@@ -347,19 +419,19 @@ The distances were rotated so that the <em>x-axis</em> is aligned</p>
 <p>use tower sampling to generate random numbers</p>
 <dl class="py function">
 <dt id="fish_corr.tower_sample.bisection_search">
-<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">bisection_search</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#fish_corr.tower_sample.bisection_search" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">bisection_search</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a><a class="headerlink" href="#fish_corr.tower_sample.bisection_search" title="Permalink to this definition">¶</a></dt>
 <dd><p>bisection search</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.tower_sample.build_tower">
-<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">build_tower</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.build_tower" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">build_tower</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.build_tower" title="Permalink to this definition">¶</a></dt>
 <dd><p>generate discrete CDF</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.tower_sample.tower_sampling">
-<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">tower_sampling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.tower_sampling" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.tower_sample.</code><code class="sig-name descname">tower_sampling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int64<span class="p">]</span><a class="headerlink" href="#fish_corr.tower_sample.tower_sampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>using tower sampling</p>
 </dd></dl>
 
@@ -369,25 +441,23 @@ The distances were rotated so that the <em>x-axis</em> is aligned</p>
 <dl class="py class">
 <dt id="fish_corr.utility.GCE">
 <em class="property">class </em><code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">GCE</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajs</span></em>, <em class="sig-param"><span class="n">good_frames</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.GCE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Estimating the Group Centre, trying to use knowledge of good frames to reduce the error</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.utility.biased_discrete_nd">
 <code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">biased_discrete_nd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span></em>, <em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.biased_discrete_nd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate random numbers that have the joint distribution of many variables
-Using tower sampling
-:param variabels:</p>
-<blockquote>
-<div><p>a iterable of random variables, each variable is a numpy array
-shape: (Number, Dimension)</p>
-</div></blockquote>
+Using tower sampling</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bins</strong> – the bin for generating the discrete distribution, it can be either
+<li><p><strong>variabels</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a iterable of random variables, each variable is a numpy array
+shape: (Number, Dimension)</p></li>
+<li><p><strong>bins</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the bin for generating the discrete distribution, it can be either
 shape: (Dimension, bin_number)</p></li>
-<li><p><strong>size</strong> – the number of generated random numbers</p></li>
+<li><p><strong>size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the number of generated random numbers</p></li>
 </ul>
 </dd>
 </dl>
@@ -400,14 +470,14 @@ shape: (Dimension, bin_number)</p></li>
 The fitting result a is a proxy to relaxation time</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em>) – the data to be fit, it can be either (tau, acf) or just acf
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the data to be fit, it can be either (tau, acf) or just acf
 shape, (2, n) or (n,)</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>fitting parameter a, relaxation time</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -437,15 +507,15 @@ return: the dimension &amp; fitting function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acf</strong> (<em>np.ndarray</em>) – the acf function, shape (2, n) or (n, )</p></li>
-<li><p><strong>delta</strong> (<em>float</em>) – the range above/below 0, which will be fitted linearly</p></li>
+<li><p><strong>acf</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the acf function, shape (2, n) or (n, )</p></li>
+<li><p><strong>delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the range above/below 0, which will be fitted linearly</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>the relaxation time</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -469,31 +539,33 @@ return: the dimension &amp; fitting function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>var</strong> (<em>np.ndarray</em>) – a continual nD variable.  the shape is (number, dimension)</p></li>
-<li><p><strong>size</strong> (<em>int</em>) – the maximum size of <span class="math notranslate nohighlight">\(\tau\)</span>, by default <span class="math notranslate nohighlight">\(\tau\)</span> == len(var)</p></li>
-<li><p><strong>step</strong> (<em>int</em>) – every <code class="docutils literal notranslate"><span class="pre">step</span></code> points in time were chosen as t0 in the calculation</p></li>
+<li><p><strong>var</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a continual nD variable.  the shape is (number, dimension)</p></li>
+<li><p><strong>size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum size of <span class="math notranslate nohighlight">\(\tau\)</span>, by default <span class="math notranslate nohighlight">\(\tau\)</span> == len(var)</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – every <code class="docutils literal notranslate"><span class="pre">step</span></code> points in time were chosen as t0 in the calculation</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>The auto-correlation function of the variable</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.utility.get_acf_fft">
-<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_acf_fft</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">var</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">nstep</span></em>, <em class="sig-param"><span class="n">nt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_acf_fft" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_acf_fft</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">var</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">nstep</span></em>, <em class="sig-param"><span class="n">nt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_acf_fft" title="Permalink to this definition">¶</a></dt>
 <dd><p>not finished</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.utility.get_best_dilatation_rotation">
 <code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_best_dilatation_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r1</span></em>, <em class="sig-param"><span class="n">r2</span></em>, <em class="sig-param"><span class="n">init_guess</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_best_dilatation_rotation" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculate numeratically
-(r1 &#64; Lambda) &#64; Rotation = r2, hopefully</p>
+<dd><p>calculate numeratically</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">r1</span> <span class="o">@</span> <span class="n">Lambda</span><span class="p">)</span> <span class="o">@</span> <span class="n">Rotation</span> <span class="o">=</span> <span class="n">r2</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -529,7 +601,7 @@ should be: len(frames) * particle_number_per_frame</p></li>
 <dl class="py function">
 <dt id="fish_corr.utility.get_centre_move">
 <code class="sig-prename descclassname">fish_corr.utility.</code><code class="sig-name descname">get_centre_move</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.utility.get_centre_move" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculate the movement of the centre from [frame] to [frame + 1]
+<dd><p>calculate the movement of the centre from <code class="docutils literal notranslate"><span class="pre">[frame]</span></code> to <code class="docutils literal notranslate"><span class="pre">[frame</span> <span class="pre">+</span> <span class="pre">1]</span></code>
 only the trajectories who has foodsteps in both frames were used</p>
 </dd></dl>
 
@@ -549,9 +621,9 @@ only the trajectories who has foodsteps in both frames were used</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>frames</strong> – positions of all particles in different frames, shape (frame, n, dim)</p></li>
-<li><p><strong>bins</strong> – the bins for the distance histogram</p></li>
-<li><p><strong>random_gas</strong> – shape (N, 3)</p></li>
+<li><p><strong>frames</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – positions of particles in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>bins</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> or int) – the bins for the distance histogram</p></li>
+<li><p><strong>random_gas</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – shape (N, 3)</p></li>
 </ul>
 </dd>
 </dl>
@@ -570,15 +642,15 @@ The calculation is done over many frames</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>velocity_frames</strong> (<em>np.ndarray</em>) – velocity in different frames, shape (frame, n, dim)</p></li>
-<li><p><strong>min_number</strong> (<em>np.ndarray</em>) – only include frames if its particle number&gt; min_number</p></li>
+<li><p><strong>velocity_frames</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – velocity in different frames, shape (frame, n, dim)</p></li>
+<li><p><strong>min_number</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – only include frames if its particle number&gt; min_number</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>the average speed in each frame, shape (n, )</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -610,7 +682,7 @@ should be: len(frames) * particle_number_per_frame</p></li>
 <dd><p>Calculate the average Vicsek order parameters across different frames</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>velocity_frames</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – the velocity of particles at different frames
+<dd class="field-odd"><p><strong>velocity_frames</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – the velocity of particles at different frames
 “shape” (frame_num, particle_num, dimension)
 it is not a numpy array because <cite>particle_num</cite> in each frame is different</p>
 </dd>
@@ -628,19 +700,19 @@ it is not a numpy array because <cite>particle_num</cite> in each frame is diffe
 <p>Voronoi analysis using voro++ in 3D</p>
 <dl class="py function">
 <dt id="fish_corr.voro.get_indices_with_voro_volumes_select">
-<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_indices_with_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_indices_with_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_indices_with_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_indices_with_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>getting the indices with voronoi cells volumes in a confined parbobla gemetry, given indices of points inside the convex hull</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.voro.get_voro_volumes">
-<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes" title="Permalink to this definition">¶</a></dt>
 <dd><p>getting the voronoi cells volumes in a confined parbobla gemetry</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_corr.voro.get_voro_volumes_select">
-<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">numpy.ndarray<span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_corr.voro.</code><code class="sig-name descname">get_voro_volumes_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg0</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">arg3</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_corr.voro.get_voro_volumes_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>getting the voronoi cells volumes in a confined parbobla gemetry, given indices of points inside the convex hull</p>
 </dd></dl>
 

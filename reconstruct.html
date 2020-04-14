@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tracking in 3D: Computer Vision &#8212; FishPy  documentation</title>
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FishPy Modules" href="modules.html" />
+    <link rel="prev" title="Tracking in 2D: OISHI features" href="oishi.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>FishPy  documentation</span></a></h1>
+        <h2 class="heading"><span>Tracking in 3D: Computer Vision</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="oishi.html">Tracking in 2D: OISHI features</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="modules.html">FishPy Modules</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <div class="section" id="tracking-in-3d-computer-vision">
+<h1>Tracking in 3D: Computer Vision<a class="headerlink" href="#tracking-in-3d-computer-vision" title="Permalink to this headline">¶</a></h1>
+<p>Suppose you get a bunch of <code class="docutils literal notranslate"><span class="pre">oishi</span></code> features in 2D images, how to get 3D coordinates from them?</p>
+<p>Very briefly, you typically use the following code</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">fish_3d</span> <span class="kn">as</span> <span class="nn">f3</span>
+<span class="kn">import</span> <span class="nn">fish_track</span> <span class="kn">as</span> <span class="nn">ft</span>
+
+<span class="n">clusters_nv</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># nv = n view</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_views</span><span class="p">):</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">oishi</span><span class="o">.</span><span class="n">get_clusters</span><span class="p">(</span>
+        <span class="n">features_nv</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">kernels_nv</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">angles</span>
+    <span class="p">)</span>
+    <span class="n">clusters_nv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+<span class="n">matched_indices</span><span class="p">,</span> <span class="n">matched_centres</span><span class="p">,</span> <span class="n">reproj_errors</span> <span class="o">=</span> <span class="n">f3</span><span class="o">.</span><span class="n">three_view_cluster_match</span><span class="p">(</span>
+    <span class="n">clusters_nv</span><span class="p">,</span> <span class="n">cameras</span><span class="p">,</span> <span class="n">tol_2d</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">depth</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">matched_centres</span></code> is the 3D coordinates constructed from many 2D features.</p>
+<p>But what is happening? What are the meanings of those variables? What is the business happening inside the code?</p>
+<p>Here is an detailed explaination.</p>
+<div class="section" id="synchronised-cameras">
+<h2>Synchronised Cameras<a class="headerlink" href="#synchronised-cameras" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="epipolar-geometry">
+<h2>Epipolar Geometry<a class="headerlink" href="#epipolar-geometry" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="camera-distortion">
+<h2>Camera Distortion<a class="headerlink" href="#camera-distortion" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="water-refraction">
+<h2>Water refraction<a class="headerlink" href="#water-refraction" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="cost-function">
+<h2>Cost function<a class="headerlink" href="#cost-function" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="oishi.html">Tracking in 2D: OISHI features</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="modules.html">FishPy Modules</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Yushi Yang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

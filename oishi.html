@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tracking in 2D: OISHI features &#8212; FishPy  documentation</title>
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tracking in 3D: Computer Vision" href="reconstruct.html" />
+    <link rel="prev" title="Welcome to FishPy’s documentation!" href="index.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>FishPy  documentation</span></a></h1>
+        <h2 class="heading"><span>Tracking in 2D: OISHI features</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to FishPy’s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="reconstruct.html">Tracking in 3D: Computer Vision</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <div class="section" id="tracking-in-2d-oishi-features">
+<h1>Tracking in 2D: OISHI features<a class="headerlink" href="#tracking-in-2d-oishi-features" title="Permalink to this headline">¶</a></h1>
+<p>To locate the fish in a 2D image, we are looking at several points that “looks like the centre of a fish”.</p>
+<p>I call these centres oishi features, because they should be Orientation Invariant and SHape Invariant.</p>
+<p>How to find these features? Shortly speaking, type these</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">fish_track</span> <span class="kn">as</span> <span class="nn">ft</span>
+
+<span class="n">kernels</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_kernels</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">axis_indices</span><span class="p">,</span> <span class="n">cluster_number</span><span class="p">)</span>
+<span class="n">oishi_kernels</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">oishi</span><span class="o">.</span><span class="n">get_oishi_kernels</span><span class="p">(</span><span class="n">kernels</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span>
+<span class="n">features</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">oishi</span><span class="o">.</span><span class="n">get_oishi_features</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">kernels</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But what is happening? What are the meanings of those variables? What is the business happening inside the code?</p>
+<p>Here is an detailed explaination.</p>
+<div class="section" id="find-a-shape-in-a-image">
+<h2>Find a Shape in a Image<a class="headerlink" href="#find-a-shape-in-a-image" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="finding-reprsentative-shapes">
+<h2>Finding reprsentative Shapes<a class="headerlink" href="#finding-reprsentative-shapes" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="rotate-the-kernels">
+<h2>Rotate the Kernels<a class="headerlink" href="#rotate-the-kernels" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="getting-the-oishi-features">
+<h2>Getting the OISHI features<a class="headerlink" href="#getting-the-oishi-features" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+<div class="section" id="refining-the-oishi-features">
+<h2>Refining the OISHI features<a class="headerlink" href="#refining-the-oishi-features" title="Permalink to this headline">¶</a></h2>
+<p>under construction …</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Welcome to FishPy’s documentation!</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="reconstruct.html">Tracking in 3D: Computer Vision</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Yushi Yang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>
