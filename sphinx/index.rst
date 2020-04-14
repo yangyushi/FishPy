@@ -7,13 +7,11 @@ Welcome to FishPy's documentation!
 ==================================
 
 
-
 `FishPy on Github <https://github.com/yangyushi/FishPy>`_
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Features
 
    oishi
    reconstruct
