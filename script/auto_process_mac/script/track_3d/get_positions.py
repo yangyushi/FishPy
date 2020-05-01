@@ -45,6 +45,11 @@ for i, cam_name in enumerate(camera_dict):
     camera_configurations.append(cam_config)
     feature_handlers.append(open(cam_config.feature, 'rb'))
 
+for frame in range(frame_start):  # skip initial frames
+    for i in range(len(cameras)):
+        next(movies[i])
+        pickle.load(feature_handlers[i])
+
 for frame in range(frame_start, frame_end):
     images_multi_view = []
     features_multi_view = []
@@ -61,7 +66,11 @@ for frame in range(frame_start, frame_end):
 
         image = next(movies[i])
 
-        feature = pickle.load(feature_handlers[i])
+        try:
+            feature = pickle.load(feature_handlers[i])
+        except EOFError:
+            print(f"not enough featuers from view {i+1}")
+            break
 
         clusters = ft.oishi.get_clusters(
             feature, shape_kernels, angles,
@@ -105,29 +114,29 @@ for frame in range(frame_start, frame_end):
     print(f'frame {frame}', len(matched_centres))
 
     if len(matched_indices) == 0:
-        np.save(f'location_3d_frame_{frame:04}', np.empty((0, 3)))
+        np.save(f'locations_3d/frame_{frame:08}', np.empty((0, 3)))
         continue
 
-    np.save(f'locations_3d/frame_{frame:04}', matched_centres)
+    np.save(f'locations_3d/frame_{frame:08}', matched_centres)
 
     if see_reprojection:
         f3.utility.plot_reproject(
             images_multi_view[0],
             features_multi_view[0],
             matched_centres, cameras[0],
-            filename=f'cam_1-reproject_frame_{frame:04}.png'
+            filename=f'cam_1-reproject_frame_{frame:08}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[1],
             features_multi_view[1],
             matched_centres, cameras[1],
-            filename=f'cam_2-reproject_frame_{frame:04}.png'
+            filename=f'cam_2-reproject_frame_{frame:08}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[2],
             features_multi_view[2],
             matched_centres, cameras[2],
-            filename=f'cam_3-reproject_frame_{frame:04}.png'
+            filename=f'cam_3-reproject_frame_{frame:08}.png'
         )
 
 for f in feature_handlers:
