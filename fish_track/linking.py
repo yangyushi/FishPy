@@ -318,10 +318,9 @@ class ActiveLinker():
         for target in range(max_value):  # find the trajectory for every label
             result = get_trajectory(labels_numba, frames_numba, target)
             time, positions = result
-            trajectories.append([
-                np.array(time),
-                np.array(positions)
-            ])
+            trajectories.append(
+                (np.array(time), np.array(positions))
+            )
         return trajectories
 
 
@@ -599,14 +598,15 @@ def relink(trajectories, dx, dt, blur=None):
         :obj:`list` of :obj:`tuple`: The relink trajectories.
             Each trajectory is stored in a tuple, (time, positions)
     """
-    if isinstance(trajectories[0], tuple):  # (time, positions)
+
+    if type(t) in (tuple, np.ndarray, list):
         trajs = [
             Trajectory(
                 t[0], t[1], blur=blur
             ) for t in trajectories if len(t[0]) > 1
         ]
     else:
-        return TypeError("Invalid Trajectory Data Type")
+        raise TypeError("Invalid Trajectory Data Type")
 
     trajs_ordered = sort_trajectories(trajs)
 
