@@ -135,20 +135,29 @@ def plot_epl(line: List[float], image: np.ndarray):
     return epl.T
 
 
-def get_ABCD(corners: np.array, width: int, excess_rows: int) -> dict:
+def get_ABCD(corners, width, excess_rows) -> dict:
     """
-    :param corners: the coordinates of chessboard corners
-                    found by cv2.findChessboardCorners, shape (n, 2)
-    :param width: the number of corners in a row
-    :param excess_rows: if the chessboard is make of (m, n) corners (m > n)
-                        then n is *width*, excess_rows = m - n
-    what is ABCD?
-    C +-------+ D
-      |       |
-      |       |
-      |       |
-    A +-------+ B
+    What is ABCD?
+
+    .. code-block::
+
+        C +-------+ D
+          |       |
+          |       |
+          |       |
+        A +-------+ B
+
     (AB // CD, AC // BD)
+
+    Args:
+        corners (:obj:`numpy.ndarray`): the coordinates of chessboard corners found by
+                                        ``cv2.findChessboardCorners``, shape (n, 2)
+        width (:obj:`int`): the number of corners in a row
+        excess_rows(:obj:`int`): if the chessboard is make of (m, n) corners (m > n)
+                                 then n is *width*, excess_rows = m - n
+
+    Return:
+        :obj:`dict`: the locations of A, B, C, D respectively.
     """
     points_Ah, points_Bh, points_Ch, points_Dh = [], [], [], []
     for er in range(excess_rows + 1):
@@ -175,17 +184,25 @@ def get_ABCD(corners: np.array, width: int, excess_rows: int) -> dict:
     return ABCD
 
 
-def get_affinity(abcd: dict) -> np.array:
+def get_affinity(abcd):
     """
-    get the affinity matrix from a set of corners measured from
-    a chessboard image
-    :param abcd: a dict storing the measured coordinates of chessboard corners
+    Getting the affinity matrix from a set of corners measured from a chessboard image
+
     what is ABCD?
-    C +-------+ D
-      |       |
-      |       |
-      |       |
-    A +-------+ B
+
+    .. code-block::
+
+        C +-------+ D
+          |       |
+          |       |
+          |       |
+        A +-------+ B
+
+    Args:
+        abcd (:obj:`dict`): the measured coordinates of chessboard corners
+
+    Return:
+        :obj:`numpy.ndarray`: the affine transformation
     """
     lAB = np.cross(abcd['A'], abcd['B'])  # (n, 3)
     lCD = np.cross(abcd['C'], abcd['D'])  # (n, 3)
@@ -208,18 +225,25 @@ def get_affinity(abcd: dict) -> np.array:
     return H_aff
 
 
-def get_similarity(abcd: dict, H_aff: np.array) -> np.array:
+def get_similarity(abcd, H_aff):
     """
-    get the similarity matrix from a set of corners measured from
-    a chessboard image
-    :param abcd: a dict storing the measured coordinates of chessboard corners
-    :param H_aff: affinity that makes coordinates affinely recitified
+    Getting the similarity matrix from a set of corners measured from
     what is ABCD?
-    C +-------+ D
-      |       |
-      |       |
-      |       |
-    A +-------+ B
+
+    .. code-block::
+
+        C +-------+ D
+          |       |
+          |       |
+          |       |
+        A +-------+ B
+
+    Args:
+        abcd (:obj:`dict`): the measured coordinates of chessboard corners
+        H_aff (:obj:`numpy.ndarray`): affinity that makes coordinates affinely recitified
+
+    Return:
+        :obj:`numpy.ndarray`: the similar transformation matrix
     """
     abcd_aff = {}
     for letter in abcd:
@@ -281,14 +305,15 @@ def get_corners(image: np.array, rows: int, cols: int, camera_model=None):
     return corners
 
 
-def get_homography_image(image: np.array, rows: int, cols: int, camera_model=None):
+def get_homography_image(image, rows, cols, camera_model=None):
     """
-    get the homography transformation
-    from an image with a chess-board
-    image: 2d numpy array
-    rows: the number of *internal corners* inside each row
-    cols: the number of *internal corners* inside each column
-    camera_model: (optional) a Camera instance that stores the
+    get the homography transformation from an image with a chess-board
+
+    Args:
+        image (:obj:`numpy.ndarray`): a 2d image
+        rows (:obj:`int`): the number of *internal corners* inside each row
+        cols (:obj:`int`): the number of *internal corners* inside each column
+        camera_model (Camera): (optional) a Camera instance that stores the
                   distortion coefficients of the lens
     """
     length = max(rows, cols)  # length > width
@@ -305,11 +330,13 @@ def get_homography_image(image: np.array, rows: int, cols: int, camera_model=Non
     return H_sim @ H_aff
 
 
-def get_homography(camera: 'Camera', angle_num=10):
+def get_homography(camera, angle_num=10):
     """
-    get the homography that simiarly recover the 2d image perpendicular to z-axis
-    :param camera: a Camera instance of current camera
-    :param angle_num: a virtual chessboard is rotated angle_num times for calculation
+    Get the homography that simiarly recover the 2d image perpendicular to z-axis
+
+    Args:
+        camera (Camera): a Camera instance of current camera
+        angle_num (:obj:`int`): a virtual chessboard is rotated angle_num times for calculation
     """
     angles = np.linspace(0, np.pi/2, angle_num)  # rotation_angle
 
@@ -354,16 +381,19 @@ def get_homography(camera: 'Camera', angle_num=10):
     return H_sim
 
 
-def update_orientation(
-        orientations: np.array, locations: np.array, H: np.array, length=10
-        ):
+def update_orientation(orientations, locations, H, length=10):
     """
     Calculate the orientatin after applying homography H
     This is function is used to get a 'recitified' orientation
-    :param orientation: angles of the fish, sin(angle) --> x very sadly
-    :param locatons: xy positons of fish in the image, not row-col
-    :param H: the homography matrix
-    :param length: length of the orientation bar
+
+    Args:
+        orientation (:obj:`numpy.ndarray`): angles of the fish, sin(angle) --> x very sadly
+        locatons (:obj:`numpy.ndarray`): xy positons of fish in the image, not row-col
+        H (:obj:`numpy.ndarray`): the homography matrix
+        length (:obj:`int`): length of the orientation bar
+
+    Return:
+        :obj:`numpy.ndarray`: the recitified orientations
     """
     orient_rec = []
     for o, xy in zip(orientations, locations):
@@ -389,9 +419,11 @@ def update_orientation(
 
 def get_orient_line(locations, orientations, length=10):
     """
-    get the line for plot the orientations
-    :param locations: shape (n, 2)
-    :param orientations: shape (n, )
+    Get the line for plot the orientations
+
+    Args:
+        locations (:obj:`numpy.ndarray`): shape (n, 2)
+        orientations (:obj:`numpy.ndarray`): shape (n, )
     """
     unit_vector = np.array((np.sin(orientations), np.cos(orientations)))
     oline_1 = locations - length * unit_vector
@@ -411,15 +443,17 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
     """
     Chop an image in the polar coordinates
     return the chopped result as a labelled image
-    :param image: 2d image as a numpy array
-    :param H_sim: a homography (3 x 3 matrix) to similarly rectify the image
-    :param centre: origin of the polar coordinate system
-    :param radius: maximum radius in the polar coordinate system
-    :param n_angle: number of bins in terms of angle
-    :param n_radius: number of bins in terms of radius
-    :param dist_coef: distortion coefficients of the camera, shape (5, )
-                        k1, k2, p1, p2, k3 (from opencv by default)
-    :param k: camera calibration matrix (bible, P155)
+
+    Args:
+        image (:obj:`numpy.ndarray`): 2d image as a numpy array
+        H_sim (:obj:`numpy.ndarray`): a homography (3 x 3 matrix) to similarly rectify the image
+        centre (:obj:`numpy.ndarray`): origin of the polar coordinate system
+        radius (:obj:`int`): maximum radius in the polar coordinate system
+        n_angle (:obj:`int`): number of bins in terms of angle
+        n_radius (:obj:`int`): number of bins in terms of radius
+        dist_coef (:obj:`numpy.ndarray`): distortion coefficients of the camera, shape (5, )
+                           k1, k2, p1, p2, k3 (from opencv by default)
+        k: (:obj:`numpy.ndarray`) camera calibration matrix (bible, P155)
     """
     # setting up bin edges
     be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # bin_edge
@@ -492,8 +526,10 @@ def get_indices(labels):
 
 def box_count_polar_image(image, indices):
     """
-    :param image: the image taken by the camera without undistortion
-    :param labels: labelled image specifying different box regions
+    Args:
+
+        image (:obj:`numpy.ndarray`): the image taken by the camera without undistortion
+        labels (:obj:`numpy.ndarray`): labelled image specifying different box regions
     """
     invert = image.max() - image.ravel()
     intensities = np.empty(len(indices))

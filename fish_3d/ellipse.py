@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+"""
+Some helper function I wrote to reconstruct ellipses from three views
+This is to calculate the orientation of my fish tank
+"""
 import itertools
 import numpy as np
 from typing import List, Tuple
 from .camera import get_fundamental
 from .stereolink import triangulation_v3
-# Some helper function I wrote to reconstruct ellipses from three views
-# This is to calculate the orientation of my fish tank
 
 
 def get_conic_coef(a: float, b: float, xc: float, yc: float, rotation: float) -> Tuple[float]:
@@ -85,10 +87,13 @@ def find_projection(ellipse, line):
 
 def get_intersection(ellipse, line):
     """
-    find the intersection between an ellipse and a line
-    :param ellipse: represented as (a, b, xc, yc, rot), the geometrical form
-    :param line:    represented as (l1, l2, l3) where l1 x + l2 y + l3 == 0
+    Finding the intersection between an ellipse and a line
     * If there is no intersection, then find the point on the ellipse that is closest to the line.
+
+    Args:
+        ellipse (:obj:`numpy.ndarray`): represented as (a, b, xc, yc, rot), the geometrical form
+        line (:obj:`numpy.ndarray`):    represented as (l1, l2, l3) where l1 x + l2 y + l3 == 0
+
     """
     al, be, ga, de, ep, et = get_conic_coef(*ellipse)
     l1, l2, l3 = line
@@ -118,13 +123,15 @@ def get_intersection(ellipse, line):
 
 def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N: int, min_diff=250, max_cost=10):
     """
-    1. Randomly choose N points in view 1
-    3. For every chosen point (P1)
-        1. Calculate POI of P1 in other two views, get POI2 & POI3
-        2. For POI2, calculate its projection on C2, get P2 (using camera's information)
-        3. For POI3, calculate its projection on C3, get P3
-        4. Reconstruct 3D point using P1, P2, & P3
-    4. These points should be points on the surface
+    .. code-block::
+
+        1. Randomly choose N points in view 1
+        3. For every chosen point (P1)
+            1. Calculate POI of P1 in other two views, get POI2 & POI3
+            2. For POI2, calculate its projection on C2, get P2 (using camera's information)
+            3. For POI3, calculate its projection on C3, get P3
+            4. Reconstruct 3D point using P1, P2, & P3
+        4. These points should be points on the surface
     """
     points_v1 = draw_ellipse(np.linspace(0, 2*np.pi, N, endpoint=False), ellipses[0])  # (u, v)
     points = []

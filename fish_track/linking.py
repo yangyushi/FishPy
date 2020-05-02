@@ -147,6 +147,15 @@ class ActiveLinker():
         self.trajectories = None
 
     def link(self, frames):
+        """
+        Getting trajectories from positions in different frames
+
+        Args:
+            frames (:obj:`numpy.ndarray`): the positions of particles in different frames from the experimental data
+
+        Return:
+            :obj:`list`: a collection of trajectories. Each trajectory is represented by a list, [time_points, positions]
+        """
         self.labels = self.__get_labels(frames)
         self.trajectories = self.__get_trajectories(self.labels, frames)
         return self.trajectories
