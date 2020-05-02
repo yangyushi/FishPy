@@ -35,7 +35,7 @@ if f'vanilla_trajs.pkl' not in os.listdir(save_folder):
         print("Invalid linker: ", linker_name)
 
     vanilla_trajs = linker.link(frames)
-    vanilla_trajs = [t for t in vanilla_trajs if len(t['time']) > 1]
+    vanilla_trajs = [t for t in vanilla_trajs if len(t[0]) > 1]
 
     with open(f'{save_folder}/vanilla_trajs.pkl', 'wb') as f:
               pickle.dump(vanilla_trajs, f)
@@ -49,7 +49,7 @@ if len(vanilla_trajs) > 1:
         for dx in range(2, dx_max + 2):
             trajs = ft.relink(trajs, dx, dt, blur=None)
 
-    trajs = [t for t in trajs if len(t['time']) > threshold]
+    trajs = [t for t in trajs if len(t[0]) > threshold]
 else:
     trajs = vanilla_trajs
 
