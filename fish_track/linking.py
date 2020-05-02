@@ -611,7 +611,7 @@ def relink(trajectories, dx, dt, blur=None):
     trajs_ordered = sort_trajectories(trajs)
 
     dist_mat, row_map, col_map = build_dist_matrix_sparse(
-        trajs_ordered, dx=dist_threshold, dt=time_threshold
+        trajs_ordered, dx=dx, dt=dt
     )
 
     if len(dist_mat) == 0:
