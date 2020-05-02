@@ -599,7 +599,7 @@ def relink(trajectories, dx, dt, blur=None):
             Each trajectory is stored in a tuple, (time, positions)
     """
 
-    if type(t) in (tuple, np.ndarray, list):
+    if type(trajectires[0]) in (tuple, np.ndarray, list):
         trajs = [
             Trajectory(
                 t[0], t[1], blur=blur
