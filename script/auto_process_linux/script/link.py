@@ -38,7 +38,7 @@ if f'vanilla_trajs.pkl' not in os.listdir(save_folder):
     vanilla_trajs = [t for t in vanilla_trajs if len(t[0]) > 1]
 
     with open(f'{save_folder}/vanilla_trajs.pkl', 'wb') as f:
-              pickle.dump(vanilla_trajs, f)
+        pickle.dump(vanilla_trajs, f)
 else:
     with open(f'{save_folder}/vanilla_trajs.pkl', 'rb') as f:
         vanilla_trajs = pickle.load(f)

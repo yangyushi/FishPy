@@ -444,7 +444,7 @@ def build_dist_matrix(trajs_sorted, dt, dx):
     return dist_matrix
 
 
-def squeeze_sparse(array: np.array) -> np.array:
+def squeeze_sparse(array):
     """
     Given the indices in a row or column from a sparse matrix
     Remove the blank rows/columns
@@ -452,6 +452,12 @@ def squeeze_sparse(array: np.array) -> np.array:
     .. code-block::
 
         array[i + 1] >= array[i]
+
+    Args:
+        array (:obj:`numpy.ndarray`): the indices of columes/rows in a sparse matrix
+
+    Return:
+        :obj:`numpy.ndarray`: the matrix without blank columes/rows
     """
     sort_indices = np.argsort(array)
     remap = np.argsort(sort_indices)
@@ -513,7 +519,7 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx):
     return dist_mat, row_map, col_map
 
 
-def reduce_network(network) -> List[np.ndarray]:
+def reduce_network(network):
     """
     Network is compose of [(i_1, j_1), (i_2, j_2) ...] links
     The network is *sorted* with i_n > ... > i_2 > i_1
@@ -575,34 +581,25 @@ def apply_network(trajectories, network):
     return new_trajs
 
 
-def relink_slow(trajectories, dist_threshold, time_threshold, blur=None, pos_key='position', time_key='time'):
-    trajs = [
-        Trajectory(t[time_key], t[pos_key], blur=blur) for t in trajectories if len(t[time_key]) > 1
-    ]
-    trajs_ordered = sort_trajectories(trajs)
-    dist_mat = build_dist_matrix(trajs_ordered, dx=dist_threshold, dt=time_threshold)
-    networks = solve_nrook(dist_mat.astype(bool))
-    if len(networks[0]) == 0:
-        return trajectories
-    best = choose_network(dist_mat, networks)
-    reduced = reduce_network(best)
-    new_trajs = apply_network(trajs_ordered, reduced)
-    return [{'time': t.time, 'position': t.positions} for t in new_trajs]
-
-
-def relink(trajectories: List, dist_threshold: float, time_threshold: int,
-        blur=None, pos_key='position', time_key='time') -> List[dict]:
+def relink(trajectories, dx, dt, blur=None):
     """
-    Re-link short trajectories into longer
-    normal usage: relink(trajs, dx, dt, blur)
+    Re-link short trajectories into longer ones.
+
+    Args:
+        trajectories (:obj:`list`): A collection of trajectories.
+        Each trajectory is stored in a tuple, (time, positions)
+        dx (:obj:`float`): distance threshold, the only trajectories whose 'head' and 'tail'
+            is smaller than dx in space were considered as a possible link
+        dt (:obj:`int`): time threshold, the only trajectories whose 'head' and 'tail'
+            is smaller than dt in time were considered as a possible link
+        blur (:obj:`float` or :obj:`bool`): if blur is provided, all trajectories were filtered using
+            a gaussian kernel, whose sigma is the value of ``blur``
+
+    Return:
+        :obj:`list` of :obj:`tuple`: The relink trajectories.
+            Each trajectory is stored in a tuple, (time, positions)
     """
-    if isinstance(trajectories[0], dict):
-        trajs = [
-            Trajectory(
-                t[time_key], t[pos_key], blur=blur
-            ) for t in trajectories if len(t[time_key]) > 1
-        ]
-    elif isinstance(trajectories[0], list):  # (time, positions)
+    if isinstance(trajectories[0], tuple):  # (time, positions)
         trajs = [
             Trajectory(
                 t[0], t[1], blur=blur
@@ -610,6 +607,7 @@ def relink(trajectories: List, dist_threshold: float, time_threshold: int,
         ]
     else:
         return TypeError("Invalid Trajectory Data Type")
+
     trajs_ordered = sort_trajectories(trajs)
 
     dist_mat, row_map, col_map = build_dist_matrix_sparse(
@@ -631,7 +629,7 @@ def relink(trajectories: List, dist_threshold: float, time_threshold: int,
     reduced = reduce_network(best)
     new_trajs = apply_network(trajs_ordered, reduced)
 
-    return [{'time': t.time, 'position': t.positions} for t in new_trajs]
+    return [(t.time, t.positions) for t in new_trajs]
 
 
 class Movie:
