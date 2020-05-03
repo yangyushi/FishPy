@@ -11,7 +11,7 @@ with open('link_3d/trajectories.pkl', 'rb') as f:
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 for t in trajs:
-    ax.plot(*t['position'].T)
+    ax.plot(*t[1].T)
 fig.tight_layout()
 if len(sys.argv) > 1:
     plt.savefig('trajs.png')
