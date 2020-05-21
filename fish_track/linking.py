@@ -354,21 +354,23 @@ class TrackpyLinker():
         return positions, ordered_time, labels
 
     def __get_trajectory(self, value, link_result, positions, time_points, labels):
+        with_label = False
         if isinstance(labels, type(None)):
-            traj = {'time': [], 'position': []}
+            traj = [[], []]
         else:
-            traj = {'time': [], 'position': [], 'label': []}
+            traj = [[], [], []]
+            with_label = True
         for frame in link_result:
             frame_index, link_labels = frame
             if value in link_labels:
                 number_index = link_labels.index(value)
-                traj['time'].append(time_points[frame_index])
-                traj['position'].append(positions[frame_index][number_index])
-                if 'label' in traj:
+                traj[0].append(time_points[frame_index])
+                traj[1].append(positions[frame_index][number_index])
+                if with_label:
                     current_label = labels[frame_index][link_labels.index(value)]
-                    traj['label'].append(current_label)
-        traj['time'] = np.array(traj['time'])
-        traj['position'] = np.array(traj['position'])
+                    traj[2].append(current_label)
+        traj[0] = np.array(traj[0])
+        traj[1] = np.array(traj[1])
         return traj
 
     def __get_trajectories(self, link_result, positions, time_points, labels):

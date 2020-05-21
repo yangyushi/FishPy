@@ -1,6 +1,6 @@
 import cv2
 import sys
-import os
+import platform
 from PIL import Image
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QGridLayout, QApplication, QHBoxLayout, QLineEdit, QMessageBox
 import numpy as np
@@ -85,18 +85,22 @@ class Viewer(QMainWindow):
 
     def dropEvent(self, event):
         filename = event.mimeData().text()  # get the filename
-        if os.name == 'nt':
+        if platform.system() == 'Windows':
             filename = filename[8:]
-        elif os.name == 'posix':
+        elif platform.system() == 'Linux':
             filename = filename[7:-2]
-        else:
+        elif platform.system() == 'Darwin':
             filename = filename[7:]
+        else:
+            warn(f"Platform {platform.system()} is not supported")
+            return
         if '\n' in filename:
             warn('Can not read multiple files')
             return None
         try:
             image = np.array(Image.open(filename).convert('L'))
         except OSError:
+            print(filename)
             warn("This image format is not supported")
             return
         try:
