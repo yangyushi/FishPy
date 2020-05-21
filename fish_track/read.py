@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-import numpy as np
-import cv2
+import re
 import os
-from collections import deque
+import cv2
+import numpy as np
 from PIL import Image
 from scipy import ndimage
+from collections import deque
 
 
 def get_frame(file_name, frame):
@@ -93,7 +94,7 @@ def get_foreground_movie(video, background, output='foreground.avi', process=lam
     """
     video: name of the video to be processed (raw video recorded from camera)
     background: background video. It is assumend the foreground is *darker*, so foreground = backgroudn - video
-    preprocess: a python function to process *both* foreground and background before the substraction 
+    preprocess: a python function to process *both* foreground and background before the substraction
     fps: the frame rate of the obtained video
     local: the range of the local threshold
     threh_flag: flags for the global threshold, 0 - otsu; 1 - triangle; >1 - fixed value threshold, value is given number
@@ -133,3 +134,24 @@ def get_foreground_movie(video, background, output='foreground.avi', process=lam
     im_cap.release()
     bg_cap.release()
     out.release()
+
+
+def get_frames_from_xyz(filename, ncols=3):
+    f = open(filename, 'r')
+    frames = []
+    for line in f:
+        is_head = re.match(r'(\d+)\n', line)
+        if is_head:
+            frames.append([])
+            particle_num = int(is_head.group(1))
+            f.readline()  # jump through comment line
+            for j in range(particle_num):
+                data = re.split(r'\s', f.readline())[1: 1 + ncols]
+                frames[-1].append(list(map(float, data)))
+    return np.array(frames)
+
+
+def get_trajectories_xyz(filename):
+    frames = get_frames(filename)
+    trajs = np.moveaxis(frames, 0, 2)
+    return trajs
