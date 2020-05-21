@@ -260,6 +260,7 @@ class AverageAnalyser():
         self.cache = {}
         if end == 0:
             self.end = movie.max_frame
+            #print('max frame: ', movie.max_frame)
         else:
             self.end = end
 
@@ -312,6 +313,21 @@ class AverageAnalyser():
         for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
             result[i] = np.nanmean(array[t0:t1])
         return result
+
+    def scan_array_std(self, array: np.ndarray):
+        """
+        the array is assumed to start at frame self.start
+        """
+        last_pair = 0
+        for pe in self.pair_ends:
+            if pe <= len(array):
+                last_pair += 1
+
+        result = np.empty(last_pair)
+        for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
+            result[i] = np.nanstd(array[t0:t1])
+        return result
+
 
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
@@ -401,6 +417,27 @@ class AverageAnalyser():
             return self.__scan_velocities(
                 lambda x: np.nanmean(utility.get_vicsek_order(x, min_number=min_number))
             )
+
+
+    def scan_vicsek_order_std(self, min_number=0):
+        """
+        Args:
+            min_number (:obj:`int`): only take frame into consideration
+                                     if ``len(velocity) > min_number`` in this frame
+        Return:
+            :obj:`numpy.ndarray`: The moving-average of the Vicsek order parameter
+        """
+        if self.win_size >= self.step_size:
+            velocities = self.movie.velocity((self.start, self.end))
+            vicsek_movie = utility.get_vicsek_order(
+                velocities, min_number=min_number
+            )
+            return self.scan_array_std(vicsek_movie)
+        else:
+            return self.__scan_velocities(
+                lambda x: np.nanstd(utility.get_vicsek_order(x, min_number=min_number))
+            )
+
 
     def scan_rotation(self, sample_points: int):
         r"""
