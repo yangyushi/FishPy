@@ -69,6 +69,33 @@ def get_partial_cluster(cluster, size):
         return cluster[:-(length % size):(length // size)]
 
 
+def three_view_match(features, cameras, tol_2d, normal=(0, 0, 1), water_level=0.0, depth=400):
+    triplets = itertools.product(*features)
+    indices = itertools.product(
+        np.arange(len(features[0])),
+        np.arange(len(features[1])),
+        np.arange(len(features[2]))
+    )
+    matched_indices = []
+    for idx, (c0, c1, c2) in zip(indices, triplets):
+        """
+        a01, b01 = ray_trace.epipolar_la(c0, cameras[0], cameras[1], water_level, depth, normal)
+        d01 = np.abs(c0 * a01 - c1 + b01) / np.sqrt(a01**2 + 1)
+        if d01 > tol_2d:
+            continue
+        a02, b02 = ray_trace.epipolar_la(c0, cameras[0], cameras[2], water_level, depth, normal)
+        d02 = np.abs(c0 * a02 - c2 + b02) / np.sqrt(a02**2 + 1)
+        if d02 > tol_2d:
+            continue
+        """
+        point_3d, error = ray_trace.ray_trace_refractive_faster(
+            (c0, c1, c2), cameras
+        )
+        if error < tol_2d:
+            matched_indices.append(idx)
+    return matched_indices
+
+
 def three_view_cluster_match(
         clusters_multi_view, cameras, tol_2d: float,
         sample_size: int, depth: float,
@@ -154,7 +181,7 @@ def greedy_match(
     for i, centre in enumerate(centres_mv[0]):
 
         a12, b12 = ray_trace.epipolar_la(
-                centre, cameras_reordered[0], cameras_reordered[1], 
+                centre, cameras_reordered[0], cameras_reordered[1],
                 water_level, depth, normal
                 )
         a13, b13 = ray_trace.epipolar_la(
