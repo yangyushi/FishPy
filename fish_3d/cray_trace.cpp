@@ -1,4 +1,3 @@
-#include "stereo.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
@@ -20,7 +19,6 @@ static constexpr int CamerasAtCompileTime = 3;
 using Coordinates = Eigen::Matrix<double, FishAtCompileTime, d, Eigen::RowMajor>;
 using Coord = Eigen::Matrix<double, 1, d, Eigen::RowMajor>;
 using SquareMatrix = Eigen::Matrix<double, d, d, Eigen::RowMajor>;
-//using Axis = Eigen::Matrix<double, FishAtCompileTime, 1>;
 using CameraLines = Eigen::Matrix<double, CamerasAtCompileTime, 2*d, Eigen::RowMajor>;
 using FishTrackingData = Eigen::Matrix<double, FishAtCompileTime, 2*d*CamerasAtCompileTime, Eigen::RowMajor>;
 
@@ -128,26 +126,24 @@ py::array_t<double> get_intersect_of_lines(py::array_t<double> py_lines){
 PYBIND11_MODULE(cray_trace, m){
     m.doc() = "refractive ray tracing";
 
-    m.def("get_intersect_of_lines", &get_intersect_of_lines,
-          "calculate the point that are closest to multiple lines",
-          py::return_value_policy::move, py::arg("lines").noconvert());
-
-    m.def("get_intersect_single", &get_intersect_single,
-          "calculate the point that is closest to multiple lines",
-          py::return_value_policy::move, py::arg("lines").noconvert());
-
-    m.def("get_intersect_multiple", &get_intersect_multiple,
-          "calculate the points that are closest to a collection of multiple lines",
-          py::return_value_policy::move, py::arg("lines").noconvert());
     m.def(
-            "three_view_match", &three_view_match,
-            py::arg("centres_1"), py::arg("centres_2"), py::arg("centres_3"),
-            py::arg("P1"), py::arg("P2"), py::arg("P3"),
-            py::arg("O1"), py::arg("O2"), py::arg("O3"),
-            py::arg("tol_2d")
+            "get_intersect_of_lines", &get_intersect_of_lines,
+            "calculate the point that are closest to multiple lines",
+            py::return_value_policy::move,
+            py::arg("lines").noconvert()
             );
+
     m.def(
-            "get_error", &get_error,
-            py::arg("centres"), py::arg("Ps"), py::arg("Os")
+            "get_intersect_single", &get_intersect_single,
+            "calculate the point that is closest to multiple lines",
+            py::return_value_policy::move,
+            py::arg("lines").noconvert()
+            );
+
+    m.def(
+            "get_intersect_multiple", &get_intersect_multiple,
+            "calculate the points that are closest to a collection of multiple lines",
+            py::return_value_policy::move,
+            py::arg("lines").noconvert()
             );
 }

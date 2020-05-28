@@ -152,6 +152,6 @@ def get_frames_from_xyz(filename, ncols=3):
 
 
 def get_trajectories_xyz(filename):
-    frames = get_frames(filename)
+    frames = get_frames_from_xyz(filename)
     trajs = np.moveaxis(frames, 0, 2)
     return trajs

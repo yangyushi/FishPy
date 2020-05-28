@@ -3,6 +3,131 @@
 const double RII = 0.751879699;  // inverse of water refractive index
 const double RI = 1.33;  // water refractive index
 
+namespace stereo {
+
+Link::Link(int i, int j, int k, double e)
+    : indices_{i, j, k}, error_{e} {
+        ostringstream r;
+        r   << "["  << i << ", " << j  << ", " << k << "], error: "
+            << fixed << setprecision(2) << e;
+        repr_ = r.str();
+}
+
+
+int& Link::operator[] (int index){
+    return indices_[index];
+}
+
+
+Links::Links() : links_{}, size_{0} {}
+
+Links::Links(vector<Link> links)
+    :links_{links}, size_{int(links.size())} {
+    for (auto link : links_){
+        for (int i = 0; i < 3; i++){
+            indices_[i].insert(link[i]);
+        }
+    }
+}
+
+void Links::report(){
+    int idx = 0;
+    for (auto sl : links_){
+        cout << "#" << ++idx << ": " << sl.repr_ << endl;
+    }
+    for (int i = 0; i < 3; i++){
+        cout << "ID " << i+1 << ": ";
+        int count = 0;
+        for (auto idx : indices_[i]){
+            if (++count < indices_[i].size()) {
+                cout << idx << ", ";
+            } else {
+                cout << idx << endl;
+            }
+        }
+    }
+}
+
+Link& Links::operator[] (int index){
+    return links_[index];
+}
+
+
+void Links::add(int i, int j, int k, double d){
+    bool must_be_new =
+        indices_[0].find(i) == indices_[0].end() or
+        indices_[1].find(j) == indices_[1].end() or
+        indices_[2].find(k) == indices_[2].end();
+    if (must_be_new){
+        links_.push_back(Link{i, j, k, d});
+        indices_[0].insert(i);
+        indices_[1].insert(j);
+        indices_[2].insert(k);
+        size_ ++;
+        return;
+    } else {
+        for (auto& l0 : links_){
+            if ((l0[0] == i) and (l0[1] == j) and (l0[2] == k)){
+                if (d < l0.error_){
+                    l0.error_ = d;
+                    ostringstream r;
+                    r   << "[" << i << ", " << j << ", " << k << "], error: "
+                        << fixed << setprecision(2) << d;
+                    l0.repr_ = r.str();
+                }
+                return;
+            }
+        }
+        links_.push_back(Link{i, j, k, d});
+        indices_[0].insert(i);
+        indices_[1].insert(j);
+        indices_[2].insert(k);
+        size_ ++;
+        return;
+    }
+}
+
+
+void Links::add(Link l){
+    bool must_be_new =
+        indices_[0].find(l[0]) == indices_[0].end() or
+        indices_[1].find(l[1]) == indices_[1].end() or
+        indices_[2].find(l[2]) == indices_[2].end();
+    if (must_be_new){
+        links_.push_back(l);
+        indices_[0].insert(l[0]);
+        indices_[1].insert(l[1]);
+        indices_[2].insert(l[2]);
+        return;
+    } else {
+        for (auto& l0 : links_){
+            if ((l0[0] == l[0]) and (l0[1] == l[1]) and (l0[2] == l[2])){
+                if (l.error_ < l0.error_){
+                    l0.error_ = l.error_;
+                    ostringstream r;
+                    r   << "[" << l[0] << ", " << l[1] << ", " << l[2] << "], error: "
+                        << fixed << setprecision(2) << l.error_;
+                    l0.repr_ = r.str();
+                }
+                return;
+            }
+        }
+        links_.push_back(l);
+        indices_[0].insert(l[0]);
+        indices_[1].insert(l[1]);
+        indices_[2].insert(l[2]);
+        return;
+    }
+}
+
+PYLinks Links::to_py(){
+    PYLinks result;
+    for (auto link : links_){
+        result.push_back(link.indices_);
+    }
+    return result;
+}
+
 
 Vec3D get_poi(Vec2D& xy, ProjMat& P){
     Vec3D poi;
@@ -152,8 +277,9 @@ double get_error(TriXY centres, TriPM Ps, TriXYZ Os){
 Links three_view_match(
         Coord2D& centres_1, Coord2D& centres_2, Coord2D& centres_3,
         ProjMat P1, ProjMat P2, ProjMat P3,
-        Vec3D O1, Vec3D O2, Vec3D O3, double tol_2d){
-    Links result;
+          Vec3D O1,   Vec3D O2,   Vec3D O3,
+        double tol_2d, bool optimise=true
+        ){
     Vec2D x1, x2, x3;
     Vec3D poi_1, poi_2, poi_3, ref_1, ref_2, ref_3, xyz;
     Line l1, l2, l3;
@@ -161,6 +287,8 @@ Links three_view_match(
     int n2 = centres_2.rows();
     int n3 = centres_3.rows();
     double error{0};
+
+    Links links;
 
     for (int i = 0; i < n1; i++){
         x1 = centres_1.row(i);
@@ -188,10 +316,84 @@ Links three_view_match(
                             TriXYZ{O1, O2, O3}
                         );
                 if (error < tol_2d){
-                    result.push_back(Link{i, j, k});
+                    links.add(i, j, k, error);
                 }
             }
         }
     }
-    return result;
+    if (optimise){
+        return optimise_links(links);
+    } else {
+        return links;
+    }
+}
+
+
+IloBoolVarArray get_variables(IloEnv& env, Links system){
+    IloBoolVarArray x(env);
+    for (int i = 0; i < system.size_; i++){
+        x.add(IloBoolVar(env));
+    }
+    return x;
+}
+
+
+IloRangeArray get_constrains(IloEnv& env, IloBoolVarArray& x, Links sys){
+    IloRangeArray constrains(env);
+    IloInt idx;
+    for (int view = 0; view < 3; view++) { ///< ∀ i
+        for (auto i : sys.indices_[view]) {
+            IloExpr sum(env);
+            idx = 0;
+            for (auto link : sys.links_){
+                if (link[view] == i){
+                    sum += x[idx];  ///< ∑(jk)[ x(ijk) ] ≥ 1
+                }
+                idx++;
+            }
+            constrains.add(sum >= 1);
+        }
+    }
+    return constrains;
+}
+
+
+IloExpr get_cost(IloEnv& env, IloBoolVarArray x, Links system){
+    IloExpr cost(env);
+    for (int i = 0; i < system.size_; i++){
+        cost += system[i].error_ * x[IloInt(i)];
+    }
+    return cost;
+}
+
+
+Links optimise_links(Links system){
+    Links new_system;
+    IloEnv   env;
+    IloModel model(env);
+
+    IloBoolVarArray x = get_variables(env, system);  // variables
+    IloRangeArray constrains = get_constrains(env, x, system);
+    IloExpr cost = get_cost(env, x, system);
+    model.add(IloMinimize(env, cost));
+    model.add(constrains);
+
+    IloCplex cplex(model);
+    cplex.setOut(env.getNullStream());  ///< avoid log msgs on the screen
+    if ( !cplex.solve() ) {
+     env.error() << "Failed to optimize LP" << endl;
+     throw(-1);
+    }
+
+    IloNumArray vals(env);
+    cplex.getValues(vals, x);
+    for (int i = 0; i < system.size_; i++){
+        if (vals[i] == 1){
+            new_system.add(system[i]);
+        }
+    }
+    env.end();
+    return new_system;
+}
+
 }

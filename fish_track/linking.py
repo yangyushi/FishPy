@@ -151,7 +151,7 @@ class ActiveLinker():
         Getting trajectories from positions in different frames
 
         Args:
-            frames (:obj:`numpy.ndarray`): the positions of particles in different frames from the experimental data
+            frames (:obj:`list` of :obj:`numpy.ndarray`): the positions of particles in different frames from the experimental data
 
         Return:
             :obj:`list`: a collection of trajectories. Each trajectory is represented by a list, [time_points, positions]
@@ -232,11 +232,11 @@ class ActiveLinker():
         Get links in two successive frames
 
         Args:
-            fp (np.ndarray): previous frame, (dim, n)
-            f0 (np.ndarray): current frame, (dim, n)
-            f1 (np.ndarray): next frame, (dim, n)
-            f2 (np.ndarray): second next frame, (dim, n)
-            links (list): link for particles between fp to f0
+            fp (:obj:`numpy.ndarray`): previous frame, (dim, n)
+            f0 (:obj:`numpy.ndarray`): current frame, (dim, n)
+            f1 (:obj:`numpy.ndarray`): next frame, (dim, n)
+            f2 (:obj:`numpy.ndarray`): second next frame, (dim, n)
+            links (list): index correspondence for particles between fp to f0
 
         Return:
             list: link from f0 to f1

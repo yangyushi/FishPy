@@ -1,13 +1,55 @@
-CPPFLAGS = -Wall -I${prefix}/include/eigen3 -std=c++11 -fPIC -shared -O3
-LDLIBS = -L${prefix}/lib
-PYFLAGS = `${PY} -m pybind11 --includes` `${PY}-config --ldflags`
-PYEXT = `${PY}-config --extension-suffix`
+CC=clang++
+CPPFLAGS = -Wall -I${prefix}/include/eigen3 -std=c++11 -O3\
+		   -I/Applications/CPLEX_Studio1210/cplex/include\
+		   -I/Applications/CPLEX_Studio1210/concert/include\
+		   -DIL_STD -I. -fPIC
 
-cray_trace$(PYEXT): cray_trace.cpp stereo.cpp
-	g++ $(LDLIBS) $(CPPFLAGS) $(PYFLAGS) stereo.cpp cray_trace.cpp -o cray_trace$(PYEXT)
+LFLAG=-L/Applications/CPLEX_Studio1210/cplex/lib/x86-64_osx/static_pic\
+	  -L/Applications/CPLEX_Studio1210/concert/lib/x86-64_osx/static_pic\
+	  -lilocplex -lconcert -lcplex -lm -lpthread
 
-all: cray_trace.cpp
-	g++ $(LDLIBS) $(CPPFLAGS) $(PYFLAGS) stereo.cpp cray_trace.cpp -o cray_trace$(PYEXT)
+PYFLAGS = $(shell ${PY} -m pybind11 --includes)\
+		  $(shell ${PY}-config --ldflags)
+
+PYEXT = $(shell ${PY}-config --extension-suffix)
+
+all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT)
+
+cgreta$(PYEXT): libgreta.a cgreta.cpp
+	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cgreta.cpp libgreta.a -o cgreta$(PYEXT)
+
+ctemporal$(PYEXT): libtemporal.a ctemporal.cpp
+	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared ctemporal.cpp libtemporal.a -o ctemporal$(PYEXT)
+
+cstereo$(PYEXT): libstereo.a cstereo.cpp
+	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cstereo.cpp libstereo.a -o cstereo$(PYEXT)
+
+libgreta.a: greta.cpp greta.h
+	$(CC) $(CPPFLAGS) -c greta.cpp -o greta.o
+	ar rcs libgreta.a greta.o
+	rm -f greta.o
+
+libstereo.a: stereo.cpp stereo.h
+	$(CC) $(CPPFLAGS) -c stereo.cpp -o stereo.o
+	ar rcs libstereo.a stereo.o
+	rm -f stereo.o
+
+libtemporal.a: temporal.cpp temporal.h
+	$(CC) $(CPPFLAGS) -c temporal.cpp -o temporal.o
+	ar rcs libtemporal.a temporal.o
+	rm -f temporal.o
+
+cray_trace$(PYEXT): cray_trace.cpp
+	$(CC) $(LFLAG) $(CPPFLAGS) $(PYFLAGS) -shared stereo.cpp cray_trace.cpp -o cray_trace$(PYEXT)
+
+.PHONY: all
 
 test:
-	${PY} test.py
+	$(CC) $(CPPFLAGS) $(LFLAG) test_greta.cpp temporal.cpp -o test
+	./test
+	rm -f test
+
+clean:
+	rm -f *.so
+	rm -f *.o
+	rm -f *.a

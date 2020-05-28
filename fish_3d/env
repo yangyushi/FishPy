@@ -1,0 +1,2 @@
+export prefix=/usr/local
+export PY=python3
