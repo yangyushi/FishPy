@@ -30,6 +30,17 @@ Links::Links(vector<Link> links)
     }
 }
 
+Links::Links(PYLinks links_py)
+    : links_{}, size_{0} {
+        int id_1, id_2, id_3; ///< indices in three views
+        double error;
+        for (auto link_py : links_py){
+            tie(id_1, id_2, id_3, error) = link_py;
+            links_.push_back(Link{id_1, id_2, id_3, error});
+            size_++;
+        }
+    }
+
 void Links::report(){
     int idx = 0;
     for (auto sl : links_){
@@ -123,7 +134,9 @@ void Links::add(Link l){
 PYLinks Links::to_py(){
     PYLinks result;
     for (auto link : links_){
-        result.push_back(link.indices_);
+        result.push_back(make_tuple(
+                    link.indices_[0], link.indices_[1], link.indices_[2], link.error_
+                    ));
     }
     return result;
 }
@@ -271,6 +284,21 @@ double get_error(TriXY centres, TriPM Ps, TriXYZ Os){
         error += (centres[i] - reproj).norm();
     }
     return error / 3;
+}
+
+
+Vec3D three_view_reconstruct(array<Vec2D, 3>Cs, array<ProjMat, 3> Ps, array<Vec3D, 3> Os){
+    Vec3D poi, refraction, xyz;
+    Lines lines;
+    Line line;
+    for (int view = 0; view < 3; view++){
+        poi = get_poi(Cs[view], Ps[view]);
+        refraction = get_refraction_ray(poi - Os[view]);
+        line.row(0) = poi;
+        line.row(1) = refraction;
+        lines[view] = line;
+    }
+    return get_intersection(lines);
 }
 
 

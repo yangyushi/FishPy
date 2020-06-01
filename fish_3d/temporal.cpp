@@ -176,6 +176,7 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
     Links result;
     set<int> indices_0 = links_p0.indices_[1];  ///< the indices of f0 linking to fp
     Vec2D x0, xp;
+
     for (int i=0; i < f0.rows(); i++){
         if (indices_0.find(i) == indices_0.end()){  ///< index i is NOT linked to fp
             x0 = f0.row(i);
@@ -197,25 +198,44 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
 void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
     Vec2D x1;
     bool link_found{false};
+    int nn_idx{0};
+    double nn_dist = (x0 - Vec2D{f1.row(0)}).norm();
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
         double dist = (x0 - x1).norm();
+        if (dist < nn_dist) {
+            nn_dist = dist;
+            nn_idx = j;
+        }
         if (dist <= sr){
             links.add(i, j, dist);
+            link_found = true;
         }
     }
-    if (not link_found){}
+    if (not link_found){
+        links.add(i, nn_idx, nn_dist);
+    }
 }
 
 
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
     Vec2D x1;
+    bool link_found{false};
+    int nn_idx{0};
+    double nn_dist = (x0 - Vec2D{f1.row(0)}).norm();
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
         double dist = (xp + x1 - 2 * x0).norm();
+        if (dist < nn_dist) {
+            nn_dist = dist;
+            nn_idx = j;
+        }
         if (dist <= sr){
             links.add(i, j, dist);
         }
+    }
+    if (not link_found){
+        links.add(i, nn_idx, nn_dist);
     }
 }
 
@@ -351,6 +371,16 @@ Trajs links_to_trajs(vector<Links> links_multi_frames, bool allow_fragment){
             add_new_trajectories(f, trajs, links_multi_frames[f], links_multi_frames[f-1]);
         }
     }
+    if (not allow_fragment){
+        int frame_num = links_multi_frames.size() + 1;
+        Trajs trajs_full;
+        for (auto traj : trajs){
+            if (traj.indices_.size() == frame_num){
+                trajs_full.push_back(traj);
+            }
+        }
+        return trajs_full;
+    };
     return trajs;
 }
 

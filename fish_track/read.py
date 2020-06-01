@@ -148,6 +148,7 @@ def get_frames_from_xyz(filename, ncols=3):
             for j in range(particle_num):
                 data = re.split(r'\s', f.readline())[1: 1 + ncols]
                 frames[-1].append(list(map(float, data)))
+    f.close()
     return np.array(frames)
 
 

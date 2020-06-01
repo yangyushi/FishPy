@@ -15,8 +15,8 @@ PYEXT = $(shell ${PY}-config --extension-suffix)
 
 all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT)
 
-cgreta$(PYEXT): libgreta.a cgreta.cpp
-	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cgreta.cpp libgreta.a -o cgreta$(PYEXT)
+cgreta$(PYEXT): libgreta.a libtemporal.a libstereo.a cgreta.cpp
+	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cgreta.cpp libgreta.a libtemporal.a libstereo.a -o cgreta$(PYEXT)
 
 ctemporal$(PYEXT): libtemporal.a ctemporal.cpp
 	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared ctemporal.cpp libtemporal.a -o ctemporal$(PYEXT)
@@ -44,8 +44,8 @@ cray_trace$(PYEXT): cray_trace.cpp
 
 .PHONY: all
 
-test:
-	$(CC) $(CPPFLAGS) $(LFLAG) test_greta.cpp temporal.cpp -o test
+test: libgreta.a libtemporal.a libstereo.a
+	$(CC) $(CPPFLAGS) $(LFLAG) test_greta.cpp libtemporal.a libstereo.a libgreta.a -o test
 	./test
 	rm -f test
 

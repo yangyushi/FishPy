@@ -14,6 +14,7 @@ namespace stereo {
     using Mat33   = Eigen::Matrix<double, 3,              3, Eigen::RowMajor>;
     using ProjMat = Eigen::Matrix<double, 3,              4, Eigen::RowMajor>;
     using Coord2D = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
+    using Coord3D = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
     using Line    = Eigen::Matrix<double, 2,              3, Eigen::RowMajor>;
     using Lines = array<Line, 3>;
 
@@ -25,7 +26,11 @@ namespace stereo {
     using TriXYZ = array<Vec3D, 3>;
     using TriPM = array<ProjMat, 3>;
 
-    using PYLinks = vector< array<int, 3> >;  // compatible with pybind11
+    /**
+     * Indices and stereo errors of a trjaectory
+     * compatible with pybind11
+     */
+    using PYLinks = vector< tuple<int, int, int, double> >;
 
     /**
      * A collection of 3 view stereo linking result
@@ -58,6 +63,7 @@ namespace stereo {
         PYLinks to_py();
         Links();
         Links(vector<Link> links);
+        Links(PYLinks links_py);
         Link& operator[] (int index);
     };
 
@@ -101,6 +107,11 @@ namespace stereo {
 
 
     double get_error(TriXY centres, TriPM Ps, TriXYZ Os);
+
+    /**
+     * Calculate the 3D coordinates from 3 stereo-matched 2D coordinates
+     */
+    Vec3D three_view_reconstruct(array<Vec2D, 3>Cs, array<ProjMat, 3> Ps, array<Vec3D, 3> Os);
 
     /**
      * Generating stereo matched indices

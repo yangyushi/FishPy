@@ -59,6 +59,7 @@ struct Links{
 /*
  * a 2d path represented by the indices of the same particle, "shape": (nframe, 2)
  * in different frames, the γ_i(t) in 10.1109/TPAMI.2015.2414427
+ * traj[t] --> particle id in frame t
  */
 struct Traj{
     vector<int> indices_;
@@ -74,6 +75,9 @@ struct Traj{
     int last_time();
 };
 
+/**
+ * shape (n_trajs, n_frames, 2)
+ */
 using Trajs = vector<Traj>;
 
 /**
@@ -131,7 +135,7 @@ void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
 
 /**
- * Generating variables for optimisaing the stereo linking result
+ * Generating variables for optimisaing the temporal linking result
  *
  * @param env: the environment required by CPLEX
  * @param sys: a collection of possible 2-frame temporal links
@@ -167,7 +171,6 @@ Links optimise_links(Links system);
  * Link positions from 2 successive frames
  */
 Trajs link_2d(vector<Coord2D> frames, double search_range, bool allow_fragment);
-
 
 Trajs links_to_trajs(vector<Links> links, bool allow_fragment);
 
