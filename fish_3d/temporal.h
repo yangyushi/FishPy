@@ -25,6 +25,14 @@ using PYTraj = array<vector<int>, 2>;
 using PYTrajs = vector<PYTraj>;
 
 /**
+ * A meta particle that contains its intial 2D position 
+ *     and the predicted position at its next frame
+ */
+using MetaParticle = array<Vec2D, 2>;    ///< shape (2, )
+using MetaFrame = vector<MetaParticle>;  ///< shape (n_particle, 2)
+using MetaFrames = vector<MetaFrame>;    ///< shape (n_frames, n_particles, 2)
+
+/**
  * temporally matched indices
  */
 struct Link{
@@ -93,6 +101,7 @@ struct LinkerNN{
      * @param: f1 - xy coordinates of next frame
      */
     Links get_links(Coord2D f0, Coord2D f1);
+    Links get_links(MetaFrame f0, MetaFrame f1);
     LinkerNN(double search_range);
 };
 
@@ -135,6 +144,13 @@ void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
 
 /**
+ * search all the meta particles in frame 1, if its distance to the prediction of x0
+ *     is smaller than sr, add link i, j, distance
+ *     the distance is calculated as |x0.prediction - x1.start|
+ */
+void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr);
+
+/**
  * Generating variables for optimisaing the temporal linking result
  *
  * @param env: the environment required by CPLEX
@@ -171,6 +187,11 @@ Links optimise_links(Links system);
  * Link positions from 2 successive frames
  */
 Trajs link_2d(vector<Coord2D> frames, double search_range, bool allow_fragment);
+
+/**
+ * Link meta particles from 2 successive "frames"
+ */
+Trajs link_meta(MetaFrames frames, double search_range, bool allow_fragment);
 
 Trajs links_to_trajs(vector<Links> links, bool allow_fragment);
 

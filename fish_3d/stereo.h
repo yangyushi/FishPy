@@ -29,6 +29,7 @@ namespace stereo {
     /**
      * Indices and stereo errors of a trjaectory
      * compatible with pybind11
+     * shape (n_links, 4)
      */
     using PYLinks = vector< tuple<int, int, int, double> >;
 
@@ -45,7 +46,7 @@ namespace stereo {
 
 
     /**
-     * A collection of stereo links for constrained optimisation
+     * A collection of stereo links for constrained optimisation, "shape": (n_links, 3)
      * These links were subjected to a spatial cutoff of the reprojection error,
      *     and they form the set S in equation (1) of the supplementary info of
      *     this paper: 10.1109/TPAMI.2015.2414427

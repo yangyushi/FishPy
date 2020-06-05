@@ -168,6 +168,16 @@ Links LinkerNN::get_links(Coord2D f0, Coord2D f1){
     return result;
 }
 
+Links LinkerNN::get_links(MetaFrame f0, MetaFrame f1){
+    Links result;
+    MetaParticle x0;
+    for (int i=0; i < f0.size(); i++){
+        x0 = f0[i];
+        collect_link(x0, f1, result, i, sr_);
+    }
+    return result;
+}
+
 
 LinkerF3::LinkerF3(double search_range) : LinkerNN{search_range} {}
 
@@ -217,6 +227,28 @@ void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
     }
 }
 
+
+void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr){
+    MetaParticle x1;
+    bool link_found{false};
+    int nn_idx{0};
+    double nn_dist = (x0[1] - f1[0][0]).norm();
+    for (int j=0; j < f1.size(); j++){
+        x1 = f1[j];
+        double dist = (x0[1] - x1[0]).norm();  ///< between prediction and observation
+        if (dist < nn_dist) {
+            nn_dist = dist;
+            nn_idx = j;
+        }
+        if (dist <= sr){
+            links.add(i, j, dist);
+            link_found = true;
+        }
+    }
+    if (not link_found){
+        links.add(i, nn_idx, nn_dist);
+    }
+}
 
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
     Vec2D x1;
@@ -371,7 +403,7 @@ Trajs links_to_trajs(vector<Links> links_multi_frames, bool allow_fragment){
             add_new_trajectories(f, trajs, links_multi_frames[f], links_multi_frames[f-1]);
         }
     }
-    if (not allow_fragment){
+    if (not allow_fragment){  // remove trajectories shorter than the frame number
         int frame_num = links_multi_frames.size() + 1;
         Trajs trajs_full;
         for (auto traj : trajs){
@@ -398,6 +430,19 @@ Trajs link_2d(vector<Coord2D> frames, double search_range, bool allow_fragment){
                         links_multi_frames[links_multi_frames.size() - 1]
                     );
         }
+        links = optimise_links(links);
+        links_multi_frames.push_back(links);
+    }
+    return links_to_trajs(links_multi_frames, allow_fragment);
+}
+
+
+Trajs link_meta(MetaFrames frames, double search_range, bool allow_fragment){
+    vector<Links> links_multi_frames;
+    LinkerNN linker{search_range};
+    Links links;
+    for (int f = 0; f < frames.size() - 1; f++){
+        links = linker.get_links(frames[f], frames[f + 1]);
         links = optimise_links(links);
         links_multi_frames.push_back(links);
     }
