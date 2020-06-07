@@ -48,112 +48,111 @@ using STLinks = vector<st::Links>;    ///< shape (n_frame, n_links, 3)
  * γ(t)
  * k1, k2, k3 are indices of 2d trajectories
  */
-struct StereoTraj{
-    array<int, 3> id_;
-    const FramesV3 frames_v3_;
+class StereoTraj{
+    private:
+        const FramesV3& frames_v3_;
+        const double c_max_;
+    public:
+        bool is_valid_;  ///< false if no stereo link in any frame
+        double error_; ///< The time-averaged reprojection error
 
-    bool is_valid_;  ///< false if no stereo link in any frame
-    double c_max_;
-    double error_; ///< The time-averaged reprojection error
+        array<vector<int>, 3> labels_;  ///< labels[view][frame] --> particle id
+        array<tp::Vec2D, 3> pos_start_;
+        array<tp::Vec2D, 3> pos_predict_;
 
-    array<vector<int>, 3> labels_;  ///< labels[view][frame] --> particle id
-
-    array<tp::Vec2D, 3> pos_start_;
-    array<tp::Vec2D, 3> pos_predict_;
-
-    inline bool contains_particle(int view, int frame, int id){
-        return labels_[view][frame] == id;
-    }
-    /**
-     * Calculate the 3D coordinates of this trajectory
-     * @param Ps: projection matrices of three cameras
-     * @param Os: origins of three cameras
-     */
-    st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os);
-    StereoTraj(
+        inline bool contains_particle(int view, int frame, int id) const {
+            return labels_[view][frame] == id;
+        }
+        st::Coord3D get_coordinates(
+            array<st::ProjMat, 3> Ps, ///< @param Ps: projection matrices of three cameras
+            array<st::Vec3D, 3>   Os  ///< @param Os: origins of three cameras
+        ) const;
+        StereoTraj(
             int k1, int k2, int k3, double c_max,
-            const FramesV3 frames,
+            const FramesV3& frames,
             const TemporalTrajs& trajs_2d_v3,
             const STLinks& links
-            );
+        );
+        StereoTraj(
+            const StereoTraj& t, const FramesV3& frames_v3
+        );
 };
 
 /**
  * { γ(t) }
  * All the 2d trajectories should have the same length in time
  */
-struct StereoTrajs{
-    TemporalTrajs temporal_trajs_; ///< (3, n_trajs, n_frame, 2)
-    STLinks st_links_;             ///< (n_frame, n_links, 3)
-    FramesV3 frames_v3_;           ///< (3, n_frames, n_particles, 2)
-    LabelsV3 labels_;              ///< (3, n_frames, n_particles)
-    double c_max_;
-    int size_;                     ///< number of stereo trajs, trajs_.size()
-    vector<StereoTraj> trajs_;     ///< (n_trajs, )
-    const bool is_root_ = true;
-    const bool near_root_ = false;
-
-    vector<st::Coord3D> get_coordinates(
+class StereoTrajs{
+    private:
+        const TemporalTrajs temporal_trajs_; ///< (3, n_trajs, n_frame, 2)
+        const STLinks st_links_;             ///< (n_frame, n_links, 3)
+        const FramesV3 frames_v3_;           ///< (3, n_frames, n_particles, 2)
+        double c_max_;
+    public:
+        vector<StereoTraj> trajs_;     ///< (n_trajs, )
+        LabelsV3 labels_;              ///< (3, n_frames, n_particles)
+        int size_;                     ///< number of stereo trajs, trajs_.size()
+        vector<st::Coord3D> get_coordinates(
             array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-            );
-
-    inline void get_total_frames(unsigned long& frame_num){
-        frame_num *= frames_v3_[0].size();
-    }
-
-    inline unsigned long get_total_frames(){
-        return frames_v3_[0].size();
-    }
-
-    void get_validate_trajs();
-    void add(StereoTraj traj);
-    void clear();
-
-    StereoTrajs(
+            ) const;
+        inline void get_total_frames(unsigned long& frame_num) const {
+            frame_num *= frames_v3_[0].size();
+        }
+        inline unsigned long get_total_frames() const {
+            return frames_v3_[0].size();
+        }
+        void get_validate_trajs();
+        void add(const StereoTraj& traj);
+        void clear();
+        StereoTrajs(
             TemporalTrajs temporal_trajs, STLinks links, FramesV3 frames,
             double c_max
-            );
+        );
+        StereoTrajs(const StereoTrajs& anoter);
 };
 
 /**
  * the meta version of StereoTraj
  */
 template<class T>
-struct MetaST{
-    array<int, 3> id_;
-    vector<T>& parents_;
-    const MetaFramesV3& frames_v3_;
-    unsigned long total_frame_;
-    double c_max_;
-    double error_{0};
-    bool is_valid_{false};
-    array<vector<int>, 3> labels_{}; ///< (3, n_frame)
-    array<tp::Vec2D, 3> pos_start_;
-    array<tp::Vec2D, 3> pos_predict_;
-    inline bool contains_particle(int view, int frame, int id){
-        return labels_[view][frame] == id;
-    }
-
-    st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os);
-
-    MetaST(
+class MetaST{
+    private:
+        //const array<int, 3> id_;
+        const vector<T>& parents_;
+        const MetaFramesV3& frames_v3_;
+        const unsigned long total_frame_;
+        const double c_max_;
+        array<vector<int>, 3> labels_{}; ///< (3, n_frame)
+    public:
+        array<tp::Vec2D, 3> pos_start_;
+        array<tp::Vec2D, 3> pos_predict_;
+        double error_;
+        bool is_valid_{false};
+        inline bool contains_particle(int view, int frame, int id) const {
+            return labels_[view][frame] == id;
+        }
+        st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os) const;
+        MetaST(
             int k1, int k2, int k3, double c_max, unsigned long total_frame,
             const MetaFramesV3& frames_v3,
-            vector<T>& parents,
+            const vector<T>& parents,
             const TemporalTrajs& trajs_2d_v3,
             const STLinks& links
-            );
+        );
+        MetaST(
+            const MetaST<T>& anoter_traj, const MetaFramesV3& frames_v3, const vector<T>& parents
+        );
 };
 
 template<class T>
 MetaST<T>::MetaST(
         int k1, int k2, int k3, double c_max, unsigned long total_frame,
         const MetaFramesV3& frames_v3,
-        vector<T>& parents,
+        const vector<T>& parents,
         const TemporalTrajs& temporal_trajs,
-        const STLinks& links
+        const STLinks& st_links
         )
-    : id_{k1, k2, k3}, parents_{parents}, frames_v3_{frames_v3},
+    : parents_{parents}, frames_v3_{frames_v3},
       total_frame_{total_frame}, c_max_{c_max} {
         array<tp::Traj, 3> trajs_2d { ///< trajectories of meta particles belonging to
             temporal_trajs[0][k1],    //     this MetaST instance
@@ -163,10 +162,9 @@ MetaST<T>::MetaST(
         array<int, 3> indices_v3;
         int st_index = 0, frame_num = frames_v3[0].size();
 
-        array<int, 3> ids {k1, k2, k3};
         for (int view = 0; view < 3; view++){
-            pos_start_[view]   = frames_v3[view][0]            [ids[view]][0];
-            pos_predict_[view] = frames_v3[view][frame_num - 1][ids[view]][1];
+            pos_start_[view]   = frames_v3[view][0]            [trajs_2d[view][0            ]][0];
+            pos_predict_[view] = frames_v3[view][frame_num - 1][trajs_2d[view][frame_num - 1]][1];
         }
 
         for (int frame = 0; frame < frame_num; frame++){
@@ -177,7 +175,7 @@ MetaST<T>::MetaST(
             }
             st_index = 0;
             // find stereo link that link 2d trajectories in current frame
-            for (auto link : links[frame].links_){
+            for (const auto& link : st_links[frame].links_){
                 if (indices_v3 == link.indices_){
                     is_valid_ = true;
                     link_found = true;
@@ -193,33 +191,48 @@ MetaST<T>::MetaST(
         error_ /= frame_num;
 }
 
+/**
+ * copy everything except for the address of frames_v3 and parents
+ *     from anoter Meta Trajectory
+ */
+template<class T>
+MetaST<T>::MetaST(
+        const MetaST<T>& t,
+        const MetaFramesV3& frames_v3,
+        const vector<T>& parents)
+    : parents_{parents}, frames_v3_{frames_v3}, total_frame_{t.total_frame_},
+      c_max_{t.c_max_}, labels_{t.labels_}, pos_start_{t.pos_start_},
+      pos_predict_{t.pos_predict_}, error_{t.error_}, is_valid_{t.is_valid_}
+      {}
+
 template<class T>
 st::Coord3D MetaST<T>::get_coordinates(
             array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-        ){
+        ) const {
     st::Coord3D result{total_frame_, 3};
 
     unsigned long n_frames = frames_v3_[0].size();
-    const unsigned long block_size = parents_[0].get_total_frames();
+    unsigned long block_size = parents_[0].get_total_frames();
+
     array<int, 3> meta_id;
     bool is_valid = false;
 
     for (int t = 0; t < n_frames; t++){
-        is_valid = false;
         int t_shift = t * block_size;
         for (int view = 0; view < 3; view++){
             meta_id[view] = labels_[view][t];  ///< particle id in the meta frame
         }
+        is_valid = (meta_id[0] == meta_id[1]) and (meta_id[0] == meta_id[2]);
+        if (not is_valid){
+            result.block(t_shift, 0, block_size, 3) = st::Coord3D::Constant(block_size, 3, NAN);
+            continue;
+        }
         for (int idx = 0; idx < parents_[t].trajs_.size(); idx++){
 
             if (meta_id == array<int, 3>{idx, idx, idx}){
-
-                st::Coord3D tmp = parents_[t].trajs_[idx].get_coordinates(Ps, Os);
-
                 result.block(
                         t_shift, 0, block_size, 3
                     ) = parents_[t].trajs_[idx].get_coordinates(Ps, Os);
-
                 is_valid = true;
                 break;
             }
@@ -232,29 +245,30 @@ st::Coord3D MetaST<T>::get_coordinates(
 }
 
 template<class T>
-struct MetaSTs{
-    TemporalTrajs temporal_trajs_;  ///< (3, n_trajs, n_frame, 2)
-    STLinks st_links_;             ///< (n_frame, n_links, 3)
-    MetaFramesV3 frames_v3_;        ///< (3, n_frames, n_particles, 2, 2)
-    vector<T> parents_;              ///< (n_frames, )
-    LabelsV3 labels_;               ///< (3, n_frames, n_particles)
-    double c_max_;
-    int size_;                      ///< number of stereo trajs, trajs_.size()
-    bool near_root_;                ///< if the parent is StereoTrajs
-    vector< MetaST<T> > trajs_;
-    const bool is_root_ = false;
-    void get_validate_trajs();
-    void add(MetaST<T> traj);
-    void clear();
-    unsigned long get_total_frames();
-    void get_total_frames(unsigned long& frame_num);
-    vector<st::Coord3D> get_coordinates(
-            array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-            );
-    MetaSTs(
+class MetaSTs{
+    private:
+        const TemporalTrajs temporal_trajs_;  ///< (3, n_trajs, n_frame, 2)
+        const STLinks st_links_;             ///< (n_frame, n_links, 3)
+        const MetaFramesV3 frames_v3_;        ///< (3, n_frames, n_particles, 2, 2)
+        const vector<T> parents_;              ///< (n_frames, )
+        double c_max_;
+    public:
+        LabelsV3 labels_;               ///< (3, n_frames, n_particles)
+        vector< MetaST<T> > trajs_;
+        int size_;                      ///< number of stereo trajs, trajs_.size()
+        void get_validate_trajs();
+        void add(const MetaST<T>& traj);
+        void clear();
+        unsigned long get_total_frames() const;
+        void get_total_frames(unsigned long& frame_num) const;
+        vector<st::Coord3D> get_coordinates(
+                array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
+                ) const;
+        MetaSTs(
             TemporalTrajs temporal_trajs, STLinks links, MetaFramesV3 frames_v3,
             vector<T> parents, double c_max
-            );
+        );
+        MetaSTs(const MetaSTs<T>& rhs);
 };
 
 template<class T>
@@ -263,11 +277,11 @@ MetaSTs<T>::MetaSTs(
         vector<T> parents, double c_max
         )
     : temporal_trajs_{temporal_trajs}, st_links_{links}, frames_v3_{frames_v3},
-    parents_{parents}, labels_{}, c_max_{c_max}, size_{0} {
+    parents_{parents}, c_max_{c_max}, labels_{}, size_{0} {
         int v = 0;
-        for (auto frames : frames_v3_){  ///< iter over views  -> vector< Coord2D >
+        for (auto& frames : frames_v3_){  ///< iter over views  -> vector< Coord2D >
             int f = 0;
-            for (auto frame : frames){  ///< iter over frames -> Coord2D
+            for (auto& frame : frames){  ///< iter over frames -> Coord2D
                 labels_[v].push_back(set<int>{});
                 for (int  i = 0; i < frame.size(); i++){ ///< particle IDs
                     labels_[v][f].insert(i);
@@ -276,8 +290,17 @@ MetaSTs<T>::MetaSTs(
             }
             v++;
         }
-        near_root_ = bool(is_same<T, StereoTrajs>::value);
 }
+
+template<class T>
+MetaSTs<T>::MetaSTs(const MetaSTs<T>& rhs)
+    : temporal_trajs_{rhs.temporal_trajs_},
+      st_links_{rhs.st_links_}, frames_v3_{rhs.frames_v3_}, parents_{rhs.parents_},
+      c_max_{rhs.c_max_}, labels_{rhs.labels_}, trajs_{}, size_{0} {
+          for (auto& traj : rhs.trajs_){
+              add(traj);
+          }
+      }
 
 template<class T>
 void MetaSTs<T>::get_validate_trajs(){
@@ -297,9 +320,11 @@ void MetaSTs<T>::get_validate_trajs(){
 }
 
 template<class T>
-void MetaSTs<T>::add(MetaST<T> traj){
+void MetaSTs<T>::add(const MetaST<T>& traj){
     if (traj.is_valid_){
-        trajs_.push_back(traj);
+        this->trajs_.push_back(
+            MetaST<T>{traj, this->frames_v3_, this->parents_}
+        );
         size_++;
     }
 }
@@ -311,28 +336,31 @@ void MetaSTs<T>::clear(){
 }
 
 template<class T>
-unsigned long MetaSTs<T>::get_total_frames(){
+unsigned long MetaSTs<T>::get_total_frames() const{
     unsigned long frame_num = frames_v3_[0].size();
     parents_[0].get_total_frames(frame_num);
     return frame_num;
 }
 
 template<class T>
-void MetaSTs<T>::get_total_frames(unsigned long& frame_num){
+void MetaSTs<T>::get_total_frames(unsigned long& frame_num) const {
     frame_num *= frames_v3_[0].size();
     parents_[0].get_total_frames(frame_num);
 }
 
 template<class T>
-vector<st::Coord3D> MetaSTs<T>::get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os){
+vector<st::Coord3D> MetaSTs<T>::get_coordinates(
+        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
+        ) const {
     vector<st::Coord3D> result;
-    for (auto traj : trajs_){
+    for (auto& traj : trajs_){
         result.push_back(traj.get_coordinates(Ps, Os));
     }
     return result;
 }
 
 /**
+ *
  * Generating variables for optimisaing the stereo-linked 2D trajectories
  *
  * @param env:    the environment required by CPLEX
@@ -341,7 +369,7 @@ vector<st::Coord3D> MetaSTs<T>::get_coordinates(array<st::ProjMat, 3> Ps, array<
  * @return: a 1D variable array, x[i] correspoinds to system.links_[i]
  */
 template<class T>
-IloBoolVarArray get_variables(IloEnv& env, T system){
+IloBoolVarArray get_variables(IloEnv& env, const T& system){
     IloBoolVarArray x(env);
     for (int i = 0; i < system.size_; i++){
         x.add(IloBoolVar(env));
@@ -355,7 +383,7 @@ IloBoolVarArray get_variables(IloEnv& env, T system){
  * For a mathematical description, see eq. (3) in: 10.1109/TPAMI.2015.2414427
  */
 template<class T>
-IloRangeArray get_constrains_confined(IloEnv& env, IloBoolVarArray& x, T system){
+IloRangeArray get_constrains_confined(IloEnv& env, IloBoolVarArray x, const T& system){
     IloRangeArray constrains(env);
     IloInt idx;
     int total_trajs = 0;  ///< number of stereo trajs passing a 2d feature
@@ -365,7 +393,7 @@ IloRangeArray get_constrains_confined(IloEnv& env, IloBoolVarArray& x, T system)
                 IloExpr sum(env);
                 idx = 0;
                 total_trajs = 0;
-                for (auto traj : system.trajs_){
+                for (const auto& traj : system.trajs_){
                     if (traj.contains_particle(view, frame, particle_id)){
                         sum += x[idx];  ///< ∑(j)[ x(ij) ]
                         total_trajs++;
@@ -386,7 +414,7 @@ IloRangeArray get_constrains_confined(IloEnv& env, IloBoolVarArray& x, T system)
  * The cost function is ∑(γ)[error(γ) * x(γ)]
  */
 template<class T>
-IloExpr get_cost_confined(IloEnv& env, IloBoolVarArray x, T system){
+IloExpr get_cost_confined(IloEnv& env, IloBoolVarArray x, const T& system){
     IloExpr cost(env);
     for (int i = 0; i < system.size_; i++){
         cost += system.trajs_[i].error_ * x[IloInt(i)];
@@ -401,7 +429,7 @@ IloExpr get_cost_confined(IloEnv& env, IloBoolVarArray x, T system){
  * @return: a collection of valid stereo links 
  */
 template<class T>
-T optimise_links_confined(T system){
+T optimise_links_confined(const T& system){
     T new_system{system};
     new_system.clear();
     IloEnv   env;
@@ -440,13 +468,12 @@ T optimise_links_confined(T system){
  *                 they are ordered in the time-axis
  */
 template<class T>
-STLinks get_meta_stereo_links(vector<T> systems){
+STLinks get_meta_stereo_links(const vector<T>& systems){
     STLinks stereo_links;
     for (int frame = 0; frame < systems.size(); frame++){
         st::Links tmp{};
         int idx = 0;
-        for (auto traj : systems[frame].trajs_){
-            //tmp.add(traj.id_[0], traj.id_[1], traj.id_[2], traj.error_);
+        for (const auto& traj : systems[frame].trajs_){
             tmp.add(idx, idx, idx, traj.error_);
             idx++;
         }
@@ -462,14 +489,14 @@ STLinks get_meta_stereo_links(vector<T> systems){
  *                 they are ordered in the time-axis
  */
 template<class T>
-MetaFramesV3 get_meta_frames(vector<T> systems){
+MetaFramesV3 get_meta_frames(const vector<T>& systems){
     MetaFramesV3 frames_v3;
     int frame = 0;
-    for (auto system : systems){
+    for (const auto& system : systems){
         for (int view = 0; view < 3; view++){
             frames_v3[view].push_back(tp::MetaFrame{});
         }
-        for (auto traj : system.trajs_){
+        for (const auto& traj : system.trajs_){
             for (int view = 0; view < 3; view++){
                 tp::MetaParticle mp {traj.pos_start_[view], traj.pos_predict_[view]};
                 frames_v3[view][frame].push_back(mp);
@@ -479,6 +506,5 @@ MetaFramesV3 get_meta_frames(vector<T> systems){
     }
     return frames_v3;
 }
-
 
 #endif

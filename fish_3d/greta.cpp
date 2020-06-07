@@ -3,11 +3,10 @@
 
 st::Coord3D StereoTraj::get_coordinates(
         array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-        ){
+        ) const {
     int n_frames = frames_v3_[0].size();
     st::Coord3D result{n_frames, 3};
     array<st::Vec2D, 3> coordinates_2d;
-
     for (int t = 0; t < n_frames; t++){
         for (int view = 0; view < 3; view++){
             coordinates_2d[view] = frames_v3_[view][t].row(labels_[view][t]);
@@ -20,11 +19,11 @@ st::Coord3D StereoTraj::get_coordinates(
 
 StereoTraj::StereoTraj(
         int k1, int k2, int k3, double c_max,
-        const FramesV3 frames_v3,
+        const FramesV3& frames_v3,
         const TemporalTrajs& temporal_trajs,
         const STLinks& links)
-    : id_{k1, k2, k3}, frames_v3_{frames_v3},
-      is_valid_{false}, c_max_{c_max}, error_{0}, labels_{} {
+    : frames_v3_{frames_v3}, c_max_{c_max},
+      is_valid_{false}, error_{0}, labels_{} {
         array<tp::Traj, 3> trajs_2d {
             temporal_trajs[0][k1], temporal_trajs[1][k2], temporal_trajs[2][k3]
         };
@@ -40,6 +39,7 @@ StereoTraj::StereoTraj(
             p_m1[view] = frames_v3[view][frame_num - 1].row(trajs_2d[view][frame_num - 1]);
             p_m2[view] = frames_v3[view][frame_num - 2].row(trajs_2d[view][frame_num - 2]);
             pos_predict_[view] = 2 * p_m1[view] - p_m2[view];
+            //pos_predict_[view] = p_m1[view];
         }
 
         for (int frame = 0; frame < frame_num; frame++){
@@ -50,7 +50,7 @@ StereoTraj::StereoTraj(
             }
             // find stereo link that link 2d trajectories in current frame
             st_index = 0;
-            for (auto link : links[frame].links_){
+            for (auto& link : links[frame].links_){
                 if (indices_v3 == link.indices_){
                     is_valid_ = true;
                     link_found = true;
@@ -66,15 +66,21 @@ StereoTraj::StereoTraj(
         error_ /= frame_num;
 }
 
+StereoTraj::StereoTraj(const StereoTraj& t, const FramesV3& frames_v3)
+    : frames_v3_{frames_v3}, c_max_{t.c_max_}, is_valid_{t.is_valid_},
+      error_{t.error_}, labels_{t.labels_}, pos_start_{t.pos_start_},
+      pos_predict_{t.pos_predict_} {}
+
 StereoTrajs::StereoTrajs(
         TemporalTrajs temporal_trajs, STLinks links, FramesV3 frames_v3, double c_max
         )
-    : temporal_trajs_{temporal_trajs}, st_links_{links}, frames_v3_{frames_v3},
-      labels_{}, c_max_{c_max}, size_{0} {
+    : temporal_trajs_{temporal_trajs}, st_links_{links},
+      frames_v3_{frames_v3}, c_max_{c_max},
+      labels_{}, size_{0} {
         int v = 0;
-        for (auto frames : frames_v3_){  ///< iter over views  -> vector< Coord2D >
+        for (auto& frames : frames_v3_){  ///< iter over views  -> vector< Coord2D >
             int f = 0;
-            for (auto frame : frames){  ///< iter over frames -> Coord2D
+            for (auto& frame : frames){  ///< iter over frames -> Coord2D
                 labels_[v].push_back(set<int>{});
                 for (int  i = 0; i < frame.rows(); i++){ ///< particle IDs
                     labels_[v][f].insert(i);
@@ -85,11 +91,19 @@ StereoTrajs::StereoTrajs(
         }
 }
 
+StereoTrajs::StereoTrajs(const StereoTrajs& rhs)
+    : temporal_trajs_{rhs.temporal_trajs_}, st_links_{rhs.st_links_},
+      frames_v3_{rhs.frames_v3_}, c_max_{rhs.c_max_}, trajs_{}, size_{0} {
+          for (auto& traj : rhs.trajs_){
+              add(traj);
+          }
+}
+
 vector<st::Coord3D> StereoTrajs::get_coordinates(
         array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-        ){
+        ) const {
     vector<st::Coord3D> result;
-    for (auto traj : trajs_){
+    for (auto& traj : trajs_){
         result.push_back(traj.get_coordinates(Ps, Os));
     }
     return result;
@@ -112,9 +126,9 @@ void StereoTrajs::get_validate_trajs(){
         }}}
 }
 
-void StereoTrajs::add(StereoTraj traj){
+void StereoTrajs::add(const StereoTraj& traj){
     if (traj.is_valid_){
-        trajs_.push_back(traj);
+        trajs_.push_back(StereoTraj{traj, this->frames_v3_});
         size_++;
     }
 }
