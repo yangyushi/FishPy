@@ -32,14 +32,14 @@ StereoTraj::StereoTraj(
         int frame_num = frames_v3_[0].size();
 
         array<st::Vec2D, 3> p_m1;  ///< p[-1]
-        array<st::Vec2D, 3> p_m2;  ///< p[-2]
+        array<st::Vec2D, 3> p_0;  ///< p[-1]
+        array<st::Vec2D, 3> v_mean;  ///< p[-2]
 
         for (int view = 0; view < 3; view++){
-            pos_start_[view] = frames_v3[view][0].row(trajs_2d[view][0]);
-            p_m1[view] = frames_v3[view][frame_num - 1].row(trajs_2d[view][frame_num - 1]);
-            p_m2[view] = frames_v3[view][frame_num - 2].row(trajs_2d[view][frame_num - 2]);
-            pos_predict_[view] = 2 * p_m1[view] - p_m2[view];
-            //pos_predict_[view] = p_m1[view];
+            pos_start_[view]   = frames_v3[view][      0      ].row(trajs_2d[view][      0      ]);
+            p_m1[view]         = frames_v3[view][frame_num - 1].row(trajs_2d[view][frame_num - 1]);
+            v_mean[view] = (p_m1[view] - pos_start_[view]) / (frame_num - 1);
+            pos_predict_[view] = p_m1[view] + v_mean[view];
         }
 
         for (int frame = 0; frame < frame_num; frame++){
