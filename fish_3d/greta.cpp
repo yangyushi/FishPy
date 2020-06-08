@@ -83,7 +83,6 @@ array<st::Coord2D, 3> StereoTraj::get_coordinates_2d() const {
         }
         result[view] = coord_2d;
     }
-    cout << "real coordinates 2D (V3) done" << endl;
     return result;
 }
 
@@ -94,7 +93,6 @@ st::Coord2D StereoTraj::get_coordinates_2d(int view) const {
         int id = labels_[view][t];
         result.row(t) = frames_v3_[view][t].row(id);
     }
-    cout << "real coordinates 2D done" << endl;
     return result;
 }
 

@@ -93,7 +93,6 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2(
 
     meta_sts_lv1.get_validate_trajs();
 
-    cout << "meta sts lv1 size: " << meta_sts_lv1.size_ << endl;
 
     MetaSTs<StereoTrajs> meta_sts_lv1_opt = optimise_links_confined(meta_sts_lv1);
 
@@ -121,7 +120,6 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2t3(
 
     vector< tuple<st::Coord3D, double> > result;
 
-    cout << "collecting meta trajectories" << endl;
     vector< MetaSTs<StereoTrajs> > meta_lv2;
     for (int t3 = 0; t3 < tau_3; t3++){
         vector<StereoTrajs> meta_lv1;
@@ -170,31 +168,24 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2t3(
         meta_lv2.push_back(meta_sts_lv1_opt);
     }
 
-    cout << "getting meta stereo links" << endl;
     STLinks stereo_links_meta_lv2 = get_meta_stereo_links(meta_lv2);
-    cout << "getting meta frames" << endl;
     MetaFramesV3 frames_meta_lv2 = get_meta_frames(meta_lv2);
 
-    cout << "getting meta temporal trajectories" << endl;
     TemporalTrajs temporal_trajs_meta_lv2;
     for (int view = 0; view < 3; view++){
         temporal_trajs_meta_lv2[view] = tp::link_meta(frames_meta_lv2[view], search_range_traj, false);
     }
 
-    cout << "getting meta stereo trajectories" << endl;
     MetaSTs<MetaSTs <StereoTrajs> > meta_sts_lv2 {
         temporal_trajs_meta_lv2, stereo_links_meta_lv2, frames_meta_lv2, meta_lv2, c_max
     };
 
     meta_sts_lv2.get_validate_trajs();
 
-    cout << "optimising meta stereo trajectories" << endl;
     MetaSTs< MetaSTs<StereoTrajs> > meta_sts_lv2_opt = optimise_links_confined(meta_sts_lv2);
 
-    cout << "calculating coordinates" << endl;
     auto trajs_3d = meta_sts_lv2_opt.get_coordinates(Ps, Os);
 
-    cout << "exporting to py" << endl;
     for (int i = 0; i < trajs_3d.size(); i++){
         auto traj = trajs_3d[i];
         double error = meta_sts_lv2_opt.trajs_[i].error_;

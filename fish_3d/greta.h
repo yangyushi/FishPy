@@ -287,7 +287,6 @@ array<st::Coord2D, 3> MetaST<T>::get_coordinates_2d() const {
         }
         result[view] = coord_2d;
     }
-    cout << "meta coordinates 2D (V3) done" << endl;
     return result;
 }
 
@@ -303,7 +302,6 @@ st::Coord2D MetaST<T>::get_coordinates_2d(int view) const {
             t_shift, 0, block_size, 2
         ) = parents_[t].trajs_[id].get_coordinates_2d(view);
     }
-    cout << "meta coordinates 2D done" << endl;
     return result;
 }
 
