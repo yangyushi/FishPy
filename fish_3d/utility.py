@@ -7,6 +7,7 @@ from joblib import Parallel, delayed
 from scipy import ndimage
 import matplotlib.pyplot as plt
 from . import ray_trace
+from .cutility import join_pairs
 
 dpi = 150
 
@@ -527,7 +528,6 @@ def get_indices(labels):
 def box_count_polar_image(image, indices):
     """
     Args:
-
         image (:obj:`numpy.ndarray`): the image taken by the camera without undistortion
         labels (:obj:`numpy.ndarray`): labelled image specifying different box regions
     """
@@ -552,3 +552,94 @@ def box_count_polar_video(video, labels, cores=2, report=True):
     )
     return np.array(results).T  # (3, n)
 
+
+def get_overlap_pairs(trajs, num, rtol):
+    """
+    Args:
+        trajs (:obj:`list` of :obj:`numpy.ndarray`): a collections of positions
+            belonging to a single object
+        num (:obj:`int`): the maximum number of allowed overlapped objects
+        rtol (:obj:`float`): the minimum distance between two non-overlapped objects
+
+    Return:
+        :obj:`list` of :obj:`tuple`: the indices of overlapped objects
+    """
+    overlap_pairs = []
+    overlap_mat = np.zeros((len(trajs), len(trajs)), dtype=bool)
+    for i, t1 in enumerate(trajs):
+        for j, t2 in enumerate(trajs):
+            dists = np.linalg.norm(t1[0] - t2[0], axis=1)
+            overlapped = dists < rtol
+            if overlapped.sum() > num:
+                overlap_mat[i, j] = True
+    overlap_mat = np.triu(overlap_mat, k=1)
+    for i, row in enumerate(overlap_mat):
+        if row.sum() > 0:
+            for j, col in enumerate(row):
+                if col > 0:
+                    overlap_pairs.append((i, j))
+    return overlap_pairs
+
+
+def convert_traj_format(traj, t0):
+    """
+    Converting from (positions, error) to (time, positions)
+
+    Args:
+        traj (:obj:`list` of :obj:`tuple`): each trajectory is represented by (positions, error)
+        t0 (:obj:`int`) : the starting frame of this trajectory
+
+    Return:
+        :obj:`list` of :obj:`tuple`: each trajectory is represented by (time, positions)
+    """
+    time = np.arange(len(traj[0])) + t0
+    return (time, traj[0])
+
+
+def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
+    """
+    Refining the trajectories obtained from cgreta, following three steps
+
+        1. Removing trajectories that is outside the boundary (fish tank).
+        2. Removing trajectories that overlaps. Overlapping means for 2 trajectories,
+           there are more than :py:data:`num` positions whose distance is below :py:data:`rtol`
+        3. Convert the format of the trajectory, from (position, error) to (time, position)
+
+    Args:
+        trajs_3d (:obj:`list` of :obj:`tuple`): a collection of trajectories,
+            each trajectory is (position (:obj:`numpy.ndarray`), error (:obj:`float`)).
+        t0 (:obj:`int`): the starting frame of these trajectories.
+        z_min (:obj:`float`): the minimum allowed z-coordinate of each trajectory
+            corresponding to the bottom of the boundary.
+        z_max (:obj:`float`): the maximum allowed z-coordinate of each trajectory
+            corresponding to the top of the boundary.
+        num (:obj:`int`): the maximum number of allowed overlapped positions.
+
+    Return:
+        :obj:`list` of :obj:`tuple`: a collection of refined trajectories, represented as (time, position)
+    """
+    # remove trajectories that is outside the tank
+    trajs_3d_filtered = []
+    is_valid = True
+    for t in trajs_3d:
+        is_valid *= (t[0].T[-1] < z_max).all()  # all fish under water
+        is_valid *= (t[0].T[-1] > z_min).all()  # all fish in the tank
+        if is_valid:
+            trajs_3d_filtered.append(t)
+    if len(trajs_3d_filtered) == 0:
+        return []
+    # join overlapped trajectories
+    op = get_overlap_pairs(trajs_3d_filtered, num=5, rtol=10)
+    jop = join_pairs(op)
+    if len(jop) == 0:
+        return [convert_traj_format(traj, t0) for traj in trajs_3d_filtered]
+    trajs_3d_opt = []
+    not_unique = np.hstack(jop).ravel().tolist()
+    for i, traj in enumerate(trajs_3d_filtered):
+        if i not in not_unique:
+            trajs_3d_opt.append( convert_traj_format(traj, t0) )
+    for p in jop:
+        best_idx = np.argmin([trajs_3d_filtered[idx][1] for idx in p])
+        chosen_traj = trajs_3d_filtered[p[best_idx]]
+        trajs_3d_opt.append( convert_traj_format(chosen_traj, t0) )
+    return trajs_3d_opt
