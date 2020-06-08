@@ -13,7 +13,7 @@ PYFLAGS = $(shell ${PY} -m pybind11 --includes)\
 
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
-all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT)
+all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT) cutility$(PYEXT)
 
 cgreta$(PYEXT): libgreta.a libtemporal.a libstereo.a cgreta.cpp
 	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cgreta.cpp libgreta.a libtemporal.a libstereo.a -o cgreta$(PYEXT)
@@ -23,6 +23,9 @@ ctemporal$(PYEXT): libtemporal.a ctemporal.cpp
 
 cstereo$(PYEXT): libstereo.a cstereo.cpp
 	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cstereo.cpp libstereo.a -o cstereo$(PYEXT)
+
+cutility$(PYEXT): cutility.cpp
+	$(CC) $(CPPFLAGS) $(LFLAG) $(PYFLAGS) -shared cutility.cpp -o cutility$(PYEXT)
 
 libgreta.a: greta.cpp greta.h
 	$(CC) $(CPPFLAGS) -c greta.cpp -o greta.o
