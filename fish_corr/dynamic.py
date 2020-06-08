@@ -331,7 +331,7 @@ class AverageAnalyser():
 
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
-            nn_movie = list(static.get_nn_iter(self.movie))
+            nn_movie = list(static.get_nn_iter(self.movie, no_vertices=no_vertices))
             return self.scan_array(np.array(nn_movie))
         else:
             return self.__scan_positions(
