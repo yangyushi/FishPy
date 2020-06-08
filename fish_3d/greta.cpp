@@ -71,6 +71,33 @@ StereoTraj::StereoTraj(const StereoTraj& t, const FramesV3& frames_v3)
       error_{t.error_}, labels_{t.labels_}, pos_start_{t.pos_start_},
       pos_predict_{t.pos_predict_} {}
 
+
+array<st::Coord2D, 3> StereoTraj::get_coordinates_2d() const {
+    array<st::Coord2D, 3> result;
+    unsigned long n_frames = frames_v3_[0].size();
+    for (int view=0; view < 3; view++){
+        st::Coord2D coord_2d{n_frames, 2};
+        for (int t = 0; t < n_frames; t++){
+            int id = labels_[view][t];
+            coord_2d.row(t) = frames_v3_[view][t].row(id);
+        }
+        result[view] = coord_2d;
+    }
+    cout << "real coordinates 2D (V3) done" << endl;
+    return result;
+}
+
+st::Coord2D StereoTraj::get_coordinates_2d(int view) const {
+    unsigned long n_frames = frames_v3_[0].size();
+    st::Coord2D result{n_frames, 2};
+    for (int t = 0; t < n_frames; t++){
+        int id = labels_[view][t];
+        result.row(t) = frames_v3_[view][t].row(id);
+    }
+    cout << "real coordinates 2D done" << endl;
+    return result;
+}
+
 StereoTrajs::StereoTrajs(
         TemporalTrajs temporal_trajs, STLinks links, FramesV3 frames_v3, double c_max
         )

@@ -67,6 +67,10 @@ class StereoTraj{
             array<st::ProjMat, 3> Ps, ///< @param Ps: projection matrices of three cameras
             array<st::Vec3D, 3>   Os  ///< @param Os: origins of three cameras
         ) const;
+
+        array<st::Coord2D, 3> get_coordinates_2d() const ;
+        st::Coord2D get_coordinates_2d(int view) const ;
+
         StereoTraj(
             int k1, int k2, int k3, double c_max,
             const FramesV3& frames,
@@ -132,6 +136,9 @@ class MetaST{
             return labels_[view][frame] == id;
         }
         st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os) const;
+        st::Coord3D get_coordinates_broken(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os) const;
+        array<st::Coord2D, 3> get_coordinates_2d() const ;
+        st::Coord2D get_coordinates_2d(int view) const ;
         MetaST(
             int k1, int k2, int k3, double c_max, unsigned long total_frame,
             const MetaFramesV3& frames_v3,
@@ -206,7 +213,7 @@ MetaST<T>::MetaST(
       {}
 
 template<class T>
-st::Coord3D MetaST<T>::get_coordinates(
+st::Coord3D MetaST<T>::get_coordinates_broken(
             array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
         ) const {
     st::Coord3D result{total_frame_, 3};
@@ -222,7 +229,7 @@ st::Coord3D MetaST<T>::get_coordinates(
         for (int view = 0; view < 3; view++){
             meta_id[view] = labels_[view][t];  ///< particle id in the meta frame
         }
-        is_valid = (meta_id[0] == meta_id[1]) and (meta_id[0] == meta_id[2]);
+        is_valid = (meta_id[0] == meta_id[1]) and (meta_id[0] == meta_id[2]);  ///< should be [i, i, i]
         if (not is_valid){
             result.block(t_shift, 0, block_size, 3) = st::Coord3D::Constant(block_size, 3, NAN);
             continue;
@@ -238,9 +245,65 @@ st::Coord3D MetaST<T>::get_coordinates(
             }
         }
         if (not is_valid){
-            result.block(t_shift, 0, block_size, 3) = st::Coord3D::Constant(block_size, 3, NAN);
+            result.block(
+                t_shift, 0, block_size, 3
+            ) = st::Coord3D::Constant(block_size, 3, NAN);
         }
     }
+    return result;
+}
+
+template<class T>
+st::Coord3D MetaST<T>::get_coordinates(
+            array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
+        ) const {
+    st::Coord3D result{total_frame_, 3};
+    array<st::Coord2D, 3> coord_2d_v3 = get_coordinates_2d();
+
+    array<st::Vec2D, 3> coordinates_2d;
+    for (int t = 0; t < total_frame_; t++){
+        for (int view = 0; view < 3; view++){
+            coordinates_2d[view] = coord_2d_v3[view].row(t);
+        }
+        result.row(t) = st::three_view_reconstruct(coordinates_2d, Ps, Os);
+    }
+    return result;
+}
+
+
+template<class T>
+array<st::Coord2D, 3> MetaST<T>::get_coordinates_2d() const {
+    array<st::Coord2D, 3> result;
+    unsigned long n_frames = frames_v3_[0].size();
+    unsigned long block_size = parents_[0].get_total_frames();
+    for (int view=0; view < 3; view++){
+        st::Coord2D coord_2d{total_frame_, 2};
+        for (int t = 0; t < n_frames; t++){
+            int id = labels_[view][t];
+            int t_shift = t * block_size;
+            coord_2d.block(
+                t_shift, 0, block_size, 2
+            ) = parents_[t].trajs_[id].get_coordinates_2d(view);
+        }
+        result[view] = coord_2d;
+    }
+    cout << "meta coordinates 2D (V3) done" << endl;
+    return result;
+}
+
+template<class T>
+st::Coord2D MetaST<T>::get_coordinates_2d(int view) const {
+    st::Coord2D result{total_frame_, 2};
+    unsigned long n_frames = frames_v3_[0].size();
+    unsigned long block_size = parents_[0].get_total_frames();
+    for (int t = 0; t < n_frames; t++){
+        int id = labels_[view][t];
+        int t_shift = t * block_size;
+        result.block(
+            t_shift, 0, block_size, 2
+        ) = parents_[t].trajs_[id].get_coordinates_2d(view);
+    }
+    cout << "meta coordinates 2D done" << endl;
     return result;
 }
 
