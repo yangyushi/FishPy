@@ -455,7 +455,9 @@ Labels links_to_labels(vector<Links> links, const vector<Coord2D>& frames){
     set<int> label_set;
 
     labels.push_back( Label::LinSpaced(1, 0, frames[0].rows()) );
-    for (auto num : labels[0]) label_set.insert(num);
+    for (int idx = 0; idx < frames[0].rows(); idx++){
+        label_set.insert(idx);
+    }
 
     for (int frame = 0; frame < links.size(); frame++) {
         Label label_fp = labels[labels.size() - 1];
