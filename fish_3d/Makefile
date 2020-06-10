@@ -1,11 +1,10 @@
 CC=clang++
 CPPFLAGS = -Wall -I${prefix}/include/eigen3 -std=c++11 -O3\
-		   -I/Applications/CPLEX_Studio1210/cplex/include\
-		   -I/Applications/CPLEX_Studio1210/concert/include\
+		   -I$(CPLEX_ROOT)/cplex/include\
+		   -I$(CPLEX_ROOT)/concert/include\
 		   -DIL_STD -I. -fPIC
-
-LFLAG=-L/Applications/CPLEX_Studio1210/cplex/lib/x86-64_osx/static_pic\
-	  -L/Applications/CPLEX_Studio1210/concert/lib/x86-64_osx/static_pic\
+LFLAG=-L$(CPLEX_ROOT)/cplex/lib/$(CPLEX_ARCH)/static_pic\
+	  -L/$(CPLEX_ROOT)/concert/lib/$(CPLEX_ARCH)/static_pic\
 	  -lilocplex -lconcert -lcplex -lm -lpthread
 
 PYFLAGS = $(shell ${PY} -m pybind11 --includes)\
