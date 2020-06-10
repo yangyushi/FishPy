@@ -39,3 +39,16 @@ track_3d_tol_2d=3  # tolarance of reprojection error
 track_3d_water_depth=400
 track_3d_water_level=0
 track_3d_want_plot=0
+
+# GReTA Tracking parameters
+greta_frame_start=0
+greta_frame_end=54000
+greta_water_depth=400
+greta_search_range=40
+greta_tol_2d=5
+greta_tau_1=5
+greta_tau_2=5
+greta_overlap_num=5
+greta_overlap_rtol=10
+greta_relink_dx=40
+greta_relink_dt=50
