@@ -63,6 +63,7 @@ if [[ $update_process -eq 1 ]]; then
         rm "$PWD/$fn"
         cp "$fishpy/script/auto_process_$platform/$fn" "$PWD"
     done
+    cp "$fishpy/script/auto_process_$platform/auto_track_greta.sh" "$PWD"
     cp "$fishpy/script/auto_process_$platform/collect.sh" "$PWD"
     rm -rf "$PWD/script"
     cp -r "$fishpy/script/auto_process_$platform/script" "$PWD"
