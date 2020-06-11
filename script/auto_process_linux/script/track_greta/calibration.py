@@ -5,6 +5,8 @@ import json
 import pickle
 import fish_3d as f3
 import configparser
+from shutil import copyfile
+
 
 config = configparser.ConfigParser()
 config.read('configure.ini')
@@ -39,11 +41,21 @@ for cam_name in config:
     calib_orders.append(orders)
     camera_names.append(cam_name)
 
+# if cam_x in current folder
 is_calibrated = True
 for name, cam in zip(camera_names, cameras):
     is_calibrated *= f'{name}.pkl' in os.listdir('.')
 
-if not is_calibrated:
+# if cam_x in ../track_3d
+found_in_track3d = 'track_3d' in os.listdir('..')
+if (not is_calibrated) and found_in_track3d:
+    for f'{name}.pkl' in camera_names:
+        if name in os.listdir("../track_3d"):
+            copyfile(f'../track_3d/{name}.pkl', f'{name}.pkl')
+        else:
+            found_in_track3d = False
+
+if not (is_calibrated or found_in_track3d):
     f3.camera.calib_mult_ext(
         *cameras, *calib_files, *calib_orders,
         grid_size, corner_number, win_size
