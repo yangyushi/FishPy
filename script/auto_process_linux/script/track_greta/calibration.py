@@ -49,8 +49,8 @@ for name, cam in zip(camera_names, cameras):
 # if cam_x in ../track_3d
 found_in_track3d = 'track_3d' in os.listdir('..')
 if (not is_calibrated) and found_in_track3d:
-    for f'{name}.pkl' in camera_names:
-        if name in os.listdir("../track_3d"):
+    for name in camera_names:
+        if f'{name}.pkl' in os.listdir("../track_3d"):
             copyfile(f'../track_3d/{name}.pkl', f'{name}.pkl')
         else:
             found_in_track3d = False
