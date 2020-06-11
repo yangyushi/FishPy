@@ -11,13 +11,12 @@ static constexpr int LinkMatSize = Eigen::Dynamic;
 using LinkMat = Eigen::Matrix<bool, LinkMatSize, LinkMatSize, Eigen::RowMajor>;
 using Config = vector<int>;
 
-vector<int> nonzero(LinkMat & lm, int row_num) {
+vector<int> nonzero(LinkMat& lm, int row_num) {
     // return the non zero indices in a given row
-    auto row = lm.row(row_num);
     vector<int> indices;
     int n_col = lm.cols();
     for (int i = 0; i < n_col; i++){
-        if (row[i]) {
+        if (lm(row_num, i)) {
             indices.push_back(i);
         }
     }
@@ -25,7 +24,7 @@ vector<int> nonzero(LinkMat & lm, int row_num) {
 }
 
 
-int count_config(Config & config){
+int count_config(Config& config){
     /*
     * count the non-zero elements in a configuration
     * the result is possible links in a configuration
@@ -39,7 +38,7 @@ int count_config(Config & config){
     return result;
 }
 
-bool conflict(Config config){
+bool conflict(Config& config){
     if (config.size() == 1) {
         return false;
     }
@@ -53,7 +52,7 @@ bool conflict(Config config){
 }
 
 
-bool conflict_future_row(LinkMat & lm, int row, int col){
+bool conflict_future_row(LinkMat& lm, int row, int col){
     for (int r = row+1; r < lm.rows(); r++){
         if (lm(r, col) > 0){
             return true;
@@ -63,7 +62,7 @@ bool conflict_future_row(LinkMat & lm, int row, int col){
 }
 
 
-void solve(LinkMat & lm, vector<Config> & solutions,
+void solve(LinkMat& lm, vector<Config>& solutions,
            int mat_rank, int row_num=0, int level=0, Config config={}){
     if (level == mat_rank) {
         solutions.push_back(config);
@@ -91,7 +90,7 @@ void solve(LinkMat & lm, vector<Config> & solutions,
 }
 
 
-void solve_dense(LinkMat & lm, vector<Config> & solutions, int max_row,
+void solve_dense(LinkMat& lm, vector<Config>& solutions, const int& max_row,
         int row_num=0, Config config={}){
     /*
      * lm: the linkage matrix, the binarized distance matrix
@@ -104,13 +103,11 @@ void solve_dense(LinkMat & lm, vector<Config> & solutions, int max_row,
     else {
         vector<int> possible_cols;
         config.push_back(-1);
-        Config alternative = config;
+        Config alternative{config};
 
         for (int col : nonzero(lm, row_num)) { 
             config.back() = col;
-            if ( not conflict(config) ) {
-                possible_cols.push_back(col);
-            }
+            if ( not conflict(config) ) { possible_cols.push_back(col); }
         }
 
         for (int col : possible_cols) {  // choose nothing in this row
