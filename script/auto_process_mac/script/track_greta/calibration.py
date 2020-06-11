@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
-import pickle
-import numpy as np
+import os
 import re
-import cv2
 import json
-import glob
-import matplotlib.pyplot as plt
+import pickle
 import fish_3d as f3
-import fish_track as ft
 import configparser
 
 config = configparser.ConfigParser()
 config.read('configure.ini')
 
-setup_sections = ['Stereo', 'Plot', 'Calibration', 'DEFAULT']
+setup_sections = ['PostProcess', 'Stereo', 'Temporal', 'Calibration', 'DEFAULT']
 
 grid_size = float(config['Calibration']['grid_size'])
 win_size = int(config['Calibration']['win_size'])
@@ -43,9 +39,15 @@ for cam_name in config:
     calib_orders.append(orders)
     camera_names.append(cam_name)
 
-f3.camera.calib_mult_ext(*cameras, *calib_files, *calib_orders, grid_size, corner_number, win_size)
-
+is_calibrated = True
 for name, cam in zip(camera_names, cameras):
-    with open(f'{name}.pkl', 'wb') as f:
-        pickle.dump(cam, f)
-    camera_dict.update({name: cam})
+    is_calibrated *= f'{name}.pkl' in os.listdir('.')
+
+if not is_calibrated:
+    f3.camera.calib_mult_ext(
+        *cameras, *calib_files, *calib_orders,
+        grid_size, corner_number, win_size
+    )
+    for name, cam in zip(camera_names, cameras):
+        with open(f'{name}.pkl', 'wb') as f:
+            pickle.dump(cam, f)

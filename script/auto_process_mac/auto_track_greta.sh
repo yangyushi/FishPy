@@ -41,10 +41,9 @@ sed -i '' "s~GRETAOVERLAPRTOL~$greta_overlap_rtol~g" configure.ini
 sed -i '' "s~GRETARELINKDX~$greta_relink_dx~g" configure.ini
 sed -i '' "s~GRETARELINKDT~$greta_relink_dt~g" configure.ini
 
-# Calibration, only calibrate if there is no calibrated camera file
-#if [ ! -e "cameras.pkl" ]; then
-#    echo "calibrating cameras"
-#    python3 calibration.py
-#fi
+ #Calibration, only calibrate if there is no calibrated camera file
 
-cd -
+python3 calibration.py
+python3 track_greta.py
+
+cd - > /dev/null

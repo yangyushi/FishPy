@@ -1,14 +1,14 @@
 # Specifying files
 script_folder="script"
 video_folder="../fish_1"
-cam_1_internal="script/database/cam_1_int.pkl"
-cam_2_internal="script/database/cam_2_int.pkl"
-cam_3_internal="script/database/cam_3_int.pkl"
+cam_1_internal="database/cam_1_int.pkl"
+cam_2_internal="database/cam_2_int.pkl"
+cam_3_internal="database/cam_3_int.pkl"
 
 # Calibration Spec
 calib_folder="../calib-ext"
 calib_format="tiff"
-order_json="../calib_orders.json"
+order_json="../calib-ext/calib-orders.json"
 grid_size=16   # size of square on the calibration board, unit: mm
 corner_number="23, 15"  # number of inner corners in the row, column
 
@@ -42,13 +42,13 @@ track_3d_want_plot=0
 
 # GReTA Tracking parameters
 greta_frame_start=0
-greta_frame_end=54000
-greta_water_depth=400
+greta_frame_end=50
+greta_water_depth=350
 greta_search_range=40
 greta_tol_2d=5
 greta_tau_1=5
 greta_tau_2=5
 greta_overlap_num=5
 greta_overlap_rtol=10
-greta_relink_dx=40
-greta_relink_dt=50
+greta_relink_dx=10
+greta_relink_dt=10
