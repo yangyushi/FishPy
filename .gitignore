@@ -8,3 +8,5 @@
 **/test.py
 !.gitignore
 sphinx/_**
+*.sh
+!build.sh
