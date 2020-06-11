@@ -8,9 +8,10 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 from . import ray_trace
 from .cutility import join_pairs
+from .cstereo import match_v3
+from .cgreta import get_trajs_3d_t1t2
 
 dpi = 150
-
 
 def see_corners(image_file, corner_number=(23, 15)):
     img = cv2.imread(image_file)
@@ -643,3 +644,46 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
         chosen_traj = trajs_3d_filtered[p[best_idx]]
         trajs_3d_opt.append( convert_traj_format(chosen_traj, t0) )
     return trajs_3d_opt
+
+
+def get_short_trajs(
+    cameras, features_mv_mt, st_error_tol, search_range, t1, t2,
+    z_min, z_max, overlap_num, overlap_rtol
+    ):
+    """
+    Getting short 3D trajectories from 2D positions and camera informations
+    """
+    shift = t1 * t2
+    frame_num = len(features_mv_mt)
+    t_starts = [t * shift for t in range(frame_num // shift)]
+    proj_mats = [cam.p for cam in cameras]
+    cam_origins = [cam.o for cam in cameras]
+    trajectories = []
+    for t0 in t_starts:
+        stereo_matches = []
+        for features_mv in features_mv_mt[t0 : t0 + shift]:
+            matched = match_v3(
+                *features_mv, *proj_mats, *cam_origins,
+                tol_2d=st_error_tol, optimise=True
+            )
+            stereo_matches.append(matched)
+        features_mt_mv = []  # shape (3, frames, n, 3)
+        for view in range(3):
+            features_mt_mv.append([])
+            for frame in range(t0, t0 + shift):
+                features_mt_mv[-1].append( features_mv_mt[frame][view] )
+        try:
+            ctrajs_3d = get_trajs_3d_t1t2(
+                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+                search_range=search_range, search_range_traj=search_range,
+                tau_1=t1, tau_2=t2
+            )
+            trajs_3d_opt = post_process_ctraj(
+                ctrajs_3d, t0, z_min, z_max,
+                overlap_num, overlap_rtol
+            )
+            trajectories += trajs_3d_opt
+        except:
+            print(f"Tracking error from {t0} - {t0 + shift}")
+    return trajectories
+
