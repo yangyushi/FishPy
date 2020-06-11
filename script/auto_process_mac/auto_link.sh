@@ -8,6 +8,10 @@ link_dt_max=10
 link_blur=1
 link_threshold=3
 
+if [ ! $link_frame_end -gt 0 ]; then
+    link_frame_end=$track_3d_frame_end
+fi
+
 if [ ! -d "link_3d" ]; then
     mkdir link_3d
 fi

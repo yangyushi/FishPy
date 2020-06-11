@@ -41,4 +41,7 @@ fi
 make pos
 make sort
 
+tar -cf locations.tar locations_3d
+rm -rf locations_3d
+
 cd -
