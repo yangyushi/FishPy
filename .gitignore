@@ -10,3 +10,4 @@
 sphinx/_**
 *.sh
 !build.sh
+fish_3d/env
