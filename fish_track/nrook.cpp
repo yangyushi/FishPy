@@ -16,7 +16,7 @@ vector<int> nonzero(LinkMat& lm, int row_num) {
     vector<int> indices;
     int n_col = lm.cols();
     for (int i = 0; i < n_col; i++){
-        if (lm(row_num, i)) {
+        if (lm(row_num, i) > 0) {
             indices.push_back(i);
         }
     }
@@ -30,7 +30,7 @@ int count_config(Config& config){
     * the result is possible links in a configuration
     */
     int result = 0;
-    for (auto col : config){
+    for (auto& col : config){
         if (col >= 0){
             result += 1;
         }
@@ -101,7 +101,7 @@ void solve_dense(LinkMat& lm, vector<Config>& solutions, const int& max_row,
         return;
     }
     else {
-        vector<int> possible_cols;
+        vector<int> possible_cols{};
         config.push_back(-1);
         Config alternative{config};
 
@@ -110,17 +110,20 @@ void solve_dense(LinkMat& lm, vector<Config>& solutions, const int& max_row,
             if ( not conflict(config) ) { possible_cols.push_back(col); }
         }
 
+        if (possible_cols.size() == 0){
+            solve_dense(lm, solutions, max_row, row_num+1, alternative);
+            return;
+        }
+
         for (int col : possible_cols) {  // choose nothing in this row
             if (conflict_future_row(lm, row_num, col)) {
                 solve_dense(lm, solutions, max_row, row_num+1, alternative);
-                break;
+            } else {
+                config.back() = col;
+                solve_dense(lm, solutions, max_row, row_num+1, config);
             }
         }
-
-        for (int col : possible_cols) { // select different columns in this row
-            config.back() = col;
-            solve_dense(lm, solutions, max_row, row_num+1, config);
-        }
+        return;
     }
 }
 
@@ -162,7 +165,7 @@ py::array_t<int> solve_nrook_dense(LinkMat lm, int max_row){
     solve_dense(lm, solutions, max_row);
 
     int max_conf_size = 0;
-    for (auto config : solutions) {
+    for (auto& config : solutions) {
         size = count_config(config);
         if (size > max_conf_size){
             max_conf_size = size;
@@ -170,7 +173,7 @@ py::array_t<int> solve_nrook_dense(LinkMat lm, int max_row){
     }
 
     int num_solutions = 0;
-    for (auto config : solutions) {
+    for (auto& config : solutions) {
         if (count_config(config) == max_conf_size){
             num_solutions += 1;
         }

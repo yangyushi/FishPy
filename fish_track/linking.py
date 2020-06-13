@@ -619,6 +619,9 @@ def relink(trajectories, dx, dt, blur=None):
     if len(dist_mat) == 0:
         return trajectories
 
+    if len(dist_mat) >= 100:
+        print("Solving LARGE linking matrix")
+
     max_row = max(row_map.keys())+1
     networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
 
