@@ -49,7 +49,9 @@ sed -i'' "s~GRETATAU2~$greta_tau_2~g" configure.ini
 sed -i'' "s~GRETAOVERLAPNUM~$greta_overlap_num~g" configure.ini
 sed -i'' "s~GRETAOVERLAPRTOL~$greta_overlap_rtol~g" configure.ini
 sed -i'' "s~GRETARELINKDX~$greta_relink_dx~g" configure.ini
+sed -i'' "s~GRETARELINKSTEP~$greta_relink_dx_step~g" configure.ini
 sed -i'' "s~GRETARELINKDT~$greta_relink_dt~g" configure.ini
+sed -i'' "s~GRETARELINKBLUR~$greta_relink_blur~g" configure.ini
 
  #Calibration, only calibrate if there is no calibrated camera file
 

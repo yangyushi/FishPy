@@ -42,13 +42,15 @@ track_3d_want_plot=0
 
 # GReTA Tracking parameters
 greta_frame_start=0
-greta_frame_end=50
+greta_frame_end=500
 greta_water_depth=350
 greta_search_range=40
 greta_tol_2d=5
 greta_tau_1=5
-greta_tau_2=5
+greta_tau_2=4
 greta_overlap_num=5
-greta_overlap_rtol=10
-greta_relink_dx=10
-greta_relink_dt=10
+greta_overlap_rtol=20
+greta_relink_dx=50
+greta_relink_dx_step=5
+greta_relink_dt=40
+greta_relink_blur=2

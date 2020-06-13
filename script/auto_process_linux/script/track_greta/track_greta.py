@@ -8,6 +8,8 @@ import fish_track as ft
 from scipy import ndimage
 import matplotlib.pyplot as plt
 
+if os.path.isfile("relinked.pkl"):
+    exit()
 
 config = ft.utility.Configure('configure.ini')
 
@@ -61,3 +63,11 @@ else:
 
     with open('trajectories.pkl', 'wb') as f:
         pickle.dump(trajectories, f)
+
+relinked = ft.relink(trajectories, 1, 1, config.PostProcess.relink_blur)
+dxs = np.arange(1, config.PostProcess.relink_dx, config.PostProcess.relink_dx_step)
+for dx in dxs:
+    relinked = ft.relink( relinked, dx, config.PostProcess.relink_dt, None)
+
+with open('relinked.pkl', 'wb') as f:
+    pickle.dump(relinked, f)
