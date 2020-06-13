@@ -29,13 +29,11 @@ elif sys.argv[1].lower() == "greta":
 else:
     exit("Choose [GReTA] or [Linking] (case insensitive)")
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-for t in trajs:
-    ax.plot(*t[1].T, '-+')
-fig.tight_layout()
+lengths = [len(t[0]) for t in trajs]
+plt.hist(lengths)
+plt.tight_layout()
 if len(sys.argv) > 2:
-    plt.savefig('trajs.png')
+    plt.savefig('traj-stat.png')
     plt.show()
 else:
-    plt.savefig('trajs.png')
+    plt.savefig('traj-stat.png')
