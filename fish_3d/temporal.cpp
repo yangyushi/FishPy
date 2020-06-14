@@ -206,6 +206,7 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
 
 
 void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
+    if (f1.size() == 0){ return; }
     Vec2D x1;
     bool link_found{false};
     int nn_idx{0};
@@ -229,6 +230,7 @@ void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
 
 
 void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr){
+    if (f1.size() == 0){ return; }
     MetaParticle x1;
     bool link_found{false};
     int nn_idx{0};
@@ -251,6 +253,7 @@ void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr
 }
 
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
+    if (f1.size() == 0){ return; }
     Vec2D x1;
     bool link_found{false};
     int nn_idx{0};
@@ -264,6 +267,7 @@ void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double s
         }
         if (dist <= sr){
             links.add(i, j, dist);
+            link_found = true;
         }
     }
     if (not link_found){

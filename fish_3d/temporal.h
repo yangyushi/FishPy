@@ -28,7 +28,7 @@ using PYTrajs = vector<PYTraj>;
  * A meta particle that contains its intial 2D position 
  *     and the predicted position at its next frame
  */
-using MetaParticle = array<Vec2D, 2>;    ///< shape (2, )
+using MetaParticle = array<Vec2D, 2>;    ///< shape (2, 2)
 using MetaFrame = vector<MetaParticle>;  ///< shape (n_particle, 2)
 using MetaFrames = vector<MetaFrame>;    ///< shape (n_frames, n_particles, 2)
 
