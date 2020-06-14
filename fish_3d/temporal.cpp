@@ -206,72 +206,36 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
 
 
 void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
-    if (f1.size() == 0){ return; }
     Vec2D x1;
-    bool link_found{false};
-    int nn_idx{0};
-    double nn_dist = (x0 - Vec2D{f1.row(0)}).norm();
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
         double dist = (x0 - x1).norm();
-        if (dist < nn_dist) {
-            nn_dist = dist;
-            nn_idx = j;
-        }
         if (dist <= sr){
             links.add(i, j, dist);
-            link_found = true;
         }
-    }
-    if (not link_found){
-        links.add(i, nn_idx, nn_dist);
     }
 }
 
 
 void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr){
-    if (f1.size() == 0){ return; }
     MetaParticle x1;
-    bool link_found{false};
-    int nn_idx{0};
-    double nn_dist = (x0[1] - f1[0][0]).norm();
     for (int j=0; j < f1.size(); j++){
         x1 = f1[j];
         double dist = (x0[1] - x1[0]).norm();  ///< between prediction and observation
-        if (dist < nn_dist) {
-            nn_dist = dist;
-            nn_idx = j;
-        }
         if (dist <= sr){
             links.add(i, j, dist);
-            link_found = true;
         }
-    }
-    if (not link_found){
-        links.add(i, nn_idx, nn_dist);
     }
 }
 
 void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
-    if (f1.size() == 0){ return; }
     Vec2D x1;
-    bool link_found{false};
-    int nn_idx{0};
-    double nn_dist = (x0 - Vec2D{f1.row(0)}).norm();
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
         double dist = (xp + x1 - 2 * x0).norm();
-        if (dist < nn_dist) {
-            nn_dist = dist;
-            nn_idx = j;
-        }
         if (dist <= sr){
             links.add(i, j, dist);
-            link_found = true;
         }
-    }
-    if (not link_found){
-        links.add(i, nn_idx, nn_dist);
     }
 }
 
