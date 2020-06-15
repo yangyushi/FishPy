@@ -312,7 +312,7 @@ corner_number = grid_number - 1</p></li>
 
 <dl class="py function">
 <dt id="fish_3d.cray_trace.get_intersect_of_lines">
-<code class="sig-prename descclassname">fish_3d.cray_trace.</code><code class="sig-name descname">get_intersect_of_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_3d.cray_trace.get_intersect_of_lines" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.cray_trace.</code><code class="sig-name descname">get_intersect_of_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span>float64<span class="p">]</span><a class="headerlink" href="#fish_3d.cray_trace.get_intersect_of_lines" title="Permalink to this definition">¶</a></dt>
 <dd><p>calculate the point that are closest to multiple lines</p>
 </dd></dl>
 
@@ -325,9 +325,11 @@ corner_number = grid_number - 1</p></li>
 </div>
 <div class="section" id="module-fish_3d.ellipse">
 <span id="fish-3d-ellipse-module"></span><h2>fish_3d.ellipse module<a class="headerlink" href="#module-fish_3d.ellipse" title="Permalink to this headline">¶</a></h2>
+<p>Some helper function I wrote to reconstruct ellipses from three views
+This is to calculate the orientation of my fish tank</p>
 <dl class="py function">
 <dt id="fish_3d.ellipse.draw_ellipse">
-<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">draw_ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">ellipse</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><a class="headerlink" href="#fish_3d.ellipse.draw_ellipse" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">draw_ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">ellipse</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><a class="headerlink" href="#fish_3d.ellipse.draw_ellipse" title="Permalink to this definition">¶</a></dt>
 <dd><p>return (u, v) coordinates for plotting
 no need to use <cite>np.flip</cite> to plot with figure</p>
 </dd></dl>
@@ -351,28 +353,30 @@ to the algebraic form (α x^2 + β x y + γ y^2 + δ x + ε y + η)</p>
 <dl class="py function">
 <dt id="fish_3d.ellipse.get_intersection">
 <code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">get_intersection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ellipse</span></em>, <em class="sig-param"><span class="n">line</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ellipse.get_intersection" title="Permalink to this definition">¶</a></dt>
-<dd><p>find the intersection between an ellipse and a line
-:param ellipse: represented as (a, b, xc, yc, rot), the geometrical form
-:param line:    represented as (l1, l2, l3) where l1 x + l2 y + l3 == 0
+<dd><p>Finding the intersection between an ellipse and a line
 * If there is no intersection, then find the point on the ellipse that is closest to the line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ellipse</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – represented as (a, b, xc, yc, rot), the geometrical form</p></li>
+<li><p><strong>line</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – represented as (l1, l2, l3) where l1 x + l2 y + l3 == 0</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.ellipse.match_ellipse_sloopy">
 <code class="sig-prename descclassname">fish_3d.ellipse.</code><code class="sig-name descname">match_ellipse_sloopy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">ellipses</span><span class="p">:</span> <span class="n">List<span class="p">[</span>List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">N</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">min_diff</span><span class="o">=</span><span class="default_value">250</span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ellipse.match_ellipse_sloopy" title="Permalink to this definition">¶</a></dt>
-<dd><p>1. Randomly choose N points in view 1
-3. For every chosen point (P1)</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Calculate POI of P1 in other two views, get POI2 &amp; POI3</p></li>
-<li><p>For POI2, calculate its projection on C2, get P2 (using camera’s information)</p></li>
-<li><p>For POI3, calculate its projection on C3, get P3</p></li>
-<li><p>Reconstruct 3D point using P1, P2, &amp; P3</p></li>
-</ol>
-</div></blockquote>
-<ol class="arabic simple" start="4">
-<li><p>These points should be points on the surface</p></li>
-</ol>
+<dd><div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">Randomly</span> <span class="n">choose</span> <span class="n">N</span> <span class="n">points</span> <span class="n">in</span> <span class="n">view</span> <span class="mi">1</span>
+<span class="mf">3.</span> <span class="n">For</span> <span class="n">every</span> <span class="n">chosen</span> <span class="n">point</span> <span class="p">(</span><span class="n">P1</span><span class="p">)</span>
+    <span class="mf">1.</span> <span class="n">Calculate</span> <span class="n">POI</span> <span class="n">of</span> <span class="n">P1</span> <span class="n">in</span> <span class="n">other</span> <span class="n">two</span> <span class="n">views</span><span class="p">,</span> <span class="n">get</span> <span class="n">POI2</span> <span class="o">&amp;</span> <span class="n">POI3</span>
+    <span class="mf">2.</span> <span class="n">For</span> <span class="n">POI2</span><span class="p">,</span> <span class="n">calculate</span> <span class="n">its</span> <span class="n">projection</span> <span class="n">on</span> <span class="n">C2</span><span class="p">,</span> <span class="n">get</span> <span class="n">P2</span> <span class="p">(</span><span class="n">using</span> <span class="n">camera</span><span class="o">&#39;</span><span class="n">s</span> <span class="n">information</span><span class="p">)</span>
+    <span class="mf">3.</span> <span class="n">For</span> <span class="n">POI3</span><span class="p">,</span> <span class="n">calculate</span> <span class="n">its</span> <span class="n">projection</span> <span class="n">on</span> <span class="n">C3</span><span class="p">,</span> <span class="n">get</span> <span class="n">P3</span>
+    <span class="mf">4.</span> <span class="n">Reconstruct</span> <span class="mi">3</span><span class="n">D</span> <span class="n">point</span> <span class="n">using</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="o">&amp;</span> <span class="n">P3</span>
+<span class="mf">4.</span> <span class="n">These</span> <span class="n">points</span> <span class="n">should</span> <span class="n">be</span> <span class="n">points</span> <span class="n">on</span> <span class="n">the</span> <span class="n">surface</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -500,7 +504,7 @@ line = [points (a), unit directions (v)]</p>
 
 <dl class="py function">
 <dt id="fish_3d.ray_trace.get_poi">
-<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">get_poi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">coordinate</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.get_poi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">get_poi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">coordinate</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.get_poi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the poi, point on interface. See the sketch for its meaning</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>               <span class="n">camera</span>
               <span class="o">/</span>
@@ -714,7 +718,7 @@ d, x, z - length in mm</p>
 
 <dl class="py function">
 <dt id="fish_3d.ray_trace.ray_trace_refractive_trajectory">
-<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">ray_trace_refractive_trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">refractive_index</span><span class="o">=</span><span class="default_value">1.33</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.ray_trace_refractive_trajectory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.ray_trace.</code><code class="sig-name descname">ray_trace_refractive_trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">refractive_index</span><span class="o">=</span><span class="default_value">1.33</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.ray_trace.ray_trace_refractive_trajectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>reconstruct a trajectory from many views
 :param trajectories: list of positions belonging to the same individual at different time points, shape (time_points, dim)</p>
 </dd></dl>
@@ -821,7 +825,7 @@ unit is mm</p>
 
 <dl class="py function">
 <dt id="fish_3d.stereolink.match_points_v3">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">match_points_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.match_points_v3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">match_points_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_cost</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.match_points_v3" title="Permalink to this definition">¶</a></dt>
 <dd><p>match points in three views
 no refractions were considered
 :param cameras: a list of three cameras
@@ -866,8 +870,13 @@ the clusters were assumed to be in water, n = 1.333</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="fish_3d.stereolink.three_view_match">
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">three_view_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">features</span></em>, <em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">tol_2d</span></em>, <em class="sig-param"><span class="n">normal</span><span class="o">=</span><span class="default_value">0, 0, 1</span></em>, <em class="sig-param"><span class="n">water_level</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">depth</span><span class="o">=</span><span class="default_value">400</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.three_view_match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt id="fish_3d.stereolink.triangulation_v3">
-<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">triangulation_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.triangulation_v3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.stereolink.</code><code class="sig-name descname">triangulation_v3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">cameras</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Camera<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.stereolink.triangulation_v3" title="Permalink to this definition">¶</a></dt>
 <dd><p>the positions in different views should be undistorted</p>
 </dd></dl>
 
@@ -880,8 +889,8 @@ the clusters were assumed to be in water, n = 1.333</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>image</strong> – the image taken by the camera without undistortion</p></li>
-<li><p><strong>labels</strong> – labelled image specifying different box regions</p></li>
+<li><p><strong>image</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the image taken by the camera without undistortion</p></li>
+<li><p><strong>labels</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – labelled image specifying different box regions</p></li>
 </ul>
 </dd>
 </dl>
@@ -893,48 +902,79 @@ the clusters were assumed to be in water, n = 1.333</p>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="fish_3d.utility.get_ABCD">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_ABCD</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corners</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">width</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">excess_rows</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a><a class="headerlink" href="#fish_3d.utility.get_ABCD" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt id="fish_3d.utility.convert_traj_format">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">convert_traj_format</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">traj</span></em>, <em class="sig-param"><span class="n">t0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.convert_traj_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converting from (positions, error) to (time, positions)</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>corners</strong> – the coordinates of chessboard corners
-found by cv2.findChessboardCorners, shape (n, 2)</p></li>
-<li><p><strong>width</strong> – the number of corners in a row</p></li>
-<li><p><strong>excess_rows</strong> – if the chessboard is make of (m, n) corners (m &gt; n)
+<li><p><strong>traj</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a>) – each trajectory is represented by (positions, error)</p></li>
+<li><p><strong>t0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the starting frame of this trajectory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>each trajectory is represented by (time, positions)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_ABCD">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_ABCD</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corners</span></em>, <em class="sig-param"><span class="n">width</span></em>, <em class="sig-param"><span class="n">excess_rows</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a><a class="headerlink" href="#fish_3d.utility.get_ABCD" title="Permalink to this definition">¶</a></dt>
+<dd><p>What is ABCD?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+</pre></div>
+</div>
+<p>(AB // CD, AC // BD)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>corners</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the coordinates of chessboard corners found by
+<code class="docutils literal notranslate"><span class="pre">cv2.findChessboardCorners</span></code>, shape (n, 2)</p></li>
+<li><p><strong>width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the number of corners in a row</p></li>
+<li><p><strong>excess_rows</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if the chessboard is make of (m, n) corners (m &gt; n)
 then n is <em>width</em>, excess_rows = m - n</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the locations of A, B, C, D respectively.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
 </dl>
-<p>what is ABCD?
-C +——-+ D</p>
-<blockquote>
-<div><div class="line-block">
-<div class="line"><a href="#id1"><span class="problematic" id="id2">|</span></a></div>
-<div class="line"><a href="#id3"><span class="problematic" id="id4">|</span></a></div>
-<div class="line"><a href="#id5"><span class="problematic" id="id6">|</span></a></div>
-</div>
-</div></blockquote>
-<p>A +——-+ B
-(AB // CD, AC // BD)</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_affinity">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_affinity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_affinity" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the affinity matrix from a set of corners measured from
-a chessboard image
-:param abcd: a dict storing the measured coordinates of chessboard corners
-what is ABCD?
-C +——-+ D</p>
-<blockquote>
-<div><div class="line-block">
-<div class="line"><a href="#id7"><span class="problematic" id="id8">|</span></a></div>
-<div class="line"><a href="#id9"><span class="problematic" id="id10">|</span></a></div>
-<div class="line"><a href="#id11"><span class="problematic" id="id12">|</span></a></div>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_affinity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_affinity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getting the affinity matrix from a set of corners measured from a chessboard image</p>
+<p>what is ABCD?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+</pre></div>
 </div>
-</div></blockquote>
-<p>A +——-+ B</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>abcd</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – the measured coordinates of chessboard corners</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the affine transformation</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -953,24 +993,33 @@ the coordinates of labels were returned, shape: (label_number, 3)</p>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_homography">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span></em>, <em class="sig-param"><span class="n">angle_num</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the homography that simiarly recover the 2d image perpendicular to z-axis
-:param camera: a Camera instance of current camera
-:param angle_num: a virtual chessboard is rotated angle_num times for calculation</p>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span></em>, <em class="sig-param"><span class="n">angle_num</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the homography that simiarly recover the 2d image perpendicular to z-axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>camera</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – a Camera instance of current camera</p></li>
+<li><p><strong>angle_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – a virtual chessboard is rotated angle_num times for calculation</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_homography_image">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">rows</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">cols</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography_image" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the homography transformation
-from an image with a chess-board
-image: 2d numpy array
-rows: the number of <em>internal corners</em> inside each row
-cols: the number of <em>internal corners</em> inside each column
-camera_model: (optional) a Camera instance that stores the</p>
-<blockquote>
-<div><p>distortion coefficients of the lens</p>
-</div></blockquote>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_homography_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">rows</span></em>, <em class="sig-param"><span class="n">cols</span></em>, <em class="sig-param"><span class="n">camera_model</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_homography_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the homography transformation from an image with a chess-board</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a 2d image</p></li>
+<li><p><strong>rows</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the number of <em>internal corners</em> inside each row</p></li>
+<li><p><strong>cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the number of <em>internal corners</em> inside each column</p></li>
+<li><p><strong>camera_model</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – (optional) a Camera instance that stores the
+distortion coefficients of the lens</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -981,33 +1030,75 @@ camera_model: (optional) a Camera instance that stores the</p>
 <dl class="py function">
 <dt id="fish_3d.utility.get_orient_line">
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_orient_line</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">locations</span></em>, <em class="sig-param"><span class="n">orientations</span></em>, <em class="sig-param"><span class="n">length</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_orient_line" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the line for plot the orientations
-:param locations: shape (n, 2)
-:param orientations: shape (n, )</p>
+<dd><p>Get the line for plot the orientations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>locations</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – shape (n, 2)</p></li>
+<li><p><strong>orientations</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – shape (n, )</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_overlap_pairs">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_overlap_pairs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajs</span></em>, <em class="sig-param"><span class="n">num</span></em>, <em class="sig-param"><span class="n">rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_overlap_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a collections of positions
+belonging to a single object</p></li>
+<li><p><strong>num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum number of allowed overlapped objects</p></li>
+<li><p><strong>rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum distance between two non-overlapped objects</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the indices of overlapped objects</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_short_trajs">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_short_trajs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">features_mv_mt</span></em>, <em class="sig-param"><span class="n">st_error_tol</span></em>, <em class="sig-param"><span class="n">search_range</span></em>, <em class="sig-param"><span class="n">t1</span></em>, <em class="sig-param"><span class="n">t2</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em>, <em class="sig-param"><span class="n">overlap_num</span></em>, <em class="sig-param"><span class="n">overlap_rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_short_trajs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getting short 3D trajectories from 2D positions and camera informations</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_similarity">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></span></em>, <em class="sig-param"><span class="n">H_aff</span><span class="p">:</span> <span class="n">numpy.array</span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_3d.utility.get_similarity" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the similarity matrix from a set of corners measured from
-a chessboard image
-:param abcd: a dict storing the measured coordinates of chessboard corners
-:param H_aff: affinity that makes coordinates affinely recitified
-what is ABCD?
-C +——-+ D</p>
-<blockquote>
-<div><div class="line-block">
-<div class="line"><a href="#id13"><span class="problematic" id="id14">|</span></a></div>
-<div class="line"><a href="#id15"><span class="problematic" id="id16">|</span></a></div>
-<div class="line"><a href="#id17"><span class="problematic" id="id18">|</span></a></div>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span></em>, <em class="sig-param"><span class="n">H_aff</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_similarity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getting the similarity matrix from a set of corners measured from
+what is ABCD?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+  <span class="o">|</span>       <span class="o">|</span>
+<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+</pre></div>
 </div>
-</div></blockquote>
-<p>A +——-+ B</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>abcd</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – the measured coordinates of chessboard corners</p></li>
+<li><p><strong>H_aff</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – affinity that makes coordinates affinely recitified</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the similar transformation matrix</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_3d.utility.plot_epl">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">plot_epl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.plot_epl" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">plot_epl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span><span class="p">:</span> <span class="n">List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.plot_epl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the scatters of an epipolar line <em>inside</em> an image
 The images is considered as being stored in (row [y], column [x])</p>
 </dd></dl>
@@ -1026,20 +1117,54 @@ The images is considered as being stored in (row [y], column [x])</p>
 <dt id="fish_3d.utility.polar_chop">
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">polar_chop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">H_sim</span></em>, <em class="sig-param"><span class="n">centre</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">n_angle</span></em>, <em class="sig-param"><span class="n">n_radius</span></em>, <em class="sig-param"><span class="n">dist_coef</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.polar_chop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Chop an image in the polar coordinates
-return the chopped result as a labelled image
-:param image: 2d image as a numpy array
-:param H_sim: a homography (3 x 3 matrix) to similarly rectify the image
-:param centre: origin of the polar coordinate system
-:param radius: maximum radius in the polar coordinate system
-:param n_angle: number of bins in terms of angle
-:param n_radius: number of bins in terms of radius
-:param dist_coef: distortion coefficients of the camera, shape (5, )</p>
+return the chopped result as a labelled image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – 2d image as a numpy array</p></li>
+<li><p><strong>H_sim</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a homography (3 x 3 matrix) to similarly rectify the image</p></li>
+<li><p><strong>centre</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – origin of the polar coordinate system</p></li>
+<li><p><strong>radius</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – maximum radius in the polar coordinate system</p></li>
+<li><p><strong>n_angle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of bins in terms of angle</p></li>
+<li><p><strong>n_radius</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – number of bins in terms of radius</p></li>
+<li><p><strong>dist_coef</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – distortion coefficients of the camera, shape (5, )
+k1, k2, p1, p2, k3 (from opencv by default)</p></li>
+<li><p><strong>k</strong> – (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) camera calibration matrix (bible, P155)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.post_process_ctraj">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">post_process_ctraj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajs_3d</span></em>, <em class="sig-param"><span class="n">t0</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em>, <em class="sig-param"><span class="n">num</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">rtol</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.post_process_ctraj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refining the trajectories obtained from cgreta, following three steps</p>
 <blockquote>
-<div><p>k1, k2, p1, p2, k3 (from opencv by default)</p>
+<div><ol class="arabic simple">
+<li><p>Removing trajectories that is outside the boundary (fish tank).</p></li>
+<li><p>Removing trajectories that overlaps. Overlapping means for 2 trajectories,
+there are more than <code class="xref py py-data docutils literal notranslate"><span class="pre">num</span></code> positions whose distance is below <code class="xref py py-data docutils literal notranslate"><span class="pre">rtol</span></code></p></li>
+<li><p>Convert the format of the trajectory, from (position, error) to (time, position)</p></li>
+</ol>
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>k</strong> – camera calibration matrix (bible, P155)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajs_3d</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a>) – a collection of trajectories,
+each trajectory is (position (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>), error (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>)).</p></li>
+<li><p><strong>t0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the starting frame of these trajectories.</p></li>
+<li><p><strong>z_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum allowed z-coordinate of each trajectory
+corresponding to the bottom of the boundary.</p></li>
+<li><p><strong>z_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the maximum allowed z-coordinate of each trajectory
+corresponding to the top of the boundary.</p></li>
+<li><p><strong>num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum number of allowed overlapped positions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a collection of refined trajectories, represented as (time, position)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1051,13 +1176,25 @@ return the chopped result as a labelled image
 
 <dl class="py function">
 <dt id="fish_3d.utility.update_orientation">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">update_orientation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orientations</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">locations</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">H</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">length</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.update_orientation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">update_orientation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orientations</span></em>, <em class="sig-param"><span class="n">locations</span></em>, <em class="sig-param"><span class="n">H</span></em>, <em class="sig-param"><span class="n">length</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.update_orientation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the orientatin after applying homography H
-This is function is used to get a ‘recitified’ orientation
-:param orientation: angles of the fish, sin(angle) –&gt; x very sadly
-:param locatons: xy positons of fish in the image, not row-col
-:param H: the homography matrix
-:param length: length of the orientation bar</p>
+This is function is used to get a ‘recitified’ orientation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>orientation</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – angles of the fish, sin(angle) –&gt; x very sadly</p></li>
+<li><p><strong>locatons</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – xy positons of fish in the image, not row-col</p></li>
+<li><p><strong>H</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the homography matrix</p></li>
+<li><p><strong>length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – length of the orientation bar</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the recitified orientations</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

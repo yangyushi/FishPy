@@ -101,7 +101,19 @@ Works with n-dimensional data in Euclidean space</p>
 <dl class="py method">
 <dt id="fish_track.linking.ActiveLinker.link">
 <code class="sig-name descname">link</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.ActiveLinker.link" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Getting trajectories from positions in different frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frames</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the positions of particles in different frames from the experimental data</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a collection of trajectories. Each trajectory is represented by a list, [time_points, positions]</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -349,15 +361,17 @@ which specifies the label values in different frames
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>trajectories</strong> (<em>List</em><em>[</em><a class="reference internal" href="#fish_track.linking.Trajectory" title="fish_track.linking.Trajectory"><em>Trajectory</em></a><em>]</em>) – </p></li>
-<li><p><strong>network</strong> (<em>List</em><em>[</em><em>np.ndarray</em><em>]</em>) – </p></li>
+<li><p><strong>trajectories</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference internal" href="#fish_track.linking.Trajectory" title="fish_track.linking.Trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Trajectory</span></code></a>) – unlinked trajectories</p></li>
+<li><p><strong>network</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the chosen network to link trajectories
+Each network may have different sizes</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a collection of trajectories</p>
+<dd class="field-even"><p>trajectories that were connected according
+to the given network</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>List[<a class="reference internal" href="#fish_track.linking.Trajectory" title="fish_track.linking.Trajectory">Trajectory</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference internal" href="#fish_track.linking.Trajectory" title="fish_track.linking.Trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Trajectory</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -418,8 +432,25 @@ from squeezed distance matrix to origional distance matrix</p>
 
 <dl class="py function">
 <dt id="fish_track.linking.choose_network">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">choose_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distance_matrix</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">networks</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><a class="headerlink" href="#fish_track.linking.choose_network" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">choose_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distance_matrix</span></em>, <em class="sig-param"><span class="n">networks</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><a class="headerlink" href="#fish_track.linking.choose_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose the network with minimum distance amonest a collection of networks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distance_matrix</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the distances for different links.
+distance_matrix[link] –&gt; distance of this link</p></li>
+<li><p><strong>networks</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a collection of networks, a network
+is a collection of links. The shape is (n_network, n_link, 2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the network with minimum distance, shape (n_link, 2)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt id="fish_track.linking.get_trajectory">
@@ -428,18 +459,24 @@ from squeezed distance matrix to origional distance matrix</p>
 
 <dl class="py function">
 <dt id="fish_track.linking.reduce_network">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">reduce_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">]</span><a class="headerlink" href="#fish_track.linking.reduce_network" title="Permalink to this definition">¶</a></dt>
-<dd><p>Network is compose of [(i_1, j_1), (i_2, j_2) …] links
-The network is <em>sorted</em> with i_n &gt; … &gt; i_2 &gt; i_1</p>
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">reduce_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.reduce_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Network is compose of linkes that looks like,</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[(</span><span class="n">i_1</span><span class="p">,</span> <span class="n">j_1</span><span class="p">),</span> <span class="p">(</span><span class="n">i_2</span><span class="p">,</span> <span class="n">j_2</span><span class="p">)</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The network is <strong>sorted</strong> with</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">i_n</span> <span class="o">&gt;</span> <span class="o">...</span> <span class="o">&gt;</span> <span class="n">i_2</span> <span class="o">&gt;</span> <span class="n">i_1</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>network</strong> (<em>np.ndarray</em>) – a collection of links</p>
+<dd class="field-odd"><p><strong>network</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a collection of links, shape (n, 2)</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>the reduced network</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -453,14 +490,37 @@ The network is <em>sorted</em> with i_n &gt; … &gt; i_2 &gt; i_1</p>
 
 <dl class="py function">
 <dt id="fish_track.linking.relink">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span><span class="p">:</span> <span class="n">List</span></em>, <em class="sig-param"><span class="n">dist_threshold</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">time_threshold</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pos_key</span><span class="o">=</span><span class="default_value">'position'</span></em>, <em class="sig-param"><span class="n">time_key</span><span class="o">=</span><span class="default_value">'time'</span></em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a><span class="p">]</span><a class="headerlink" href="#fish_track.linking.relink" title="Permalink to this definition">¶</a></dt>
-<dd><p>Re-link short trajectories into longer
-normal usage: relink(trajs, dx, dt, blur)</p>
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">dx</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.relink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-link short trajectories into longer ones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectories</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – A collection of trajectories.</p></li>
+<li><p><strong>trajectory is stored in a tuple</strong><strong>,</strong> (<em>Each</em>) – </p></li>
+<li><p><strong>dx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – distance threshold, the only trajectories whose ‘head’ and ‘tail’
+is smaller than dx in space were considered as a possible link</p></li>
+<li><p><strong>dt</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – time threshold, the only trajectories whose ‘head’ and ‘tail’
+is smaller than dt in time were considered as a possible link</p></li>
+<li><p><strong>blur</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – if blur is provided, all trajectories were filtered using
+a gaussian kernel, whose sigma is the value of <code class="docutils literal notranslate"><span class="pre">blur</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The relink trajectories.</dt><dd><p>Each trajectory is stored in a tuple, (time, positions)</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="fish_track.linking.relink_slow">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink_slow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">dist_threshold</span></em>, <em class="sig-param"><span class="n">time_threshold</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pos_key</span><span class="o">=</span><span class="default_value">'position'</span></em>, <em class="sig-param"><span class="n">time_key</span><span class="o">=</span><span class="default_value">'time'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.relink_slow" title="Permalink to this definition">¶</a></dt>
+<dt id="fish_track.linking.solve_unique">
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">solve_unique</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rows</span></em>, <em class="sig-param"><span class="n">cols</span></em>, <em class="sig-param"><span class="n">values</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.solve_unique" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -482,10 +542,28 @@ normal usage: relink(trajs, dx, dt, blur)</p>
 
 <dl class="py function">
 <dt id="fish_track.linking.squeeze_sparse">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">squeeze_sparse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span><span class="p">:</span> <span class="n">numpy.array</span></em><span class="sig-paren">)</span> &#x2192; numpy.array<a class="headerlink" href="#fish_track.linking.squeeze_sparse" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">squeeze_sparse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.squeeze_sparse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given the indices in a row or column from a sparse matrix
 Remove the blank rows/columns</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">array</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>array</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – the indices of columes/rows in a sparse matrix</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the matrix without blank columes/rows</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">44</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">278</span><span class="p">,</span> <span class="mi">904</span><span class="p">,</span> <span class="mi">1060</span><span class="p">,</span> <span class="mi">2731</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">squeeze_sparse</span><span class="p">(</span><span class="n">output</span><span class="p">))</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -496,13 +574,13 @@ Remove the blank rows/columns</p>
 <p>solve n rook problem in restricted available sites</p>
 <dl class="py function">
 <dt id="fish_track.nrook.solve_nrook">
-<code class="sig-prename descclassname">fish_track.nrook.</code><code class="sig-name descname">solve_nrook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lm</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a><span class="p">[</span>m<span class="p">, </span>n<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_track.nrook.solve_nrook" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.nrook.</code><code class="sig-name descname">solve_nrook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lm</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a><span class="p">[</span>m<span class="p">, </span>n<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_track.nrook.solve_nrook" title="Permalink to this definition">¶</a></dt>
 <dd><p>solve the n rook problem in a given availabel sites</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="fish_track.nrook.solve_nrook_dense">
-<code class="sig-prename descclassname">fish_track.nrook.</code><code class="sig-name descname">solve_nrook_dense</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lm</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a><span class="p">[</span>m<span class="p">, </span>n<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_row</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_track.nrook.solve_nrook_dense" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.nrook.</code><code class="sig-name descname">solve_nrook_dense</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lm</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a><span class="p">[</span>m<span class="p">, </span>n<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_row</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><span class="p">[</span>int32<span class="p">]</span><a class="headerlink" href="#fish_track.nrook.solve_nrook_dense" title="Permalink to this definition">¶</a></dt>
 <dd><p>solve the n rook problem in a given availabel sites from a dense distance matrix</p>
 </dd></dl>
 
@@ -645,7 +723,7 @@ NOT <code class="docutils literal notranslate"><span class="pre">(row,</span> <s
 
 <dl class="py function">
 <dt id="fish_track.oishi.o2v">
-<code class="sig-prename descclassname">fish_track.oishi.</code><code class="sig-name descname">o2v</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orientation</span></em>, <em class="sig-param"><span class="n">angles</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a><a class="headerlink" href="#fish_track.oishi.o2v" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.oishi.</code><code class="sig-name descname">o2v</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orientation</span></em>, <em class="sig-param"><span class="n">angles</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><a class="headerlink" href="#fish_track.oishi.o2v" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert orientation to a unit vector</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -732,6 +810,16 @@ bop: the binary open morphological transformation, 0 - don’t use; &gt;0 - size
 </dd></dl>
 
 <dl class="py function">
+<dt id="fish_track.read.get_frames_from_xyz">
+<code class="sig-prename descclassname">fish_track.read.</code><code class="sig-name descname">get_frames_from_xyz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">ncols</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.read.get_frames_from_xyz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="fish_track.read.get_trajectories_xyz">
+<code class="sig-prename descclassname">fish_track.read.</code><code class="sig-name descname">get_trajectories_xyz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.read.get_trajectories_xyz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt id="fish_track.read.iter_image_sequence">
 <code class="sig-prename descclassname">fish_track.read.</code><code class="sig-name descname">iter_image_sequence</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">'frame_'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.read.iter_image_sequence" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -753,7 +841,7 @@ Everything is in 2d</p>
 
 <dl class="py function">
 <dt id="fish_track.shape.get_maxima">
-<code class="sig-prename descclassname">fish_track.shape.</code><code class="sig-name descname">get_maxima</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">threshold</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">window_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.shape.get_maxima" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.shape.</code><code class="sig-name descname">get_maxima</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">threshold</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">window_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.shape.get_maxima" title="Permalink to this definition">¶</a></dt>
 <dd><p>return the location of features in the image
 the result is (u, v), not (row, column)
 :return maxima: shape is (n, 2)</p>
