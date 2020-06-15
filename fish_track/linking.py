@@ -6,7 +6,6 @@ import trackpy as tp
 from numba import njit
 from typing import List
 from scipy import ndimage
-import matplotlib.pyplot as plt
 from scipy.sparse import coo_matrix
 from joblib import delayed, Parallel
 from numba.typed import List as nList
@@ -459,6 +458,12 @@ def squeeze_sparse(array):
 
     Return:
         :obj:`numpy.ndarray`: the matrix without blank columes/rows
+
+    Example:
+        >>> input = np.array([44, 53, 278, 904, 1060, 2731])
+        >>> output = np.array([0, 1, 2, 3, 4, 5])
+        >>> np.allclose(output, squeeze_sparse(output))
+        True
     """
     sort_indices = np.argsort(array)
     remap = np.argsort(sort_indices)
@@ -507,29 +512,41 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx):
                     cols.append(i+j+1)
                     values.append(distance)
     if len(values) == 0:
-        return np.empty(0), {}, {}
+        return np.empty(0), {}, {}, np.empty((0, 2), dtype=int)
     rows = np.array(rows, dtype=int)
     cols = np.array(cols, dtype=int)
     values = np.array(values, dtype=float)
+    rows, cols, values, unique_links = solve_unique(rows, cols, values)
+    if len(rows) == 0:
+        return np.empty((0, 0)), {}, {}, unique_links
     rows_sqz = squeeze_sparse(rows)
     cols_sqz = squeeze_sparse(cols)
     row_map = {r1 : r0 for r0, r1 in zip(rows, rows_sqz)}  # map from squeezed to origional
     col_map = {c1 : c0 for c0, c1 in zip(cols, cols_sqz)}
     larger = max(max(rows_sqz), max(cols_sqz)) + 1
     dist_mat = coo_matrix((values, (rows_sqz, cols_sqz)), shape=(larger, larger), dtype=float).toarray()
-    return dist_mat, row_map, col_map
+    return dist_mat, row_map, col_map, unique_links
 
 
 def reduce_network(network):
     """
-    Network is compose of [(i_1, j_1), (i_2, j_2) ...] links
-    The network is *sorted* with i_n > ... > i_2 > i_1
+    Network is compose of linkes that looks like,
+
+    .. code-block:: py
+
+        [(i_1, j_1), (i_2, j_2) ...]
+
+    The network is **sorted** with
+
+    .. code-block:: py
+
+        i_n > ... > i_2 > i_1
 
     Args:
-        network (np.ndarray): a collection of links
+        network (:obj:`numpy.ndarray`): a collection of links, shape (n, 2)
 
     Return:
-        np.ndarray: the reduced network
+        :obj:`list` of :obj:`numpy.ndarray`: the reduced network
 
     Example:
         >>> input = np.array([(0, 1), (1, 3), (3, 5), (4, 5), (6, 7), (7, 8)])
@@ -542,7 +559,7 @@ def reduce_network(network):
         if i in to_skip:
             continue
         new_link = link.copy()
-        ll = np.where(link[-1] == network[:, 0])[0]
+        ll = np.where(link[-1] == network[:, 0])[0]  # link of link
         while len(ll) > 0:
             to_skip.append(ll)
             new_link = np.hstack((new_link, network[ll[0], 1]))
@@ -551,7 +568,19 @@ def reduce_network(network):
     return reduced
 
 
-def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> np.ndarray:
+def choose_network(distance_matrix, networks) -> np.ndarray:
+    """
+    Choose the network with minimum distance amonest a collection of networks
+
+    Args:
+        distance_matrix(:obj:`numpy.ndarray`): the distances for different links.
+            distance_matrix[link] --> distance of this link
+        networks (:obj:`numpy.ndarray`): a collection of networks, a network
+            is a collection of links. The shape is (n_network, n_link, 2)
+
+    Return:
+        :obj:`numpy.ndarray`: the network with minimum distance, shape (n_link, 2)
+    """
     distances = []
     for network in networks:
         costs = distance_matrix[tuple(network.T)]
@@ -563,11 +592,13 @@ def choose_network(distance_matrix: np.ndarray, networks: np.ndarray) -> np.ndar
 def apply_network(trajectories, network):
     """
     Args:
-        trajectories (List[Trajectory]):
-        network (List[np.ndarray]):
+        trajectories (:obj:`list` of :obj:`Trajectory`): unlinked trajectories
+        network (:obj:`list` of :obj:`numpy.ndarray`): the chosen network to link trajectories
+            Each network may have different sizes
 
     Return:
-        List[Trajectory]: a collection of trajectories
+        :obj:`list` of :obj:`Trajectory`: trajectories that were connected according
+        to the given network
     """
     new_trajs = []
     to_modify = np.hstack(network)
@@ -580,6 +611,22 @@ def apply_network(trajectories, network):
         if i not in to_modify:
             new_trajs.append(t)
     return new_trajs
+
+
+def solve_unique(rows, cols, values):
+    unsolved_indices, unique_links = [], []
+    for i, (r, c) in enumerate(zip(rows, cols)):
+        is_unique_row = np.sum(rows == r) == 1
+        is_unique_col = np.sum(cols == c) == 1
+        if is_unique_col and is_unique_row:
+            unique_links.append((r, c))
+        else:
+            unsolved_indices.append(i)
+    if len(unsolved_indices) == 0:
+        return np.array([]), np.array([]), np.array([]), np.array(unique_links, dtype=int)
+    else:
+        ui = np.array(unsolved_indices)
+        return rows[ui], cols[ui], values[ui], np.array(unique_links, dtype=int)
 
 
 def relink(trajectories, dx, dt, blur=None):
@@ -612,7 +659,7 @@ def relink(trajectories, dx, dt, blur=None):
 
     trajs_ordered = sort_trajectories(trajs)
 
-    dist_mat, row_map, col_map = build_dist_matrix_sparse(
+    dist_mat, row_map, col_map, unique_links = build_dist_matrix_sparse(
         trajs_ordered, dx=dx, dt=dt
     )
 
@@ -631,7 +678,9 @@ def relink(trajectories, dx, dt, blur=None):
         best[i, 0] = row_map[pair[0]]
         best[i, 1] = col_map[pair[1]]
 
-    reduced = reduce_network(best)
+    network = np.concatenate((unique_links, best))
+
+    reduced = reduce_network(network)
     new_trajs = apply_network(trajs_ordered, reduced)
 
     return [(t.time, t.positions) for t in new_trajs]
