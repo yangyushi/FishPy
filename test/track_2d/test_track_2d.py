@@ -2,10 +2,12 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import fish_track as ft
+import os
 
+script_path = os.path.dirname(__file__)
 
-shape_kernels = np.load('shape_kernels.npy')
-img = np.array(Image.open('fish-50.png').convert('L'))
+shape_kernels = np.load(script_path + '/shape_kernels.npy')
+img = np.array(Image.open(script_path + '/fish-50.png').convert('L'))
 
 
 def test_oishi_feature():
