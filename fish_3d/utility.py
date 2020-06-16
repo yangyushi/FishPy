@@ -585,6 +585,8 @@ def get_overlap_pairs(trajs, num, rtol):
 def convert_traj_format(traj, t0):
     """
     Converting from (positions, error) to (time, positions)
+    The starting & ending NAN will be removed, the NAN in the middile will
+        be replaced by linear interpolation
 
     Args:
         traj (:obj:`list` of :obj:`tuple`): each trajectory is represented by (positions, error)
@@ -593,8 +595,42 @@ def convert_traj_format(traj, t0):
     Return:
         :obj:`list` of :obj:`tuple`: each trajectory is represented by (time, positions)
     """
-    time = np.arange(len(traj[0])) + t0
-    return (time, traj[0])
+    # detect head NAN
+    is_nan = np.isnan(traj[0].T[0])
+    for head_idx in range(len(traj[0])):
+        if not is_nan[head_idx]:
+            break
+    # detect tail NAN
+    for tail_idx in range(len(traj[0]))[::-1]:
+        if not is_nan[tail_idx]:
+            break
+    coords = traj[0][head_idx : tail_idx + 1]
+    coords = interpolate_nan(coords, is_nan[head_idx : tail_idx + 1])
+    time = np.arange(len(coords)) + t0 + head_idx
+    return (time, coords)
+
+
+def interpolate_nan(coordinates, is_nan):
+    """
+    replace nan with linear interpolation of a (n, 3) array along the first axis
+
+    Args:
+        coordinates (:obj:`numpy.ndarray`): xyz coordinates of a trajectory, might contain nan
+        is_nan (:obj:`numpy.ndarray`): 1d bolean array showing if coordinates[i] is nan or not
+
+    Return:
+        :obj:`numpy.ndarray`: the interpolated coordinates array
+    """
+    result = coordinates.copy()
+    nan_indices = is_nan.nonzero()[0]
+    not_nan_indices = np.logical_not(is_nan).nonzero()[0]
+    for dim in range(3):
+        result[:, dim][nan_indices] = np.interp(
+            nan_indices,
+            not_nan_indices,
+            coordinates[:, dim][not_nan_indices]
+        )
+    return result
 
 
 def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
@@ -623,14 +659,17 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
     trajs_3d_filtered = []
     is_valid = True
     for t in trajs_3d:
-        is_valid *= (t[0].T[-1] < z_max).all()  # all fish under water
-        is_valid *= (t[0].T[-1] > z_min).all()  # all fish in the tank
+        z = t[0].T[-1]
+        z = z[~np.isnan(z)]
+        is_valid *= (z < z_max).all()  # all fish under water
+        is_valid *= (z > z_min).all()  # all fish in the tank
+        is_valid *= len(z) > 1
         if is_valid:
             trajs_3d_filtered.append(t)
     if len(trajs_3d_filtered) == 0:
         return []
     # join overlapped trajectories
-    op = get_overlap_pairs(trajs_3d_filtered, num=5, rtol=10)
+    op = get_overlap_pairs(trajs_3d_filtered, num, rtol)
     jop = join_pairs(op)
     if len(jop) == 0:
         return [convert_traj_format(traj, t0) for traj in trajs_3d_filtered]
@@ -672,18 +711,14 @@ def get_short_trajs(
             features_mt_mv.append([])
             for frame in range(t0, t0 + shift):
                 features_mt_mv[-1].append( features_mv_mt[frame][view] )
-        try:
-            ctrajs_3d = get_trajs_3d_t1t2(
-                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
-                search_range=search_range, search_range_traj=search_range,
-                tau_1=t1, tau_2=t2
-            )
-            trajs_3d_opt = post_process_ctraj(
-                ctrajs_3d, t0, z_min, z_max,
-                overlap_num, overlap_rtol
-            )
-            trajectories += trajs_3d_opt
-        except:
-            print(f"Tracking error from {t0} - {t0 + shift}")
+        ctrajs_3d = get_trajs_3d_t1t2(
+            features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+            search_range=search_range, search_range_traj=search_range,
+            tau_1=t1, tau_2=t2, re_max=st_error_tol
+        )
+        trajs_3d_opt = post_process_ctraj(
+            ctrajs_3d, t0, z_min, z_max,
+            overlap_num, overlap_rtol
+        )
+        trajectories += trajs_3d_opt
     return trajectories
-

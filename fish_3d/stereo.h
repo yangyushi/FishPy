@@ -108,6 +108,7 @@ namespace stereo {
 
 
     double get_error(TriXY centres, TriPM Ps, TriXYZ Os);
+    double get_error_with_xyz(TriXY centres, TriPM Ps, TriXYZ Os, Vec3D xyz);
 
     /**
      * Calculate the 3D coordinates from 3 stereo-matched 2D coordinates

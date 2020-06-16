@@ -10,7 +10,7 @@ namespace py = pybind11;
 vector< tuple<st::Coord3D, double> > get_trajs_3d(
         FramesV3 frames_v3, vector<st::PYLinks> stereo_links_py,
         array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os,
-        double c_max, double search_range
+        double c_max, double search_range, double re_max
         ){
     vector< tuple<st::Coord3D, double> > result;
 
@@ -29,7 +29,7 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d(
 
     StereoTrajs stereo_trajs_opt = optimise_links_confined(stereo_trajs);
 
-    auto trajs_3d = stereo_trajs_opt.get_coordinates(Ps, Os);
+    auto trajs_3d = stereo_trajs_opt.get_coordinates(Ps, Os, re_max);
     for (int i = 0; i < trajs_3d.size(); i++){
         auto traj = trajs_3d[i];
         double error = stereo_trajs_opt.trajs_[i].error_;
@@ -43,7 +43,7 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2(
         FramesV3 frames_v3, vector<st::PYLinks> stereo_links_py,
         array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os,
         double c_max, double search_range, double search_range_traj,
-        int tau_1, int tau_2
+        int tau_1, int tau_2, double re_max
         ){
     if (tau_1 * tau_2 != frames_v3[0].size()){
         throw runtime_error("Invalid time division (τ1 * τ2 != T)");
@@ -96,7 +96,7 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2(
 
     MetaSTs<StereoTrajs> meta_sts_lv1_opt = optimise_links_confined(meta_sts_lv1);
 
-    auto trajs_3d = meta_sts_lv1_opt.get_coordinates(Ps, Os);
+    auto trajs_3d = meta_sts_lv1_opt.get_coordinates(Ps, Os, re_max);
 
     for (int i = 0; i < trajs_3d.size(); i++){
         auto traj = trajs_3d[i];
@@ -112,7 +112,7 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2t3(
         FramesV3 frames_v3, vector<st::PYLinks> stereo_links_py,
         array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os,
         double c_max, double search_range, double search_range_traj,
-        int tau_1, int tau_2, int tau_3
+        int tau_1, int tau_2, int tau_3, double re_max
         ){
     if (tau_1 * tau_2 * tau_3 != frames_v3[0].size()){
         throw runtime_error("Invalid time division (τ1 * τ2 * τ3 != T)");
@@ -184,7 +184,7 @@ vector< tuple<st::Coord3D, double> > get_trajs_3d_t1t2t3(
 
     MetaSTs< MetaSTs<StereoTrajs> > meta_sts_lv2_opt = optimise_links_confined(meta_sts_lv2);
 
-    auto trajs_3d = meta_sts_lv2_opt.get_coordinates(Ps, Os);
+    auto trajs_3d = meta_sts_lv2_opt.get_coordinates(Ps, Os, re_max);
 
     for (int i = 0; i < trajs_3d.size(); i++){
         auto traj = trajs_3d[i];
@@ -202,20 +202,20 @@ PYBIND11_MODULE(cgreta, m){
             "get_trajs_3d", &get_trajs_3d,
             py::arg("frames_v3"), py::arg("stereo_links"),
             py::arg("project_matrices"), py::arg("camera_origins"),
-            py::arg("c_max"), py::arg("search_range")
+            py::arg("c_max"), py::arg("search_range"), py::arg("re_max")
         );
     m.def(
             "get_trajs_3d_t1t2", &get_trajs_3d_t1t2,
             py::arg("frames_v3"), py::arg("stereo_links"),
             py::arg("project_matrices"), py::arg("camera_origins"),
             py::arg("c_max"), py::arg("search_range"), py::arg("search_range_traj"),
-            py::arg("tau_1"), py::arg("tau_2")
+            py::arg("tau_1"), py::arg("tau_2"), py::arg("re_max")
         );
     m.def(
             "get_trajs_3d_t1t2t3", &get_trajs_3d_t1t2t3,
             py::arg("frames_v3"), py::arg("stereo_links"),
             py::arg("project_matrices"), py::arg("camera_origins"),
             py::arg("c_max"), py::arg("search_range"), py::arg("search_range_traj"),
-            py::arg("tau_1"), py::arg("tau_2"), py::arg("tau_3")
+            py::arg("tau_1"), py::arg("tau_2"), py::arg("tau_3"), py::arg("re_max")
         );
 }

@@ -35,7 +35,6 @@ PYBIND11_MODULE(cstereo, m){
             py::arg("O1"), py::arg("O2"), py::arg("O3"),
             py::arg("tol_2d"), py::arg("optimise")=true
             );
-
     m.def(
             "get_error", &get_error,
             py::arg("centres"), py::arg("Ps"), py::arg("Os")

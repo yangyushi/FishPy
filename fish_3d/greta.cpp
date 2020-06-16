@@ -13,7 +13,29 @@ st::Coord3D StereoTraj::get_coordinates(
         }
         result.row(t) = st::three_view_reconstruct(coordinates_2d, Ps, Os);
     }
+    return result;
+}
 
+st::Coord3D StereoTraj::get_coordinates(
+        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os, double max_error
+        ) const {
+    int n_frames = frames_v3_[0].size();
+    st::Coord3D result{n_frames, 3};
+    st::TriXY coordinates_2d;
+    st::Vec3D xyz;
+    double error;
+    for (int t = 0; t < n_frames; t++){
+        for (int view = 0; view < 3; view++){
+            coordinates_2d[view] = frames_v3_[view][t].row(labels_[view][t]);
+        }
+        xyz = st::three_view_reconstruct(coordinates_2d, Ps, Os);
+        error = st::get_error_with_xyz(coordinates_2d, Ps, Os, xyz);
+        if (error < max_error){
+            result.row(t) = xyz;
+        } else {
+            result.row(t) = st::Vec3D::Constant(3, 1, NAN);
+        }
+    }
     return result;
 }
 
@@ -125,7 +147,7 @@ StereoTrajs::StereoTrajs(const StereoTrajs& rhs)
 }
 
 vector<st::Coord3D> StereoTrajs::get_coordinates(
-        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
+        st::TriPM Ps, st::TriXYZ Os
         ) const {
     vector<st::Coord3D> result;
     for (auto& traj : trajs_){
@@ -133,6 +155,17 @@ vector<st::Coord3D> StereoTrajs::get_coordinates(
     }
     return result;
 }
+
+vector<st::Coord3D> StereoTrajs::get_coordinates(
+        st::TriPM Ps, st::TriXYZ Os, double max_error
+        ) const {
+    vector<st::Coord3D> result;
+    for (auto& traj : trajs_){
+        result.push_back(traj.get_coordinates(Ps, Os, max_error));
+    }
+    return result;
+}
+
 
 void StereoTrajs::get_validate_trajs(){
         for (int k1 = 0; k1 < temporal_trajs_[0].size(); k1++){

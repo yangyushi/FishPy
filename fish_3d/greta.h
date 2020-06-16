@@ -64,9 +64,11 @@ class StereoTraj{
             return labels_[view][frame] == id;
         }
         st::Coord3D get_coordinates(
-            array<st::ProjMat, 3> Ps, ///< @param Ps: projection matrices of three cameras
-            array<st::Vec3D, 3>   Os  ///< @param Os: origins of three cameras
+            st::TriPM  Ps, ///< @param Ps: projection matrices of three cameras
+            st::TriXYZ Os  ///< @param Os: origins of three cameras
         ) const;
+
+        st::Coord3D get_coordinates(st::TriPM  Ps, st::TriXYZ Os, double max_error) const;
 
         array<st::Coord2D, 3> get_coordinates_2d() const ;
         st::Coord2D get_coordinates_2d(int view) const ;
@@ -96,9 +98,8 @@ class StereoTrajs{
         vector<StereoTraj> trajs_;     ///< (n_trajs, )
         LabelsV3 labels_;              ///< (3, n_frames, n_particles)
         int size_;                     ///< number of stereo trajs, trajs_.size()
-        vector<st::Coord3D> get_coordinates(
-            array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-            ) const;
+        vector<st::Coord3D> get_coordinates(st::TriPM Ps, st::TriXYZ Os) const;
+        vector<st::Coord3D> get_coordinates(st::TriPM Ps, st::TriXYZ Os, double max_error) const;
         inline void get_total_frames(unsigned long& frame_num) const {
             frame_num *= frames_v3_[0].size();
         }
@@ -136,6 +137,7 @@ class MetaST{
             return labels_[view][frame] == id;
         }
         st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os) const;
+        st::Coord3D get_coordinates(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os, double max_error) const;
         st::Coord3D get_coordinates_broken(array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os) const;
         array<st::Coord2D, 3> get_coordinates_2d() const ;
         st::Coord2D get_coordinates_2d(int view) const ;
@@ -258,9 +260,9 @@ st::Coord3D MetaST<T>::get_coordinates(
             array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
         ) const {
     st::Coord3D result{total_frame_, 3};
+    st::TriXY coordinates_2d;
     array<st::Coord2D, 3> coord_2d_v3 = get_coordinates_2d();
 
-    array<st::Vec2D, 3> coordinates_2d;
     for (int t = 0; t < total_frame_; t++){
         for (int view = 0; view < 3; view++){
             coordinates_2d[view] = coord_2d_v3[view].row(t);
@@ -270,6 +272,29 @@ st::Coord3D MetaST<T>::get_coordinates(
     return result;
 }
 
+template<class T>
+st::Coord3D MetaST<T>::get_coordinates(
+            array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os, double max_error
+        ) const {
+    st::Coord3D result{total_frame_, 3};
+    array<st::Coord2D, 3> coord_2d_v3 = get_coordinates_2d();
+    st::TriXY coordinates_2d;
+    st::Vec3D xyz;
+    double error;
+    for (int t = 0; t < total_frame_; t++){
+        for (int view = 0; view < 3; view++){
+            coordinates_2d[view] = coord_2d_v3[view].row(t);
+        }
+        xyz = st::three_view_reconstruct(coordinates_2d, Ps, Os);
+        error = st::get_error_with_xyz(coordinates_2d, Ps, Os, xyz);
+        if (error < max_error){
+            result.row(t) = xyz;
+        } else {
+            result.row(t) = st::Vec3D::Constant(3, 1, NAN);
+        }
+    }
+    return result;
+}
 
 template<class T>
 array<st::Coord2D, 3> MetaST<T>::get_coordinates_2d() const {
@@ -322,9 +347,8 @@ class MetaSTs{
         void clear();
         unsigned long get_total_frames() const;
         void get_total_frames(unsigned long& frame_num) const;
-        vector<st::Coord3D> get_coordinates(
-                array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-                ) const;
+        vector<st::Coord3D> get_coordinates(st::TriPM Ps, st::TriXYZ Os) const;
+        vector<st::Coord3D> get_coordinates(st::TriPM Ps, st::TriXYZ Os, double max_error) const;
         MetaSTs(
             TemporalTrajs temporal_trajs, STLinks links, MetaFramesV3 frames_v3,
             vector<T> parents, double c_max
@@ -411,11 +435,22 @@ void MetaSTs<T>::get_total_frames(unsigned long& frame_num) const {
 
 template<class T>
 vector<st::Coord3D> MetaSTs<T>::get_coordinates(
-        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
+        st::TriPM Ps, st::TriXYZ Os
         ) const {
     vector<st::Coord3D> result;
     for (auto& traj : trajs_){
         result.push_back(traj.get_coordinates(Ps, Os));
+    }
+    return result;
+}
+
+template<class T>
+vector<st::Coord3D> MetaSTs<T>::get_coordinates(
+        st::TriPM Ps, st::TriXYZ Os, double max_error
+        ) const {
+    vector<st::Coord3D> result;
+    for (auto& traj : trajs_){
+        result.push_back(traj.get_coordinates(Ps, Os, max_error));
     }
     return result;
 }

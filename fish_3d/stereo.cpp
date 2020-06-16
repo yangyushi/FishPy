@@ -287,7 +287,18 @@ double get_error(TriXY centres, TriPM Ps, TriXYZ Os){
 }
 
 
-Vec3D three_view_reconstruct(array<Vec2D, 3>Cs, array<ProjMat, 3> Ps, array<Vec3D, 3> Os){
+double get_error_with_xyz(TriXY centres, TriPM Ps, TriXYZ Os, Vec3D xyz){
+    double error{0};
+    Vec2D reproj;
+    for (int i = 0; i < 3; i++){
+        reproj = reproject_refractive(xyz, Ps[i], Os[i]);
+        error += (centres[i] - reproj).norm();
+    }
+    return error / 3;
+}
+
+
+Vec3D three_view_reconstruct(TriXY Cs, TriPM Ps, TriXYZ Os){
     Vec3D poi, refraction, xyz;
     Lines lines;
     Line line;
