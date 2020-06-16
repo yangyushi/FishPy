@@ -622,6 +622,8 @@ def solve_unique(rows, cols, values):
             unique_links.append((r, c))
         else:
             unsolved_indices.append(i)
+    if len(unique_links) == 0:
+        unique_links = np.empty((0, 2))
     if len(unsolved_indices) == 0:
         return np.array([]), np.array([]), np.array([]), np.array(unique_links, dtype=int)
     else:
@@ -717,6 +719,7 @@ def segment_trajectories(trajectories, window_size, max_frame):
                 if traj[0][0] < edge:   # traj[0][0] is the start frame number
                     traj_segments[-1].append(traj)
                     used_traj_ids.append(j)
+    traj_segments = [ts for ts in traj_segments if len(ts) > 0]
     return traj_segments
 
 
