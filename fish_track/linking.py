@@ -686,6 +686,71 @@ def relink(trajectories, dx, dt, blur=None):
     return [(t.time, t.positions) for t in new_trajs]
 
 
+def segment_trajectories(trajectories, window_size, max_frame):
+    """
+    Split trajectories into different segments according to their starting time points
+
+    If there are 5400 frames, with a `window_size = 500`, then the edges of each segment are
+
+    .. code-block:: py
+
+        [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5350]
+
+    Args:
+        trajectories (:obj:`list`): A collection of trajectories.
+            Each trajectory is stored in a tuple, (time, positions)
+        window_size (:obj:`int`): the frame number size of each segment for
+            the relink of the 1st iteration
+        max_frame (:obj:`int`): the maximum number of frames
+
+    Return:
+        :obj:`list`: a list of trajectories in different segments
+    """
+    edges = [window_size * i for i in range(max_frame // window_size + 1)]
+    edges.append(max_frame)
+    traj_segments = []
+    used_traj_ids = []
+    for edge in edges[1:]:
+        traj_segments.append([])
+        for j, traj in enumerate(trajectories):
+            if j not in used_traj_ids:
+                if traj[0][0] < edge:   # traj[0][0] is the start frame number
+                    traj_segments[-1].append(traj)
+                    used_traj_ids.append(j)
+    return traj_segments
+
+
+def relink_by_segments(trajectories, window_size, max_frame, dx, dt, blur=None):
+    """
+    Re-link short trajectories into longer ones.
+
+    The task is firstly separated into different segments with equal size, then combined
+
+    Args:
+        trajectories (:obj:`list`): A collection of trajectories.
+            Each trajectory is stored in a tuple, (time, positions)
+        window_size (:obj:`int`): the frame number size of each segment for
+            the relink of the 1st iteration
+        max_frame (:obj:`int`): the maximum number of frames
+        dx (:obj:`float`): distance threshold, the only trajectories whose 'head' and 'tail'
+            is smaller than dx in space were considered as a possible link
+        dt (:obj:`int`): time threshold, the only trajectories whose 'head' and 'tail'
+            is smaller than dt in time were considered as a possible link
+        blur (:obj:`float` or :obj:`bool`): if blur is provided, all trajectories were filtered using
+            a gaussian kernel, whose sigma is the value of ``blur``
+
+    Return:
+        :obj:`list` of :obj:`tuple`: The relink trajectories.
+            Each trajectory is stored in a tuple, (time, positions)
+    """
+
+    traj_segments = segment_trajectories(trajectories, window_size, max_frame)
+    relinked_segments = []
+    for trajs in traj_segments:
+        relinked_segments += relink(trajs, dx, dt, blur)
+    return relink(relinked_segments, dx, dt, blur)
+
+
 class Movie:
     """
     Store both the trajectories and positions of experimental data
