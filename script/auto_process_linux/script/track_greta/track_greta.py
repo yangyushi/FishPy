@@ -64,10 +64,23 @@ else:
     with open('trajectories.pkl', 'wb') as f:
         pickle.dump(trajectories, f)
 
-relinked = ft.relink(trajectories, 1, 1, config.PostProcess.relink_blur)
+relinked = ft.relink_by_segments(
+    trajectories,
+    config.PostProcess.relink_window,
+    config.Stereo.frame_end,
+    1, 1,
+    config.PostProcess.relink_blur
+)
 dxs = np.arange(1, config.PostProcess.relink_dx, config.PostProcess.relink_dx_step)
 for dx in dxs:
-    relinked = ft.relink( relinked, dx, config.PostProcess.relink_dt, None)
+    relinked = ft.relink_by_segments(
+        relinked,
+        config.PostProcess.relink_window,
+        config.Stereo.frame_end,
+        dx,
+        config.PostProcess.relink_dt,
+        None
+    )
 
 with open('relinked.pkl', 'wb') as f:
     pickle.dump(relinked, f)
