@@ -298,6 +298,8 @@ class Camera():
             x' * fx + cx -> u'
         """
         new_points = points.astype(np.float64)
+        if new_points.shape[0] == 0:
+            return np.empty((0, 2))
         new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
         if want_uv:
             undistorted = cv2.undistortPoints(
