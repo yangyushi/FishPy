@@ -264,7 +264,11 @@ def get_nn_iter(frames, no_vertices=True):
             if len(positions) < 4:
                 yield np.nan
                 continue
-            cv = ConvexHull(positions)
+            try:
+                cv = ConvexHull(positions)
+            except:
+                yield np.nan
+                continue
             not_vertices = np.array([
                 x for x in np.arange(len(cv.points)) if x not in cv.vertices
             ], dtype=int)
