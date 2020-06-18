@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from . import ray_trace
 from .cutility import join_pairs
 from .cstereo import match_v3
-from .cgreta import get_trajs_3d_t1t2
+from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3
 
 dpi = 150
 
@@ -687,12 +687,12 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
 
 def get_short_trajs(
     cameras, features_mv_mt, st_error_tol, search_range, t1, t2,
-    z_min, z_max, overlap_num, overlap_rtol
+    z_min, z_max, overlap_num, overlap_rtol, t3=1
     ):
     """
     Getting short 3D trajectories from 2D positions and camera informations
     """
-    shift = t1 * t2
+    shift = t1 * t2 * t3
     frame_num = len(features_mv_mt)
     t_starts = [t * shift for t in range(frame_num // shift)]
     proj_mats = [cam.p for cam in cameras]
@@ -711,11 +711,20 @@ def get_short_trajs(
             features_mt_mv.append([])
             for frame in range(t0, t0 + shift):
                 features_mt_mv[-1].append( features_mv_mt[frame][view] )
-        ctrajs_3d = get_trajs_3d_t1t2(
-            features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
-            search_range=search_range, search_range_traj=search_range,
-            tau_1=t1, tau_2=t2, re_max=st_error_tol
-        )
+        if t3 == 1:
+            ctrajs_3d = get_trajs_3d_t1t2(
+                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+                search_range=search_range, search_range_traj=search_range,
+                tau_1=t1, tau_2=t2, re_max=st_error_tol
+            )
+        elif t3 > 1:
+            ctrajs_3d = get_trajs_3d_t1t2t3(
+                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+                search_range=search_range, search_range_traj=search_range,
+                tau_1=t1, tau_2=t2, tau_3=t3, re_max=st_error_tol
+            )
+        else:
+            raise ValueError("unsatisfied condition: t3 > 1")
         trajs_3d_opt = post_process_ctraj(
             ctrajs_3d, t0, z_min, z_max,
             overlap_num, overlap_rtol
