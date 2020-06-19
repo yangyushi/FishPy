@@ -55,6 +55,7 @@ else:
         search_range=config.Temporal.search_range,
         t1=config.Temporal.t1,
         t2=config.Temporal.t2,
+        t3=config.Temporal.t3,
         z_min=-config.PostProcess.water_depth,
         z_max=0,
         overlap_num=config.PostProcess.overlap_num,
@@ -81,6 +82,8 @@ for dx in dxs:
         config.PostProcess.relink_dt,
         None
     )
+
+relinked = [t for t in relinked if len(t[0]) > config.PostProcess.relink_min]
 
 with open('relinked.pkl', 'wb') as f:
     pickle.dump(relinked, f)
