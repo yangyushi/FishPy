@@ -631,7 +631,7 @@ def solve_unique(rows, cols, values):
         return rows[ui], cols[ui], values[ui], np.array(unique_links, dtype=int)
 
 
-def relink(trajectories, dx, dt, blur=None):
+def relink(trajectories, dx, dt, blur):
     """
     Re-link short trajectories into longer ones.
 
@@ -651,11 +651,7 @@ def relink(trajectories, dx, dt, blur=None):
     """
 
     if type(trajectories[0]) in (tuple, np.ndarray, list):
-        trajs = [
-            Trajectory(
-                t[0], t[1], blur=blur
-            ) for t in trajectories if len(t[0]) > 1
-        ]
+        trajs = [ Trajectory( t[0], t[1], blur=None) for t in trajectories if len(t[0]) > 1 ]
     else:
         raise TypeError("Invalid Trajectory Data Type")
 
@@ -666,7 +662,7 @@ def relink(trajectories, dx, dt, blur=None):
     )
 
     if len(dist_mat) == 0:
-        return trajectories
+        return [(t.time, t.positions) for t in trajs_ordered]
 
     if len(dist_mat) >= 100:
         print("Solving LARGE linking matrix")
