@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from . import ray_trace
 from .cutility import join_pairs
 from .cstereo import match_v3
-from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3
+from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3, get_trajs_3d
 
 dpi = 150
 
@@ -567,10 +567,11 @@ def get_overlap_pairs(trajs, num, rtol):
     """
     overlap_pairs = []
     overlap_mat = np.zeros((len(trajs), len(trajs)), dtype=bool)
+    rtol_sq = rtol * rtol
     for i, t1 in enumerate(trajs):
         for j, t2 in enumerate(trajs):
-            dists = np.linalg.norm(t1[0] - t2[0], axis=1)
-            overlapped = dists < rtol
+            dists_sq = np.sum(np.square(t1[0] - t2[0]), axis=1)
+            overlapped = dists_sq[~np.isnan(dists_sq)] < rtol_sq
             if overlapped.sum() > num:
                 overlap_mat[i, j] = True
     overlap_mat = np.triu(overlap_mat, k=1)
@@ -596,21 +597,57 @@ def convert_traj_format(traj, t0):
         :obj:`list` of :obj:`tuple`: each trajectory is represented by (time, positions)
     """
     # detect head NAN
-    is_nan = np.isnan(traj[0].T[0])
-    for head_idx in range(len(traj[0])):
-        if not is_nan[head_idx]:
-            break
-    # detect tail NAN
-    for tail_idx in range(len(traj[0]))[::-1]:
-        if not is_nan[tail_idx]:
-            break
-    coords = traj[0][head_idx : tail_idx + 1]
-    coords = interpolate_nan(coords, is_nan[head_idx : tail_idx + 1])
-    time = np.arange(len(coords)) + t0 + head_idx
-    return (time, coords)
+    was_nan = True
+    new_trajs = []
+
+    coordinates = traj[0].copy()
+    is_valid_array = np.logical_not(np.isnan(coordinates[:, 0]))
+    is_valid_array = fill_hole_1d(is_valid_array, size=3)
+    coordinates = interpolate_nan(coordinates)
+    coordinates[~is_valid_array] = np.nan
+
+    for t, coord in enumerate(coordinates):
+        is_nan = np.isnan(coord).any()
+        if was_nan and (not is_nan):
+            new_trajs.append([[], []])
+        if (not is_nan):
+            new_trajs[-1][0].append(t0 + t)
+            new_trajs[-1][1].append(coord)
+        was_nan = is_nan
+
+    return [(np.array(t[0]), np.array(t[1])) for t in new_trajs]
 
 
-def interpolate_nan(coordinates, is_nan):
+def fill_hole_1d(binary, size):
+    """
+    Fill "holes" in a binary signal whose length is smaller than size
+
+    Args:
+        binary (:obj:`numpy.ndarray`): a boolean numpy array
+        size (:obj:`int`): the holes whose length is smaller than size
+            will be filled
+
+    Return:
+        :obj:`numpy.ndarray`: the filled binary array
+
+    Example:
+        >>> binary = np.array([0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1])
+        >>> filled = np.array([0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+        >>> np.array_equal(filled, fill_hole_1d(binary, 2))
+        True
+    """
+    filled = binary.copy().astype(int)
+    for s in np.arange(size + 2, 2, -1):
+        probe = np.zeros(s)
+        probe[0] = 1
+        probe[-1] = 1
+        for shift in range(0, len(binary) - s + 1):
+            if np.array_equal(probe, filled[shift : shift + s]):
+                filled[shift : shift + s] = 1
+    return filled.astype(binary.dtype)
+
+
+def interpolate_nan(coordinates):
     """
     replace nan with linear interpolation of a (n, 3) array along the first axis
 
@@ -620,15 +657,36 @@ def interpolate_nan(coordinates, is_nan):
 
     Return:
         :obj:`numpy.ndarray`: the interpolated coordinates array
+
+    Example:
+        >>> target = np.array([np.arange(100)] * 3).T.astype(float)
+        >>> target.shape
+        (100, 3)
+        >>> with_nan = target.copy()
+        >>> nan_idx = np.random.randint(0, 100, 50)
+        >>> with_nan[nan_idx] = np.nan
+        >>> with_nan[0] = 0
+        >>> with_nan[-1] = 99
+        >>> np.allclose(target, interpolate_nan(with_nan))
+        True
     """
+    is_nan = np.isnan(coordinates[:, 0])
+    for head_idx in range(len(coordinates)):
+        if not is_nan[head_idx]:
+            break
+    # detect tail NAN
+    for tail_idx in range(len(coordinates))[::-1]:
+        if not is_nan[tail_idx]:
+            break
+    valid_range = slice(head_idx, tail_idx + 1, 1)
     result = coordinates.copy()
-    nan_indices = is_nan.nonzero()[0]
-    not_nan_indices = np.logical_not(is_nan).nonzero()[0]
+    nan_indices = is_nan[valid_range].nonzero()[0]
+    not_nan_indices = np.logical_not(is_nan[valid_range]).nonzero()[0]
     for dim in range(3):
-        result[:, dim][nan_indices] = np.interp(
+        result[:, dim][valid_range][nan_indices] = np.interp(
             nan_indices,
             not_nan_indices,
-            coordinates[:, dim][not_nan_indices]
+            coordinates[:, dim][valid_range][not_nan_indices]
         )
     return result
 
@@ -672,22 +730,25 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
     op = get_overlap_pairs(trajs_3d_filtered, num, rtol)
     jop = join_pairs(op)
     if len(jop) == 0:
-        return [convert_traj_format(traj, t0) for traj in trajs_3d_filtered]
+        trajs_3d_opt = []
+        for traj in trajs_3d_filtered:
+            trajs_3d_opt += convert_traj_format(traj, t0)
+        return trajs_3d_opt
     trajs_3d_opt = []
     not_unique = np.hstack(jop).ravel().tolist()
     for i, traj in enumerate(trajs_3d_filtered):
         if i not in not_unique:
-            trajs_3d_opt.append( convert_traj_format(traj, t0) )
+            trajs_3d_opt += convert_traj_format(traj, t0)
     for p in jop:
         best_idx = np.argmin([trajs_3d_filtered[idx][1] for idx in p])
         chosen_traj = trajs_3d_filtered[p[best_idx]]
-        trajs_3d_opt.append( convert_traj_format(chosen_traj, t0) )
+        trajs_3d_opt += convert_traj_format(chosen_traj, t0)
     return trajs_3d_opt
 
 
 def get_short_trajs(
     cameras, features_mv_mt, st_error_tol, search_range, t1, t2,
-    z_min, z_max, overlap_num, overlap_rtol, t3=1
+    z_min, z_max, overlap_num, overlap_rtol, reproj_err_tol, t3=1
     ):
     """
     Getting short 3D trajectories from 2D positions and camera informations
@@ -711,17 +772,22 @@ def get_short_trajs(
             features_mt_mv.append([])
             for frame in range(t0, t0 + shift):
                 features_mt_mv[-1].append( features_mv_mt[frame][view] )
-        if t3 == 1:
+        if (t2 == 1 and t3 == 1):
+            ctrajs_3d = get_trajs_3d(
+                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+                search_range=search_range, re_max=reproj_err_tol
+            )
+        elif (t2 > 1 and t3 == 1):
             ctrajs_3d = get_trajs_3d_t1t2(
                 features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
                 search_range=search_range, search_range_traj=search_range,
-                tau_1=t1, tau_2=t2, re_max=st_error_tol
+                tau_1=t1, tau_2=t2, re_max=reproj_err_tol
             )
-        elif t3 > 1:
+        elif (t2 > 1 and t3 > 1):
             ctrajs_3d = get_trajs_3d_t1t2t3(
                 features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
                 search_range=search_range, search_range_traj=search_range,
-                tau_1=t1, tau_2=t2, tau_3=t3, re_max=st_error_tol
+                tau_1=t1, tau_2=t2, tau_3=t3, re_max=reproj_err_tol
             )
         else:
             raise ValueError("unsatisfied condition: t3 > 1")
@@ -730,4 +796,4 @@ def get_short_trajs(
             overlap_num, overlap_rtol
         )
         trajectories += trajs_3d_opt
-    return trajectories
+    return [t for t in trajectories if len(t[0]) > 1]
