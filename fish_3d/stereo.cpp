@@ -266,7 +266,7 @@ double get_reproj_error(Vec3D xyz, TriXY centres, TriPM Ps, TriXYZ Os){
 }
 
 
-double get_error(TriXY centres, TriPM Ps, TriXYZ Os){
+double get_error(TriXY& centres, TriPM& Ps, TriXYZ& Os){
     double error{0}; 
     Lines lines;
     Line l;
@@ -287,7 +287,7 @@ double get_error(TriXY centres, TriPM Ps, TriXYZ Os){
 }
 
 
-double get_error_with_xyz(TriXY centres, TriPM Ps, TriXYZ Os, Vec3D xyz){
+double get_error_with_xyz(TriXY& centres, TriPM& Ps, TriXYZ& Os, Vec3D& xyz){
     double error{0};
     Vec2D reproj;
     for (int i = 0; i < 3; i++){

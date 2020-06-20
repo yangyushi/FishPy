@@ -101,14 +101,13 @@ namespace stereo {
     double get_u(double d, double x, double z);
 
 
-    Vec2D reproject_refractive(Vec3D point, Vec2D xy, ProjMat P);
-
+    Vec2D reproject_refractive(Vec3D point, ProjMat P, Vec3D O);
 
     double get_reproj_error(Vec3D xyz, TriXY centres, TriPM Ps, TriXYZ Os);
 
 
-    double get_error(TriXY centres, TriPM Ps, TriXYZ Os);
-    double get_error_with_xyz(TriXY centres, TriPM Ps, TriXYZ Os, Vec3D xyz);
+    double get_error(TriXY& centres, TriPM& Ps, TriXYZ& Os);
+    double get_error_with_xyz(TriXY& centres, TriPM& Ps, TriXYZ& Os, Vec3D& xyz);
 
     /**
      * Calculate the 3D coordinates from 3 stereo-matched 2D coordinates

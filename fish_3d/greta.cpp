@@ -1,9 +1,7 @@
 #include "greta.h"
 
 
-st::Coord3D StereoTraj::get_coordinates(
-        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os
-        ) const {
+st::Coord3D StereoTraj::get_coordinates(st::TriPM& Ps, st::TriXYZ& Os) const {
     int n_frames = frames_v3_[0].size();
     st::Coord3D result{n_frames, 3};
     array<st::Vec2D, 3> coordinates_2d;
@@ -17,7 +15,7 @@ st::Coord3D StereoTraj::get_coordinates(
 }
 
 st::Coord3D StereoTraj::get_coordinates(
-        array<st::ProjMat, 3> Ps, array<st::Vec3D, 3> Os, double max_error
+        st::TriPM& Ps, st::TriXYZ& Os, double max_error
         ) const {
     int n_frames = frames_v3_[0].size();
     st::Coord3D result{n_frames, 3};
@@ -146,9 +144,7 @@ StereoTrajs::StereoTrajs(const StereoTrajs& rhs)
           }
 }
 
-vector<st::Coord3D> StereoTrajs::get_coordinates(
-        st::TriPM Ps, st::TriXYZ Os
-        ) const {
+vector<st::Coord3D> StereoTrajs::get_coordinates(st::TriPM& Ps, st::TriXYZ& Os) const {
     vector<st::Coord3D> result;
     for (auto& traj : trajs_){
         result.push_back(traj.get_coordinates(Ps, Os));
@@ -157,7 +153,7 @@ vector<st::Coord3D> StereoTrajs::get_coordinates(
 }
 
 vector<st::Coord3D> StereoTrajs::get_coordinates(
-        st::TriPM Ps, st::TriXYZ Os, double max_error
+        st::TriPM& Ps, st::TriXYZ& Os, double max_error
         ) const {
     vector<st::Coord3D> result;
     for (auto& traj : trajs_){

@@ -192,7 +192,7 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
             x0 = f0.row(i);
             collect_link(x0, f1, result, i, sr_);
         } else {    ///< index i is linked to fp
-            for (auto lp : links_p0.links_){
+            for (auto& lp : links_p0.links_){
                 if (lp[1] == i){
                     xp = fp.row(lp[0]); 
                     x0 = f0.row(lp[1]);
@@ -215,7 +215,6 @@ void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
         }
     }
 }
-
 
 void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr){
     MetaParticle x1;
@@ -256,7 +255,7 @@ IloRangeArray get_constrains(IloEnv& env, IloBoolVarArray& x, Links system){
         for (auto i : system.indices_[frame]) { ///< ∀ i
             IloExpr sum(env);
             idx = 0;
-            for (auto link : system.links_){
+            for (auto& link : system.links_){
                 if (link[frame] == i){
                     sum += x[idx];  ///< ∑(j)[ x(ij) ]
                 }
