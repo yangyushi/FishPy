@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from typing import List, Tuple
+from .cstereo import refractive_project
 
 
 def draw(img, axes):
@@ -233,11 +234,12 @@ class Camera():
         self.distortion = cam.distortion
         self.update()
 
+
     def project(self, position: np.array):
         """
         Project a 3D position onto the image plane
         """
-        assert position.shape == (3,), "Please input an [x, y, z] array"
+        assert position.shape[0] == 3, "Please input an [x, y, z] array"
         uv, _ = cv2.projectPoints(
                 objectPoints=np.vstack(position).T,
                 rvec=self.rotation.as_rotvec(),
@@ -245,7 +247,24 @@ class Camera():
                 cameraMatrix=self.k,
                 distCoeffs=self.distortion
         )
-        return uv.ravel()[:2]
+        return np.squeeze(uv).T
+
+
+    def project_refractive(self, positions):
+        """
+        Project the 3D points under water
+        the normal water-air interface is assumed to be (0, 0, 1)
+
+        Args:
+            positions (:obj:`numpy.ndarray`): a collection of 3d points, shape (n, 3)
+
+        Return:
+            :obj:`numpy.ndarray`: the projected 2D locations, shape (n, 2)
+        """
+        coord_2d_nodist = refractive_project(positions, self.p, self.o)
+        coord_2d = self.redistort_points(coord_2d_nodist.T)
+        return coord_2d.T
+
 
     def undistort(self, point: np.array, want_uv=False):
         """

@@ -25,6 +25,17 @@ PYLinks match_v3(
 }
 
 
+Coord2D refractive_project(Coord3D& points, ProjMat& P, Vec3D& O){
+    Vec3D xyz;
+    Coord2D result{points.rows(), 2};
+    for (int i = 0; i < points.rows(); i++){
+        xyz = points.row(i);
+        result.row(i) = reproject_refractive(xyz, P, O);
+    }
+    return result;
+}
+
+
 
 PYBIND11_MODULE(cstereo, m){
     m.doc() = "stereo matching & greta tracking";
@@ -38,5 +49,9 @@ PYBIND11_MODULE(cstereo, m){
     m.def(
             "get_error", &get_error,
             py::arg("centres"), py::arg("Ps"), py::arg("Os")
+            );
+    m.def(
+            "refractive_project", &refractive_project,
+            py::arg("points"), py::arg("P"), py::arg("O")
             );
 }
