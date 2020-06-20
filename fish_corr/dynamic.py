@@ -328,7 +328,6 @@ class AverageAnalyser():
             result[i] = np.nanstd(array[t0:t1])
         return result
 
-
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
             nn_movie = list(static.get_nn_iter(self.movie, no_vertices=no_vertices))
@@ -418,7 +417,6 @@ class AverageAnalyser():
                 lambda x: np.nanmean(utility.get_vicsek_order(x, min_number=min_number))
             )
 
-
     def scan_vicsek_order_std(self, min_number=0):
         """
         Args:
@@ -437,7 +435,6 @@ class AverageAnalyser():
             return self.__scan_velocities(
                 lambda x: np.nanstd(utility.get_vicsek_order(x, min_number=min_number))
             )
-
 
     def scan_rotation(self, sample_points: int):
         r"""
@@ -474,3 +471,7 @@ class AverageAnalyser():
                 tau = utility.fit_acf_exp(acf)
                 result.append(tau)
         return np.array(result)
+
+    def scan_number(self):
+        numbers = np.array([len(frame) for frame in self.movie])
+        return self.scan_array(numbers)
