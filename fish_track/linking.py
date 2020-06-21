@@ -651,7 +651,7 @@ def relink(trajectories, dx, dt, blur):
     """
 
     if type(trajectories[0]) in (tuple, np.ndarray, list):
-        trajs = [ Trajectory( t[0], t[1], blur=None) for t in trajectories if len(t[0]) > 1 ]
+        trajs = [ Trajectory( t[0], t[1], blur=blur) for t in trajectories if len(t[0]) > 1 ]
     else:
         raise TypeError("Invalid Trajectory Data Type")
 

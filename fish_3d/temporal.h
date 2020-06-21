@@ -95,6 +95,7 @@ using Trajs = vector<Traj>;
  */
 struct LinkerNN{
     double sr_; 
+    double sr2_; 
     /**
      * Generating all possible linke between two successive frames
      * @param: f0 - xy coordinates of current frame
@@ -125,7 +126,7 @@ struct LinkerF3 : public LinkerNN{
      * @param: links_lp0 - the links between the previouse frame and the current frame
      */
     using LinkerNN::get_links;
-    Links get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& links_p0);
+    Links get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, Links& links_p0);
     LinkerF3(double search_range);
 };
 
@@ -134,21 +135,21 @@ struct LinkerF3 : public LinkerNN{
  *     is smaller than sr, add link i, j, distance
  *     the distance is calculated as |x0 - x1|
  */
-void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
+void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr2);
 
 /**
  * search all the positions in frame 1, if its distance to x0
  *     is smaller than sr, add link i, j, distance
  *     the distance is calculated as |xp + x1 - 2 * x1|
  */
-void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr);
+void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr2);
 
 /**
  * search all the meta particles in frame 1, if its distance to the prediction of x0
  *     is smaller than sr, add link i, j, distance
  *     the distance is calculated as |x0.prediction - x1.start|
  */
-void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr);
+void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr2);
 
 /**
  * Generating variables for optimisaing the temporal linking result
@@ -163,6 +164,7 @@ IloBoolVarArray get_variables(IloEnv& env, Links system);
 /**
  * Generating the constrains that essentially mean
  *     1. Any feature in frame i must have its correspondances in frame i+1
+ *     1. Any feature in frame i+1 must have its correspondances in frame i
  *     2. The same feature i can be used for different termporal links
  * For a mathematical description, see eq. (3) in the supplementary info of
  *     this paper: 10.1109/TPAMI.2015.2414427

@@ -11,7 +11,7 @@ Link::Link(int i, int j, double e)
 }
 
 
-int& Link::operator[] (int index){
+int& Link::operator[] (int index) {
     return indices_[index];
 }
 
@@ -26,7 +26,7 @@ Links::Links(vector<Link> links)
     }
 }
 
-Link& Links::operator[] (int index){
+Link& Links::operator[] (int index) {
     return links_[index];
 }
 
@@ -155,7 +155,8 @@ int& Traj::operator[] (int index) {
 int Traj::last_time() { return time_[time_.size() - 1]; }
 
 
-LinkerNN::LinkerNN(double search_range) : sr_{search_range} {}
+LinkerNN::LinkerNN(double search_range)
+    : sr_{search_range}, sr2_{search_range * search_range} {}
 
 
 Links LinkerNN::get_links(Coord2D f0, Coord2D f1){
@@ -163,7 +164,7 @@ Links LinkerNN::get_links(Coord2D f0, Coord2D f1){
     Vec2D x0;
     for (int i=0; i < f0.rows(); i++){
         x0 = f0.row(i);
-        collect_link(x0, f1, result, i, sr_);
+        collect_link(x0, f1, result, i, sr2_);
     }
     return result;
 }
@@ -173,7 +174,7 @@ Links LinkerNN::get_links(MetaFrame f0, MetaFrame f1){
     MetaParticle x0;
     for (int i=0; i < f0.size(); i++){
         x0 = f0[i];
-        collect_link(x0, f1, result, i, sr_);
+        collect_link(x0, f1, result, i, sr2_);
     }
     return result;
 }
@@ -182,7 +183,7 @@ Links LinkerNN::get_links(MetaFrame f0, MetaFrame f1){
 LinkerF3::LinkerF3(double search_range) : LinkerNN{search_range} {}
 
 
-Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& links_p0){
+Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, Links& links_p0){
     Links result;
     set<int> indices_0 = links_p0.indices_[1];  ///< the indices of f0 linking to fp
     Vec2D x0, xp;
@@ -190,13 +191,13 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
     for (int i=0; i < f0.rows(); i++){
         if (indices_0.find(i) == indices_0.end()){  ///< index i is NOT linked to fp
             x0 = f0.row(i);
-            collect_link(x0, f1, result, i, sr_);
+            collect_link(x0, f1, result, i, sr2_);
         } else {    ///< index i is linked to fp
             for (auto& lp : links_p0.links_){
                 if (lp[1] == i){
                     xp = fp.row(lp[0]); 
                     x0 = f0.row(lp[1]);
-                    collect_link(xp, x0, f1, result, i, sr_);
+                    collect_link(xp, x0, f1, result, i, sr2_);
                 }
             }
         }
@@ -205,36 +206,74 @@ Links LinkerF3::get_links(Coord2D& f0, Coord2D& f1, Coord2D& fp, const Links& li
 }
 
 
-void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
+void collect_link(Vec2D x0, Coord2D& f1, Links& links, int i, double sr2){
+    if (f1.rows() == 0) return;
+    int nn_idx{0};
+    double nn_dist_sq{0};
+    for (int d = 0; d < 2; d++){ nn_dist_sq += pow(x0(d, 0) - f1(0, d), 2); }
+    bool found_link{false};
     Vec2D x1;
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
-        double dist = (x0 - x1).norm();
-        if (dist <= sr){
-            links.add(i, j, dist);
+        double dist_sq = (x0 - x1).array().pow(2).sum();
+        if (dist_sq < nn_dist_sq) {
+            nn_dist_sq = dist_sq;
+            nn_idx = j;
         }
+        if (dist_sq <= sr2){
+            links.add(i, j, dist_sq);
+            found_link = true;
+        }
+    }
+    if (not found_link){
+        links.add(i, nn_idx, nn_dist_sq);
     }
 }
 
-void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr){
+void collect_link(MetaParticle x0, MetaFrame& f1, Links& links, int i, double sr2){
+    if (f1.size() == 0) return;
     MetaParticle x1;
+    int nn_idx{0};
+    double nn_dist_sq = (x0[1] - f1[0][0]).array().pow(2).sum();
+    bool found_link{false};
     for (int j=0; j < f1.size(); j++){
         x1 = f1[j];
-        double dist = (x0[1] - x1[0]).norm();  ///< between prediction and observation
-        if (dist <= sr){
-            links.add(i, j, dist);
+        double dist_sq = (x0[1] - x1[0]).array().pow(2).sum();  ///< between prediction and observation
+        if (dist_sq < nn_dist_sq){
+            nn_dist_sq = dist_sq;
+            nn_idx = j;
         }
+        if (dist_sq <= sr2){
+            links.add(i, j, dist_sq);
+            found_link = true;
+        }
+    }
+    if (not found_link){
+        links.add(i, nn_idx, nn_dist_sq);
     }
 }
 
-void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr){
+void collect_link(Vec2D xp, Vec2D x0, Coord2D& f1, Links& links, int i, double sr2){
+    if (f1.rows() == 0) return;
     Vec2D x1;
+    int nn_idx{0};
+    double nn_dist_sq{0};
+    for (int d = 0; d < 2; d++){ nn_dist_sq += pow(x0(d, 0) - f1(0, d), 2); }
+    bool found_link{false};
     for (int j=0; j < f1.rows(); j++){
         x1 = f1.row(j);
-        double dist = (xp + x1 - 2 * x0).norm();
-        if (dist <= sr){
-            links.add(i, j, dist);
+        double dist_sq = (xp + x1 - 2 * x0).array().pow(2).sum();
+        if (dist_sq < nn_dist_sq){
+            nn_dist_sq = dist_sq;
+            nn_idx = j;
         }
+        if (dist_sq <= sr2){
+            links.add(i, j, dist_sq);
+            found_link = true;
+        }
+    }
+    if (not found_link){
+        links.add(i, nn_idx, nn_dist_sq);
     }
 }
 
@@ -251,13 +290,13 @@ IloBoolVarArray get_variables(IloEnv& env, Links system){
 IloRangeArray get_constrains(IloEnv& env, IloBoolVarArray& x, Links system){
     IloRangeArray constrains(env);
     IloInt idx;
-    for (int frame = 0; frame < 2; frame++) { 
-        for (auto i : system.indices_[frame]) { ///< ∀ i
+    for (int frame = 0; frame < 2; frame++) { ///< ∀ i/j
+        for (auto i : system.indices_[frame]) {
             IloExpr sum(env);
             idx = 0;
             for (auto& link : system.links_){
                 if (link[frame] == i){
-                    sum += x[idx];  ///< ∑(j)[ x(ij) ]
+                    sum += x[idx];  ///< ∑(j/i)[ x(ij) ]
                 }
                 idx++;
             }
