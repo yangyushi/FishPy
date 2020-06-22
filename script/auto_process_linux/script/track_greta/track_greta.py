@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import pickle
@@ -13,9 +14,9 @@ if os.path.isfile("relinked.pkl"):
 
 config = ft.utility.Configure('configure.ini')
 
-if os.path.isfile("trajectories.pkl"):
-    with open('trajectories.pkl', 'rb') as f:
-        trajectories = pickle.load(f)
+if os.path.isfile("ctraj_batches.pkl"):
+    with open('ctraj_batches.pkl', 'rb') as f:
+        ctraj_batches = pickle.load(f)
 else:
     camera_files = glob("cam*.pkl")
     camera_files.sort()
@@ -38,8 +39,9 @@ else:
     for frame in range(0, config.Stereo.frame_end - config.Stereo.frame_start):
         frame_mv = []
         for view in range(3):
+            data = pickle.load(feature_handlers[view])
             frame = cameras[view].undistort_points(
-                pickle.load(feature_handlers[view])[:2].T,
+                data[:2].T,
                 want_uv=True
             )
             frame_mv.append(frame)
@@ -49,41 +51,49 @@ else:
     for view in range(3):
         feature_handlers[view].close()
 
-    trajectories = f3.utility.get_short_trajs(
-        cameras, features_mv_mt,
+    ctraj_batches = f3.utility.get_trajectory_batches(
+        cameras,
+        features_mv_mt,
         st_error_tol=config.Stereo.tol_2d,
         search_range=config.Temporal.search_range,
-        t1=config.Temporal.t1,
-        t2=config.Temporal.t2,
-        t3=config.Temporal.t3,
+        tau=config.Temporal.tau,
         z_min=-config.PostProcess.water_depth,
         z_max=0,
         overlap_num=config.PostProcess.overlap_num,
-        overlap_rtol=config.PostProcess.overlap_rtol
+        overlap_rtol=config.PostProcess.overlap_rtol,
+        reproj_err_tol=config.Stereo.tol_2d
     )
 
-    with open('trajectories.pkl', 'wb') as f:
+    with open('ctraj_batches.pkl', 'wb') as f:
+        pickle.dump(ctraj_batches, f)
+
+if os.path.isfile("trajectories.pkl"):
+    with open("trajectories.pkl", "rb") as f:
+        trajectories = pickle.load(f)
+else:
+    ctrajs_resolved, t0_resolved = f3.utility.resolve_temporal_overlap(
+        ctraj_batches,
+        lag=config.Temporal.tau//2,
+        ntol=config.Temporal.tau//2,
+        rtol=config.PostProcess.overlap_rtol
+    )
+    trajectories = []
+    for t, t0 in zip(ctrajs_resolved, t0_resolved):
+        trajectories += f3.utility.convert_traj_format(t, t0)
+    with open("trajectories.pkl", "wb") as f:
         pickle.dump(trajectories, f)
 
-relinked = ft.relink_by_segments(
-    trajectories,
-    config.PostProcess.relink_window,
-    config.Stereo.frame_end,
-    1, 1,
-    config.PostProcess.relink_blur
-)
 dxs = np.arange(1, config.PostProcess.relink_dx, config.PostProcess.relink_dx_step)
 for dx in dxs:
-    relinked = ft.relink_by_segments(
-        relinked,
-        config.PostProcess.relink_window,
-        config.Stereo.frame_end,
-        dx,
-        config.PostProcess.relink_dt,
-        None
+    trajectories = ft.relink_by_segments(
+        trajectories,
+        window_size=config.PostProcess.relink_window,
+        max_frame=config.Stereo.frame_end,
+        dx=dx, dt=config.PostProcess.relink_dt,
+        blur_velocity=config.PostProcess.relink_blur
     )
 
-relinked = [t for t in relinked if len(t[0]) > config.PostProcess.relink_min]
+trajectories = [t for t in trajectories if len(t[0]) > config.PostProcess.relink_min]
 
 with open('relinked.pkl', 'wb') as f:
-    pickle.dump(relinked, f)
+    pickle.dump(trajectories, f)
