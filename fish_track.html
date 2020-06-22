@@ -328,7 +328,7 @@ which specifies the label values in different frames
 
 <dl class="py class">
 <dt id="fish_track.linking.Trajectory">
-<em class="property">class </em><code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">Trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">velocities</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.Trajectory" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">Trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">positions</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">velocities</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blur_velocity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.Trajectory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Bundle handy methods with trajectory data</p>
 <dl class="py method">
@@ -490,7 +490,7 @@ is a collection of links. The shape is (n_network, n_link, 2)</p></li>
 
 <dl class="py function">
 <dt id="fish_track.linking.relink">
-<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">dx</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.relink" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">dx</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blur_velocity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.relink" title="Permalink to this definition">¶</a></dt>
 <dd><p>Re-link short trajectories into longer ones.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -514,6 +514,67 @@ a gaussian kernel, whose sigma is the value of <code class="docutils literal not
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_track.linking.relink_by_segments">
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">relink_by_segments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">window_size</span></em>, <em class="sig-param"><span class="n">max_frame</span></em>, <em class="sig-param"><span class="n">dx</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">blur</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blur_velocity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.relink_by_segments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-link short trajectories into longer ones.</p>
+<p>The task is firstly separated into different segments with equal size, then combined</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectories</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – A collection of trajectories.
+Each trajectory is stored in a tuple, (time, positions)</p></li>
+<li><p><strong>window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the frame number size of each segment for
+the relink of the 1st iteration</p></li>
+<li><p><strong>max_frame</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum number of frames</p></li>
+<li><p><strong>dx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – distance threshold, the only trajectories whose ‘head’ and ‘tail’
+is smaller than dx in space were considered as a possible link</p></li>
+<li><p><strong>dt</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – time threshold, the only trajectories whose ‘head’ and ‘tail’
+is smaller than dt in time were considered as a possible link</p></li>
+<li><p><strong>blur</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – if blur is provided, all trajectories were filtered using
+a gaussian kernel, whose sigma is the value of <code class="docutils literal notranslate"><span class="pre">blur</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The relink trajectories.</dt><dd><p>Each trajectory is stored in a tuple, (time, positions)</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_track.linking.segment_trajectories">
+<code class="sig-prename descclassname">fish_track.linking.</code><code class="sig-name descname">segment_trajectories</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">window_size</span></em>, <em class="sig-param"><span class="n">max_frame</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_track.linking.segment_trajectories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split trajectories into different segments according to their starting time points</p>
+<p>If there are 5400 frames, with a <cite>window_size = 500</cite>, then the edges of each segment are</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2500</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">3500</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="mi">4500</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">5350</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectories</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – A collection of trajectories.
+Each trajectory is stored in a tuple, (time, positions)</p></li>
+<li><p><strong>window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the frame number size of each segment for
+the relink of the 1st iteration</p></li>
+<li><p><strong>max_frame</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the maximum number of frames</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of trajectories in different segments</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>

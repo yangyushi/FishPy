@@ -103,6 +103,24 @@ the corner number should be in the format of (row, column)</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="fish_3d.camera.Camera.project_refractive">
+<code class="sig-name descname">project_refractive</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">positions</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.project_refractive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project the 3D points under water
+the normal water-air interface is assumed to be (0, 0, 1)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>positions</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a collection of 3d points, shape (n, 3)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the projected 2D locations, shape (n, 2)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="fish_3d.camera.Camera.read_calibration">
 <code class="sig-name descname">read_calibration</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mat_file</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.camera.Camera.read_calibration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read calibration result from TOOLBOX_calib
@@ -904,11 +922,13 @@ the clusters were assumed to be in water, n = 1.333</p>
 <dl class="py function">
 <dt id="fish_3d.utility.convert_traj_format">
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">convert_traj_format</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">traj</span></em>, <em class="sig-param"><span class="n">t0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.convert_traj_format" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converting from (positions, error) to (time, positions)</p>
+<dd><p>Converting from (positions, error) to (time, positions)
+The starting &amp; ending NAN will be removed, the NAN in the middile will
+be replaced by linear interpolation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>traj</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a>) – each trajectory is represented by (positions, error)</p></li>
+<li><p><strong>traj</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a>) – each trajectory is represented by (positions, error)</p></li>
 <li><p><strong>t0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the starting frame of this trajectory</p></li>
 </ul>
 </dd>
@@ -922,14 +942,42 @@ the clusters were assumed to be in water, n = 1.333</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="fish_3d.utility.fill_hole_1d">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">fill_hole_1d</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">binary</span></em>, <em class="sig-param"><span class="n">size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.fill_hole_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill “holes” in a binary signal whose length is smaller than size</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binary</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – a boolean numpy array</p></li>
+<li><p><strong>size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the holes whose length is smaller than size
+will be filled</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the filled binary array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">binary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">filled</span><span class="p">,</span> <span class="n">fill_hole_1d</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt id="fish_3d.utility.get_ABCD">
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_ABCD</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corners</span></em>, <em class="sig-param"><span class="n">width</span></em>, <em class="sig-param"><span class="n">excess_rows</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a><a class="headerlink" href="#fish_3d.utility.get_ABCD" title="Permalink to this definition">¶</a></dt>
 <dd><p>What is ABCD?</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>C +-------+ D
+  |       |
+  |       |
+  |       |
+A +-------+ B
 </pre></div>
 </div>
 <p>(AB // CD, AC // BD)</p>
@@ -957,11 +1005,11 @@ then n is <em>width</em>, excess_rows = m - n</p></li>
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_affinity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_affinity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getting the affinity matrix from a set of corners measured from a chessboard image</p>
 <p>what is ABCD?</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>C +-------+ D
+  |       |
+  |       |
+  |       |
+A +-------+ B
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -1064,8 +1112,37 @@ belonging to a single object</p></li>
 
 <dl class="py function">
 <dt id="fish_3d.utility.get_short_trajs">
-<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_short_trajs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">features_mv_mt</span></em>, <em class="sig-param"><span class="n">st_error_tol</span></em>, <em class="sig-param"><span class="n">search_range</span></em>, <em class="sig-param"><span class="n">t1</span></em>, <em class="sig-param"><span class="n">t2</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em>, <em class="sig-param"><span class="n">overlap_num</span></em>, <em class="sig-param"><span class="n">overlap_rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_short_trajs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_short_trajs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">features_mv_mt</span></em>, <em class="sig-param"><span class="n">st_error_tol</span></em>, <em class="sig-param"><span class="n">search_range</span></em>, <em class="sig-param"><span class="n">t1</span></em>, <em class="sig-param"><span class="n">t2</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em>, <em class="sig-param"><span class="n">overlap_num</span></em>, <em class="sig-param"><span class="n">overlap_rtol</span></em>, <em class="sig-param"><span class="n">reproj_err_tol</span></em>, <em class="sig-param"><span class="n">t3</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_short_trajs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getting short 3D trajectories from 2D positions and camera informations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cameras</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – cameras for 3 views</p></li>
+<li><p><strong>freatrues_mv_mt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – 2d features in different views at different frames</p></li>
+<li><p><strong>st_error_tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the stereo reprojection error cut-off for stereo linking</p></li>
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the length of trajectories in each batch; unit: frame
+the overlap between different batches will be <cite>tau // 2</cite></p></li>
+<li><p><strong>z_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum allowed z-positions for all trajectories</p></li>
+<li><p><strong>z_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the maximum allowed z-positions for all trajectories</p></li>
+<li><p><strong>t1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the time duration in the first iteration in GReTA</p></li>
+<li><p><strong>t2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the time duration in the second iteration in GReTA</p></li>
+<li><p><strong>t3</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the time duration in the third iteration in GReTA</p></li>
+<li><p><strong>overlap_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if two trajectories have more numbers of
+overlapped positions than <cite>overlap_num</cite>, establish a link.</p></li>
+<li><p><strong>overlap_rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – if two trajectories have more numbers of
+overlapped positions, link them.</p></li>
+<li><p><strong>reproj_err_tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the 3d positiosn whose reprojection error
+is greater than this will not be re-constructed, instead a NAN
+is inserted into the trajectory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>trajectories</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) ]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -1073,11 +1150,11 @@ belonging to a single object</p></li>
 <code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_similarity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">abcd</span></em>, <em class="sig-param"><span class="n">H_aff</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_similarity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getting the similarity matrix from a set of corners measured from
 what is ABCD?</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">+-------+</span> <span class="n">D</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-  <span class="o">|</span>       <span class="o">|</span>
-<span class="n">A</span> <span class="o">+-------+</span> <span class="n">B</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>C +-------+ D
+  |       |
+  |       |
+  |       |
+A +-------+ B
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -1094,6 +1171,131 @@ what is ABCD?</p>
 <dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_temporal_overlapped_pairs">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_temporal_overlapped_pairs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">batch_1</span></em>, <em class="sig-param"><span class="n">batch_2</span></em>, <em class="sig-param"><span class="n">lag</span></em>, <em class="sig-param"><span class="n">ntol</span></em>, <em class="sig-param"><span class="n">rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_temporal_overlapped_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get pairs that link overlapped trajectories from two batches.
+The temporal size of trajectories in both batches should be the same</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_1</strong> – (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> ) ]):
+each trajectory is (positions, error), time is <cite>[t0, t0 + size]</cite></p></li>
+<li><p><strong>batch_2</strong> – (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> ) ]):
+each trajectory is (positions, error), time is <cite>[t0 + lag, t0 + size + lag]</cite></p></li>
+<li><p><strong>lag</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – The temporal lag between two batches</p></li>
+<li><p><strong>ntol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if two trajectories have more numbers of
+overlapped positions than <cite>ntol</cite>, establish a link</p></li>
+<li><p><strong>rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – positions whose distance is smaller than <cite>rtol</cite>
+are considered to be overlapped.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>indices of a pair of overlapped trajectories, shape (n, 2)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_trajectory_batches">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_trajectory_batches</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span></em>, <em class="sig-param"><span class="n">features_mv_mt</span></em>, <em class="sig-param"><span class="n">st_error_tol</span></em>, <em class="sig-param"><span class="n">search_range</span></em>, <em class="sig-param"><span class="n">tau</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em>, <em class="sig-param"><span class="n">overlap_num</span></em>, <em class="sig-param"><span class="n">overlap_rtol</span></em>, <em class="sig-param"><span class="n">reproj_err_tol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_trajectory_batches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getting short 3D trajectories batches from 2D positions and camera informations
+A batch is trajectories start from <cite>t0</cite> to <cite>t0 + tau</cite>
+It is designed so that the same object will overlap in different batches, and
+they can be joined with function <a class="reference internal" href="#fish_3d.utility.resolve_temporal_overlap" title="fish_3d.utility.resolve_temporal_overlap"><code class="xref any py py-func docutils literal notranslate"><span class="pre">resolve_temporal_overlap</span></code></a></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>───────────▶              (trajectory in batch 1)
+      ───────────▶        (trajectory in batch 2)
+            ───────────▶  (trajectory in batch 3)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cameras</strong> (<a class="reference internal" href="#fish_3d.camera.Camera" title="fish_3d.camera.Camera"><em>Camera</em></a>) – cameras for 3 views</p></li>
+<li><p><strong>freatrues_mv_mt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – 2d features in different views at different frames</p></li>
+<li><p><strong>st_error_tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the stereo reprojection error cut-off for stereo linking</p></li>
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the length of trajectories in each batch; unit: frame
+the overlap between different batches will be <cite>tau // 2</cite></p></li>
+<li><p><strong>z_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum allowed z-positions for all trajectories</p></li>
+<li><p><strong>z_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the maximum allowed z-positions for all trajectories</p></li>
+<li><p><strong>overlap_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if two trajectories have more numbers of
+overlapped positions than <cite>overlap_num</cite>, establish a link.</p></li>
+<li><p><strong>overlap_rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – if two trajectories have more numbers of
+overlapped positions, link them.</p></li>
+<li><p><strong>reproj_err_tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the 3d positiosn whose reprojection error
+is greater than this will not be re-constructed, instead a NAN
+is inserted into the trajectory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>trajectories in different batches</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) ] ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.get_valid_ctraj">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">get_valid_ctraj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">z_min</span></em>, <em class="sig-param"><span class="n">z_max</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.get_valid_ctraj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract valid trajectories (inside box boundary) from raw trajectories</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectories</strong> – <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> ) ]:
+a collection of trajectories, each trajectory is (positions , error)</p></li>
+<li><p><strong>z_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum allowed z-coordinate of each trajectory
+corresponding to the bottom of the boundary.</p></li>
+<li><p><strong>z_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the maximum allowed z-coordinate of each trajectory
+corresponding to the top of the boundary.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>valid trajectories</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> ) ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.interpolate_nan">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">interpolate_nan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coordinates</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.interpolate_nan" title="Permalink to this definition">¶</a></dt>
+<dd><p>replace nan with linear interpolation of a (n, 3) array along the first axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coordinates</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – xyz coordinates of a trajectory, might contain nan</p></li>
+<li><p><strong>is_nan</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – 1d bolean array showing if coordinates[i] is nan or not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the interpolated coordinates array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(100, 3)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">with_nan</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nan_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">with_nan</span><span class="p">[</span><span class="n">nan_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">with_nan</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">with_nan</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">99</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">interpolate_nan</span><span class="p">(</span><span class="n">with_nan</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -1150,8 +1352,8 @@ there are more than <code class="xref py py-data docutils literal notranslate"><
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>trajs_3d</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a>) – a collection of trajectories,
-each trajectory is (position (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>), error (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>)).</p></li>
+<li><p><strong>trajs_3d</strong> – <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> ) ]:
+a collection of trajectories, each trajectory is (positions , error)</p></li>
 <li><p><strong>t0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the starting frame of these trajectories.</p></li>
 <li><p><strong>z_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – the minimum allowed z-coordinate of each trajectory
 corresponding to the bottom of the boundary.</p></li>
@@ -1164,7 +1366,68 @@ corresponding to the top of the boundary.</p></li>
 <dd class="field-even"><p>a collection of refined trajectories, represented as (time, position)</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.remove_spatial_overlap">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">remove_spatial_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectories</span></em>, <em class="sig-param"><span class="n">ntol</span></em>, <em class="sig-param"><span class="n">rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.remove_spatial_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>If two trajectories were overlap in the space, choose the one
+with minimum reprojection error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectories</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>)) – a collection of trajectories, each trajectory is
+(positions, reprojection_error)</p></li>
+<li><p><strong>ntol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if two trajectories have more numbers of
+overlapped positions than <cite>ntol</cite>, establish a link.</p></li>
+<li><p><strong>rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – if two trajectories have more numbers of
+overlapped positions, choose the one with smaller reprojection error.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>trajectories without spatial overlap</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_3d.utility.resolve_temporal_overlap">
+<code class="sig-prename descclassname">fish_3d.utility.</code><code class="sig-name descname">resolve_temporal_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trajectory_batches</span></em>, <em class="sig-param"><span class="n">lag</span></em>, <em class="sig-param"><span class="n">ntol</span></em>, <em class="sig-param"><span class="n">rtol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_3d.utility.resolve_temporal_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>For trajectorie in many batches, extend trajectories if they were overlapped.
+For instance</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>INPUT:
+         | lag |
+    ───────────▶              (trajectory in batch 1)
+          ───────────▶        (trajectory in batch 2)
+                ───────────▶  (trajectory in batch 3)
+OUTPUT:
+    ───────────────────────▶  (trajectory in result)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectory_batches</strong> – (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) ] ]):
+trajectories in different batches</p></li>
+<li><p><strong>lag</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – the overlapped time between trajectories in two successive
+batches.</p></li>
+<li><p><strong>ntol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – if two trajectories have more numbers of
+overlapped positions than <cite>ntol</cite>, merge the two.</p></li>
+<li><p><strong>rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – positions whose distance is smaller than <cite>rtol</cite>
+are considered to be overlapped.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a collection of resolved trajectories</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> [ (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) ]</p>
 </dd>
 </dl>
 </dd></dl>
