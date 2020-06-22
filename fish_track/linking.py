@@ -39,7 +39,7 @@ class Trajectory():
     """
     Bundle handy methods with trajectory data
     """
-    def __init__(self, time, positions, blur=None, velocities=None):
+    def __init__(self, time, positions, blur=None, velocities=None, blur_velocity=None):
         """
         Args:
             time (np.ndarray): frame number for each positon, dtype=int
@@ -64,8 +64,13 @@ class Trajectory():
         if not isinstance(self.velocities, type(None)):
             self.v_end = self.velocities[-1]
         else:
-            self.v_end = (self.positions[-1] - self.positions[-2]) / (self.time[-1] - self.time[-2])
-
+            if blur_velocity:
+                positions_smooth = ndimage.gaussian_filter1d(positions, blur_velocity, axis=0)
+                self.v_end = (positions_smooth[-1] - positions_smooth[-2]) /\
+                             (self.time[-1] - self.time[-2])
+            else:
+                self.v_end = (self.positions[-1] - self.positions[-2]) /\
+                             (self.time[-1] - self.time[-2])
     def predict(self, t):
         """
         predict the position of the particle at time t
@@ -631,7 +636,7 @@ def solve_unique(rows, cols, values):
         return rows[ui], cols[ui], values[ui], np.array(unique_links, dtype=int)
 
 
-def relink(trajectories, dx, dt, blur):
+def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
     """
     Re-link short trajectories into longer ones.
 
@@ -651,7 +656,7 @@ def relink(trajectories, dx, dt, blur):
     """
 
     if type(trajectories[0]) in (tuple, np.ndarray, list):
-        trajs = [ Trajectory( t[0], t[1], blur=blur) for t in trajectories if len(t[0]) > 1 ]
+        trajs = [ Trajectory( t[0], t[1], blur=blur, blur_velocity=blur_velocity) for t in trajectories if len(t[0]) > 1 ]
     else:
         raise TypeError("Invalid Trajectory Data Type")
 
@@ -719,7 +724,8 @@ def segment_trajectories(trajectories, window_size, max_frame):
     return traj_segments
 
 
-def relink_by_segments(trajectories, window_size, max_frame, dx, dt, blur=None):
+def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
+                       blur=None, blur_velocity=None):
     """
     Re-link short trajectories into longer ones.
 
@@ -746,8 +752,8 @@ def relink_by_segments(trajectories, window_size, max_frame, dx, dt, blur=None):
     traj_segments = segment_trajectories(trajectories, window_size, max_frame)
     relinked_segments = []
     for trajs in traj_segments:
-        relinked_segments += relink(trajs, dx, dt, blur)
-    return relink(relinked_segments, dx, dt, blur)
+        relinked_segments += relink(trajs, dx, dt, blur, blur_velocity)
+    return relink(relinked_segments, dx, dt, blur, blur_velocity)
 
 
 class Movie:

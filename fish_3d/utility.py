@@ -141,7 +141,7 @@ def get_ABCD(corners, width, excess_rows) -> dict:
     """
     What is ABCD?
 
-    .. code-block::
+    .. code-block:: none
 
         C +-------+ D
           |       |
@@ -192,7 +192,7 @@ def get_affinity(abcd):
 
     what is ABCD?
 
-    .. code-block::
+    .. code-block:: none
 
         C +-------+ D
           |       |
@@ -232,7 +232,7 @@ def get_similarity(abcd, H_aff):
     Getting the similarity matrix from a set of corners measured from
     what is ABCD?
 
-    .. code-block::
+    .. code-block:: none
 
         C +-------+ D
           |       |
@@ -587,10 +587,10 @@ def convert_traj_format(traj, t0):
     """
     Converting from (positions, error) to (time, positions)
     The starting & ending NAN will be removed, the NAN in the middile will
-        be replaced by linear interpolation
+    be replaced by linear interpolation
 
     Args:
-        traj (:obj:`list` of :obj:`tuple`): each trajectory is represented by (positions, error)
+        traj (:obj:`tuple`): each trajectory is represented by (positions, error)
         t0 (:obj:`int`) : the starting frame of this trajectory
 
     Return:
@@ -691,6 +691,35 @@ def interpolate_nan(coordinates):
     return result
 
 
+def get_valid_ctraj(trajectories, z_min, z_max):
+    """
+    Extract valid trajectories (inside box boundary) from raw trajectories
+
+    Args:
+        trajectories
+            :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]:
+            a collection of trajectories, each trajectory is (positions , error)
+        z_min (:obj:`float`): the minimum allowed z-coordinate of each trajectory
+            corresponding to the bottom of the boundary.
+        z_max (:obj:`float`): the maximum allowed z-coordinate of each trajectory
+            corresponding to the top of the boundary.
+
+    Return:
+        :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]: valid trajectories
+    """
+    valid_trajectories = []
+    is_valid = True
+    for t in trajectories:
+        z = t[0].T[-1]
+        z = z[~np.isnan(z)]
+        is_valid *= (z < z_max).all()  # all fish under water
+        is_valid *= (z > z_min).all()  # all fish in the tank
+        is_valid *= len(z) > 1
+        if is_valid:
+            valid_trajectories.append(t)
+    return valid_trajectories
+
+
 def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
     """
     Refining the trajectories obtained from cgreta, following three steps
@@ -701,8 +730,9 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
         3. Convert the format of the trajectory, from (position, error) to (time, position)
 
     Args:
-        trajs_3d (:obj:`list` of :obj:`tuple`): a collection of trajectories,
-            each trajectory is (position (:obj:`numpy.ndarray`), error (:obj:`float`)).
+        trajs_3d
+            :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]:
+            a collection of trajectories, each trajectory is (positions , error)
         t0 (:obj:`int`): the starting frame of these trajectories.
         z_min (:obj:`float`): the minimum allowed z-coordinate of each trajectory
             corresponding to the bottom of the boundary.
@@ -711,19 +741,11 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
         num (:obj:`int`): the maximum number of allowed overlapped positions.
 
     Return:
-        :obj:`list` of :obj:`tuple`: a collection of refined trajectories, represented as (time, position)
+        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`numpy.ndarray`) ]:
+        a collection of refined trajectories, represented as (time, position)
     """
     # remove trajectories that is outside the tank
-    trajs_3d_filtered = []
-    is_valid = True
-    for t in trajs_3d:
-        z = t[0].T[-1]
-        z = z[~np.isnan(z)]
-        is_valid *= (z < z_max).all()  # all fish under water
-        is_valid *= (z > z_min).all()  # all fish in the tank
-        is_valid *= len(z) > 1
-        if is_valid:
-            trajs_3d_filtered.append(t)
+    trajs_3d_filtered = get_valid_ctraj(trajs_3d, z_min, z_max)
     if len(trajs_3d_filtered) == 0:
         return []
     # join overlapped trajectories
@@ -747,11 +769,34 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
 
 
 def get_short_trajs(
-    cameras, features_mv_mt, st_error_tol, search_range, t1, t2,
-    z_min, z_max, overlap_num, overlap_rtol, reproj_err_tol, t3=1
+        cameras, features_mv_mt, st_error_tol, search_range, t1, t2,
+        z_min, z_max, overlap_num, overlap_rtol, reproj_err_tol, t3=1
     ):
     """
     Getting short 3D trajectories from 2D positions and camera informations
+
+    Args:
+        cameras (Camera): cameras for 3 views
+        freatrues_mv_mt (:obj:`list`): 2d features in different views at different frames
+        st_error_tol (:obj:`float`): the stereo reprojection error cut-off for stereo linking
+        tau (:obj:`int`): the length of trajectories in each batch; unit: frame
+            the overlap between different batches will be `tau // 2`
+        z_min (:obj:`float`): the minimum allowed z-positions for all trajectories
+        z_max (:obj:`float`): the maximum allowed z-positions for all trajectories
+        t1 (:obj:`int`): the time duration in the first iteration in GReTA
+        t2 (:obj:`int`): the time duration in the second iteration in GReTA
+        t3 (:obj:`int`): the time duration in the third iteration in GReTA
+        overlap_num (:obj:`int`): if two trajectories have more numbers of
+            overlapped positions than `overlap_num`, establish a link.
+        overlap_rtol (:obj:`float`): if two trajectories have more numbers of
+            overlapped positions, link them.
+        reproj_err_tol (:obj:`float`): the 3d positiosn whose reprojection error
+            is greater than this will not be re-constructed, instead a NAN
+            is inserted into the trajectory
+
+    Return:
+        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ]:
+            trajectories
     """
     shift = t1 * t2 * t3
     frame_num = len(features_mv_mt)
@@ -797,3 +842,224 @@ def get_short_trajs(
         )
         trajectories += trajs_3d_opt
     return [t for t in trajectories if len(t[0]) > 1]
+
+
+def remove_spatial_overlap(trajectories, ntol, rtol):
+    """
+    If two trajectories were overlap in the space, choose the one
+    with minimum reprojection error.
+
+    Args:
+        trajectories ( :obj:`list` of (:obj:`numpy.ndarray`, :obj:`float`) ):
+            a collection of trajectories, each trajectory is
+            (positions, reprojection_error)
+        ntol (:obj:`int`): if two trajectories have more numbers of
+            overlapped positions than `ntol`, establish a link.
+        rtol (:obj:`float`): if two trajectories have more numbers of
+            overlapped positions, choose the one with smaller reprojection error.
+
+    Return:
+        :obj:`list` of (:obj:`numpy.ndarray`, :obj:`float`):
+            trajectories without spatial overlap
+    """
+    trajs_filtered = []
+    for t in trajectories:
+        not_nan = np.logical_not(np.isnan(t[0].T[0]))
+        if np.sum(not_nan) > 1:
+            trajs_filtered.append(t)
+    if len(trajs_filtered) == 0:
+        return []
+    # join overlapped trajectories
+    op = get_overlap_pairs(trajs_filtered, ntol, rtol)
+    jop = join_pairs(op)
+    if len(jop) == 0:
+        return trajs_filtered
+    else:
+        trajs_opt = []
+        not_unique = np.hstack(jop).ravel().tolist()
+        for i, traj in enumerate(trajs_filtered):
+            if i not in not_unique:
+                trajs_opt.append(traj)
+        for p in jop:
+            best_idx = np.argmin([trajs_filtered[idx][1] for idx in p])
+            chosen_traj = trajs_filtered[p[best_idx]]
+            trajs_opt.append(chosen_traj)
+        return trajs_opt
+
+
+def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol):
+    """
+    Get pairs that link overlapped trajectories from two batches.
+    The temporal size of trajectories in both batches should be the same
+
+    Args:
+        batch_1
+            (:obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]):
+            each trajectory is (positions, error), time is `[t0, t0 + size]`
+        batch_2
+            (:obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]):
+            each trajectory is (positions, error), time is `[t0 + lag, t0 + size + lag]`
+        lag (:obj:`int`): The temporal lag between two batches
+        ntol (:obj:`int`): if two trajectories have more numbers of
+            overlapped positions than `ntol`, establish a link
+        rtol (:obj:`float`): positions whose distance is smaller than `rtol`
+            are considered to be overlapped.
+
+    Return:
+        :obj:`numpy.ndarray`: indices of a pair of overlapped trajectories, shape (n, 2)
+    """
+    rtol_sq = rtol ** 2
+    pairs = []
+    for i, t1 in enumerate(batch_1):
+        for j, t2 in enumerate(batch_2):
+            dist_sq = np.sum(np.power(t1[0][-lag:] - t2[0][:lag], 2), axis=1)
+            dist_sq = dist_sq[~np.isnan(dist_sq)]  # remove nan
+            if np.sum(dist_sq < rtol_sq) >= ntol:
+                pairs.append((i, j))
+    if len(pairs) == 0:
+        return np.empty((0, 2), dtype=int)
+    else:
+        return np.array(pairs)
+
+
+def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
+    """
+    For trajectorie in many batches, extend trajectories if they were overlapped.
+    For instance
+
+    .. code-block:: none
+
+        INPUT:
+                 | lag |
+            ───────────▶              (trajectory in batch 1)
+                  ───────────▶        (trajectory in batch 2)
+                        ───────────▶  (trajectory in batch 3)
+        OUTPUT:
+            ───────────────────────▶  (trajectory in result)
+
+    Args:
+        trajectory_batches
+            (:obj:`list` [ :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ] ]):
+            trajectories in different batches
+        lag (:obj:`int`): the overlapped time between trajectories in two successive
+            batches.
+        ntol (:obj:`int`): if two trajectories have more numbers of
+            overlapped positions than `ntol`, merge the two.
+        rtol (:obj:`float`): positions whose distance is smaller than `rtol`
+            are considered to be overlapped.
+
+    Return:
+        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ]:
+        a collection of resolved trajectories
+    """
+    extended, fragments = [], []
+    t0_extended, t0_fragments = [], []
+    previous_pairs = np.empty((0, 2), dtype=int)
+    for i, b1 in enumerate(trajectory_batches[1:]):
+        b0 = trajectory_batches[i]   # shape (n_traj, ...)
+        new_indices = [idx for idx in np.arange(len(b0)) if idx not in previous_pairs.T[1]]
+        new_trajs = [b0[ni] for ni in new_indices]
+        pairs_extend = get_temporal_overlapped_pairs(extended, b1, lag, ntol, rtol)
+        pairs_new = get_temporal_overlapped_pairs(new_trajs, b1, lag, ntol, rtol)
+        new_extended = []
+        new_t0_extended = []
+        if len(extended) > 0:
+            # extended previous extended trajectories, 
+            new_extended += [
+                (
+                    np.vstack((extended[pe][0][:-lag], b1[p1][0])),
+                    extended[pe][1] + b1[p1][1]
+                ) for pe, p1 in pairs_extend
+            ]
+            new_t0_extended += [t0_extended[pe] for pe, p1 in pairs_extend]
+        # extended  trajectories from current batch
+        new_extended += [
+            (
+                np.vstack((new_trajs[pn][0][:-lag], b1[p1][0])),  # xyz coordinates
+                new_trajs[pn][1] + b1[p1][1]  # reprojection error
+            ) for pn, p1 in pairs_new
+        ]
+        new_t0_extended += [i * lag  for _ in pairs_new]
+        if len(extended) > 0:
+            # add non-extended previous extended trajectories into fragments
+            not_extended_idx = [
+                idx for idx in np.arange(len(extended)) if idx not in pairs_extend.T[0]
+            ]
+            fragments    += [extended[idx] for idx in not_extended_idx]
+            t0_fragments += [t0_extended[idx] for idx in not_extended_idx]
+        # add non-extended trajectories from current batch into fragments
+        not_extended_idx = [idx for idx in np.arange(len(new_trajs)) if idx not in pairs_new.T[0]]
+        fragments += [new_trajs[idx] for idx in not_extended_idx]
+        t0_fragments += [i * lag for _ in not_extended_idx]
+
+        previous_pairs = np.vstack((pairs_extend, pairs_new))
+        t0_extended = new_t0_extended
+        extended = new_extended
+
+    return extended + fragments, t0_extended + t0_fragments
+
+
+def get_trajectory_batches(
+        cameras, features_mv_mt, st_error_tol, search_range, tau,
+        z_min, z_max, overlap_num, overlap_rtol, reproj_err_tol
+    ):
+    """
+    Getting short 3D trajectories batches from 2D positions and camera informations
+    A batch is trajectories start from `t0` to `t0 + tau`
+    It is designed so that the same object will overlap in different batches, and
+    they can be joined with function :any:`resolve_temporal_overlap`
+
+    .. code-block:: none
+
+        ───────────▶              (trajectory in batch 1)
+              ───────────▶        (trajectory in batch 2)
+                    ───────────▶  (trajectory in batch 3)
+
+    Args:
+        cameras (Camera): cameras for 3 views
+        freatrues_mv_mt (:obj:`list`): 2d features in different views at different frames
+        st_error_tol (:obj:`float`): the stereo reprojection error cut-off for stereo linking
+        tau (:obj:`int`): the length of trajectories in each batch; unit: frame
+            the overlap between different batches will be `tau // 2`
+        z_min (:obj:`float`): the minimum allowed z-positions for all trajectories
+        z_max (:obj:`float`): the maximum allowed z-positions for all trajectories
+        overlap_num (:obj:`int`): if two trajectories have more numbers of
+            overlapped positions than `overlap_num`, establish a link.
+        overlap_rtol (:obj:`float`): if two trajectories have more numbers of
+            overlapped positions, link them.
+        reproj_err_tol (:obj:`float`): the 3d positiosn whose reprojection error
+            is greater than this will not be re-constructed, instead a NAN
+            is inserted into the trajectory
+
+    Return:
+        :obj:`list` [ :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ] ]:
+            trajectories in different batches
+    """
+    shift = tau // 2
+    frame_num = len(features_mv_mt)
+    t_starts = [t * shift for t in range(frame_num // shift)]
+    t_starts = [t for t in t_starts if t + tau <= frame_num]
+    proj_mats = [cam.p for cam in cameras]
+    cam_origins = [cam.o for cam in cameras]
+    batches = []
+    for t0 in t_starts:
+        stereo_matches = []
+        for features_mv in features_mv_mt[t0 : t0 + tau]:
+            matched = match_v3(
+                *features_mv, *proj_mats, *cam_origins,
+                tol_2d=st_error_tol, optimise=True
+            )
+            stereo_matches.append(matched)
+        features_mt_mv = []  # shape (3, frames, n, 3)
+        for view in range(3):
+            features_mt_mv.append([])
+            for frame in range(t0, t0 + tau):
+                features_mt_mv[-1].append( features_mv_mt[frame][view] )
+        ctrajs_3d = get_trajs_3d(
+            features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
+            search_range=search_range, re_max=reproj_err_tol
+        )
+        ctrajs_3d = get_valid_ctraj(ctrajs_3d, z_min, z_max)
+        ctrajs_3d = remove_spatial_overlap(ctrajs_3d, overlap_num, overlap_rtol)
+        batches.append(ctrajs_3d)
+    return batches
