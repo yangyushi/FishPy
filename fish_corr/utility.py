@@ -381,10 +381,12 @@ def get_mean_spd(velocity_frames, frame_number, min_number):
     """
     speeds = np.empty(frame_number)
     for i, velocity in enumerate(velocity_frames):
-        if len(velocity) > min_number:
-            speeds[i] = np.nanmean(np.linalg.norm(velocity, axis=1))
-        else:
-            speeds[i] = np.nan
+        if len(velocity) > 0:
+            spd = np.linalg.norm(velocity, axis=1)
+            if np.logical_not(np.isnan(spd)).sum() > min_number:
+                speeds[i] = np.nanmean(spd)
+            else:
+                speeds[i] = np.nan
     return np.nanmean(speeds)
 
 
