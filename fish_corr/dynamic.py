@@ -308,7 +308,6 @@ class AverageAnalyser():
         for pe in self.pair_ends:
             if pe <= len(array):
                 last_pair += 1
-
         result = np.empty(last_pair)
         for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
             result[i] = np.nanmean(array[t0:t1])
@@ -330,8 +329,8 @@ class AverageAnalyser():
 
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
-            nn_movie = list(static.get_nn_iter(self.movie, no_vertices=no_vertices))
-            return self.scan_array(np.array(nn_movie))
+            nn_movie = np.fromiter(static.get_nn_iter(self.movie, no_vertices=no_vertices), dtype=float)
+            return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
                 lambda x: static.get_nn_iter(x, no_vertices=no_vertices),
@@ -339,14 +338,14 @@ class AverageAnalyser():
 
     def scan_nn_pbc(self, box):
         if self.win_size >= self.step_size:
-            nn_movie = list(static.get_nn_iter_pbc(self.movie, box))
-            return self.scan_array(np.array(nn_movie))
+            nn_movie = np.fromiter(static.get_nn_iter_pbc(self.movie, box), dtype=float)
+            return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
                 lambda x: static.get_nn_iter_pbc(x, box=box),
             )
 
-    def scan_speed(self, min_number=0) -> np.ndarray:
+    def scan_speed(self, min_number=0):
         """
         Args:
             min_number (:obj:`int`): only take frame into consideration if len(velocity) > min_number in this frame
@@ -408,9 +407,7 @@ class AverageAnalyser():
         """
         if self.win_size >= self.step_size:
             velocities = self.movie.velocity((self.start, self.end))
-            vicsek_movie = utility.get_vicsek_order(
-                velocities, min_number=min_number
-            )
+            vicsek_movie = utility.get_vicsek_order(velocities, min_number=min_number)
             return self.scan_array(vicsek_movie)
         else:
             return self.__scan_velocities(
@@ -475,3 +472,128 @@ class AverageAnalyser():
     def scan_number(self):
         numbers = np.array([len(frame) for frame in self.movie])
         return self.scan_array(numbers)
+
+    def decorrelated_scan_2(self, f1, f2):
+        """
+        Decorrelated version of :any:`scan_array()`
+            the time averaged signals were averaged by randomly selected data points
+            to reduce possible error-induced correlation
+
+        Args:
+            f1 (:obj:`function`): the function to generate signal, :code:`f1(self) -> signal_1`
+            f2 (:obj:`function`): the function to generate signal, :code:`f2(self) -> signal_2`
+
+        Return:
+            :obj:`tuple` ( :obj:`numpy.ndarray` , :obj:`numpy.ndarray` ): the time averaged signals
+        """
+        x1 = f1(self)
+        x2 = f2(self)
+        assert len(x1) == len(x2),\
+            f"can't decorrelate signals with different sizes, ({len(x1)} != {len(x2)})"
+        last_pair = 0
+        for pe in self.pair_ends:
+            if pe <= len(x1):
+                last_pair += 1
+        result_1 = np.empty(last_pair)
+        result_2 = np.empty(last_pair)
+        for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
+            indices = np.arange(t0, t1, 1)
+            np.random.shuffle(indices)
+            i1 = indices[:self.win_size//2]
+            i2 = indices[self.win_size//2:]
+            result_1[i] = np.nanmean(x1[i1])
+            result_2[i] = np.nanmean(x2[i2])
+        return result_1, result_2
+
+    def decorrelated_scan_3(self, f1, f2, f3):
+        """
+        Decorrelated version of :any:`scan_array()`
+            the time averaged signals were averaged by randomly selected data points
+            to reduce possible error-induced correlation
+
+        Args:
+            f1 (:obj:`function`): the function to generate signal, :code:`f1(self) -> signal_1`
+            f2 (:obj:`function`): the function to generate signal, :code:`f2(self) -> signal_2`
+            f3 (:obj:`function`): the function to generate signal, :code:`f3(self) -> signal_3`
+
+        Return:
+            :obj:`tuple` ( :obj:`numpy.ndarray` , :obj:`numpy.ndarray` , :obj:`numpy.ndarray` ): the time averaged signals
+        """
+        x1, x2, x3 = f1(self), f2(self), f3(self)
+        assert (len(x1) == len(x2)) and (len(x1) == len(x3)),\
+        f"can't decorrelate signals with different sizes, ({len(x1)}, {len(x2)}, {len(x3)})"
+        last_pair = 0
+        for pe in self.pair_ends:
+            if pe <= len(x1):
+                last_pair += 1
+        result_1 = np.empty(last_pair)
+        result_2 = np.empty(last_pair)
+        result_3 = np.empty(last_pair)
+        for i, (t0, t1) in enumerate(self.pairs[:last_pair]):
+            indices = np.arange(t0, t1, 1)
+            np.random.shuffle(indices)
+            i1 = indices[ : self.win_size//3]
+            i2 = indices[self.win_size//3 : 2 * self.win_size//3]
+            i3 = indices[2 * self.win_size//3 : ]
+            result_1[i] = np.nanmean(x1[i1])
+            result_2[i] = np.nanmean(x2[i2])
+            result_3[i] = np.nanmean(x3[i3])
+        return result_1, result_2, result_3
+
+
+def get_nn_movie(analyser):
+    """
+    get the average nearest neighbour distance of all frames from a analyser
+    this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+    or AverageAnalyser.decorrelated_scan_3()
+
+    Args:
+        analyser (AverageAnalyser): instance of the AverageAnalyser
+
+    Return:
+        (:obj:`numpy.ndarray`): the average nn-distance in all frames
+    """
+    frames = analyser.movie[analyser.start : analyser.end]
+    nn_iter = static.get_nn_iter(frames, no_vertices=True)
+    return np.fromiter(nn_iter, dtype=float)
+
+
+def get_spd_movie(analyser):
+    """
+    get the average speed of all frames from a analyser
+        this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+        or AverageAnalyser.decorrelated_scan_3()
+
+    Args:
+        analyser (AverageAnalyser): instance of the AverageAnalyser
+
+    Return:
+        (:obj:`numpy.ndarray`): the average speed in all frames
+    """
+    spd_movie = np.empty(analyser.end - analyser.start)
+    for i, f in enumerate(range(analyser.start, analyser.end)):
+        velocity = analyser.movie.velocity(f)
+        if len(velocity) > 0:
+            spd = np.linalg.norm(velocity, axis=1)
+            if np.logical_not(np.isnan(spd)).sum() > 0:
+                spd_movie[i] = np.nanmean(spd)
+            else:
+                spd_movie[i] = np.nan
+    return spd_movie
+
+
+def get_order_movie(analyser):
+    """
+    get the dynamical order of all frames from a analyser
+    this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+    or AverageAnalyser.decorrelated_scan_3()
+
+    Args:
+        analyser (AverageAnalyser): instance of the AverageAnalyser
+
+    Return:
+        (:obj:`numpy.ndarray`): the dynamical order (polarisation) in all frames
+    """
+    velocities = analyser.movie.velocity((analyser.start, analyser.end))
+    vicsek_movie = utility.get_vicsek_order(velocities, min_number=2)
+    return vicsek_movie
