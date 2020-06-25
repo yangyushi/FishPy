@@ -60,6 +60,55 @@
 </dd></dl>
 
 <dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.decorrelated_scan_2">
+<code class="sig-name descname">decorrelated_scan_2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f1</span></em>, <em class="sig-param"><span class="n">f2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.decorrelated_scan_2" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Decorrelated version of <a class="reference internal" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="fish_corr.dynamic.AverageAnalyser.scan_array"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">scan_array()</span></code></a></dt><dd><p>the time averaged signals were averaged by randomly selected data points
+to reduce possible error-induced correlation</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f1</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code>) – the function to generate signal, <code class="code docutils literal notranslate"><span class="pre">f1(self)</span> <span class="pre">-&gt;</span> <span class="pre">signal_1</span></code></p></li>
+<li><p><strong>f2</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code>) – the function to generate signal, <code class="code docutils literal notranslate"><span class="pre">f2(self)</span> <span class="pre">-&gt;</span> <span class="pre">signal_2</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the time averaged signals</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> , <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> )</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fish_corr.dynamic.AverageAnalyser.decorrelated_scan_3">
+<code class="sig-name descname">decorrelated_scan_3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f1</span></em>, <em class="sig-param"><span class="n">f2</span></em>, <em class="sig-param"><span class="n">f3</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.decorrelated_scan_3" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Decorrelated version of <a class="reference internal" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="fish_corr.dynamic.AverageAnalyser.scan_array"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">scan_array()</span></code></a></dt><dd><p>the time averaged signals were averaged by randomly selected data points
+to reduce possible error-induced correlation</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f1</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code>) – the function to generate signal, <code class="code docutils literal notranslate"><span class="pre">f1(self)</span> <span class="pre">-&gt;</span> <span class="pre">signal_1</span></code></p></li>
+<li><p><strong>f2</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code>) – the function to generate signal, <code class="code docutils literal notranslate"><span class="pre">f2(self)</span> <span class="pre">-&gt;</span> <span class="pre">signal_2</span></code></p></li>
+<li><p><strong>f3</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">function</span></code>) – the function to generate signal, <code class="code docutils literal notranslate"><span class="pre">f3(self)</span> <span class="pre">-&gt;</span> <span class="pre">signal_3</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the time averaged signals</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> ( <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> , <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> , <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> )</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_array">
 <code class="sig-name descname">scan_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>the array is assumed to start at frame self.start</p>
@@ -141,7 +190,7 @@
 
 <dl class="py method">
 <dt id="fish_corr.dynamic.AverageAnalyser.scan_speed">
-<code class="sig-name descname">scan_speed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)">numpy.ndarray</a><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_speed" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">scan_speed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.AverageAnalyser.scan_speed" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>min_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – only take frame into consideration if len(velocity) &gt; min_number in this frame</p>
@@ -264,6 +313,65 @@ the centres were substrated for both frames</p>
 to transform points in _frame_ to _frame+1_</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.dynamic.get_nn_movie">
+<code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">get_nn_movie</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">analyser</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.get_nn_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the average nearest neighbour distance of all frames from a analyser
+this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+or AverageAnalyser.decorrelated_scan_3()</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>analyser</strong> (<a class="reference internal" href="#fish_corr.dynamic.AverageAnalyser" title="fish_corr.dynamic.AverageAnalyser"><em>AverageAnalyser</em></a>) – instance of the AverageAnalyser</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the average nn-distance in all frames</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.dynamic.get_order_movie">
+<code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">get_order_movie</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">analyser</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.get_order_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the dynamical order of all frames from a analyser
+this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+or AverageAnalyser.decorrelated_scan_3()</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>analyser</strong> (<a class="reference internal" href="#fish_corr.dynamic.AverageAnalyser" title="fish_corr.dynamic.AverageAnalyser"><em>AverageAnalyser</em></a>) – instance of the AverageAnalyser</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the dynamical order (polarisation) in all frames</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="fish_corr.dynamic.get_spd_movie">
+<code class="sig-prename descclassname">fish_corr.dynamic.</code><code class="sig-name descname">get_spd_movie</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">analyser</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fish_corr.dynamic.get_spd_movie" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>get the average speed of all frames from a analyser</dt><dd><p>this is intended to be used for AverageAnalyser.decorrelated_scan_3()
+or AverageAnalyser.decorrelated_scan_3()</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>analyser</strong> (<a class="reference internal" href="#fish_corr.dynamic.AverageAnalyser" title="fish_corr.dynamic.AverageAnalyser"><em>AverageAnalyser</em></a>) – instance of the AverageAnalyser</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the average speed in all frames</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.18)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
