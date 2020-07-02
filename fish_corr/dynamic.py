@@ -38,7 +38,8 @@ class Critic():
     def get_position_pair(self, frame):
         """
         return the same points in _frame_ and _frame+1_
-        the centres were substrated for both frames
+        the centres of mass were substrated for both frames
+        r1 - r0 --> velocity fluctuation
         """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no position pair in frame {frame}")
@@ -176,23 +177,29 @@ class Critic():
             self.__flctn_nos.update({frame: flctn_nos})
         return flctn_nos
 
-    def get_corr_flctn(self, bins, start, stop=None, transform="T"):
+    def get_corr_flctn(self, bins, start, stop=None, transform="T", get_raw_data=False):
         """
         Get the time-average connected correlation function of the fluctuation
 
         Args:
+            bins (:obj:`int` or :obj:`numpy.ndarray`): the number of bins or the bin edges
+            start (:obj:`int`): the start frame for the analysis
+            stop (:obj:`int` or None): the end frame for the analysis,
+                if being `None` the end frame is the last frame
             transform (:obj:`str`): here are possible options
 
                 1. ``T`` - corr of non-translational fluctuations
                 2. ``I`` - corr of non-isometric fluctuations
                 3. ``S`` - corr of non-similar fluctuations
 
+            get_raw_data (:obj:`bool`): if True, return the raw data for :any:`binned_statistic`
+                otherwise return the mean value of velocity correlation in each bin
         """
         if not stop:
             stop = len(self.movie) - 2
 
-        distances_multi_frame = np.empty(0)
-        fluctuations_multi_frame = np.empty(0)
+        distances_multi_frame = []
+        fluctuations_multi_frame = []
 
         if transform == "T":
             flctn_func = self.__get_flctn_not
@@ -220,23 +227,20 @@ class Critic():
             flctn_dimless_ij = np.empty(len(distances), dtype=float)
 
             idx = 0
-
             for i in range(len(flctn_dimless)):
                 for j in range(i+1, len(flctn_dimless)):
                     flctn_dimless_ij[idx] = flctn_dimless[i] @ flctn_dimless[j]
                     idx += 1
 
-            distances_multi_frame = np.concatenate((
-                distances_multi_frame,
-                distances
-            ), axis=0)
+            distances_multi_frame.append(distances)
+            fluctuations_multi_frame.append(flctn_dimless_ij)
 
-            fluctuations_multi_frame = np.concatenate((
-                fluctuations_multi_frame,
-                flctn_dimless_ij
-            ), axis=0)
-
-        return binned_statistic(distances_multi_frame, fluctuations_multi_frame, bins=bins)
+        distances_multi_frame = np.concatenate(distances_multi_frame, axis=0)
+        fluctuations_multi_frame = np.concatenate(fluctuations_multi_frame, axis=0)
+        if get_raw_data:
+            return distances_multi_frame, fluctuations_multi_frame
+        else:
+            return binned_statistic(distances_multi_frame, fluctuations_multi_frame, bins=bins)
 
 
 class AverageAnalyser():
