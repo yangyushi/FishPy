@@ -111,11 +111,19 @@ def get_best_rotation(r1, r2):
 
 def get_best_dilatation_rotation(r1, r2, init_guess=None):
     """
-    calculate numeratically
+    Calculate the best dilation & rotation matrices between two sets of points
 
     .. code-block::
 
         (r1 @ Lambda) @ Rotation = r2
+
+    Args:
+        r1 (:obj:`numpy.ndarray`): a collection of 3D positions, shape (N, 3)
+        r2 (:obj:`numpy.ndarray`): a collection of 3D positions, shape (N, 3)
+        init_guess (:obj:`bool`): the initial guess for numerical optimisation
+
+    Return:
+        :obj:`tuple`: (dilation matrix Lambda, rotation matrix Rotation)
     """
     if isinstance(init_guess, type(None)):
         init_guess = np.ones(r1.shape[1])
