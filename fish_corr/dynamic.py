@@ -192,7 +192,7 @@ class Critic():
                 2. ``I`` - corr of non-isometric fluctuations
                 3. ``S`` - corr of non-similar fluctuations
 
-            get_raw_data (:obj:`bool`): if True, return the raw data for :any:`binned_statistic`
+            get_raw_data (:obj:`bool`): if True, return the raw data for :obj:`scipy.stats.binned_statistic`
                 otherwise return the mean value of velocity correlation in each bin
         """
         if not stop:
@@ -280,10 +280,13 @@ class AverageAnalyser():
         if self.win_size > self.end - self.start + 1:
             raise ValueError("Window size is larger than video length")
 
-    def __scan_positions(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
+    def __scan_positions(self, func) -> np.ndarray:
         """
         The data to be averaged is calculated by func(self.movie)
         The average is tanken between (t0, t1) in self.pairs
+
+        Args:
+            func ( Callable [ :obj:`numpy.ndarray` ] ): a function that operates on a
         """
         result = []
         for i, pair in enumerate(self.pairs):
@@ -376,13 +379,11 @@ class AverageAnalyser():
             )
         )
 
-    def scan_biased_gr(self, tank, bins, number, space_bin_number=50):
+    def scan_biased_gr(self, tank, bins, space_bin_number=50, **kwargs):
         """
-        :param number: number of (posiible) particles per frame
         Args:
             tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank` to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
-            number (:obj:`int`): number of (posiible) particles per frame
             space_bin_number (:obj:`int`): number of bins to devide space to generated biased random gas
 
         Return:
@@ -396,8 +397,7 @@ class AverageAnalyser():
         positions = np.vstack(positions)
         return self.__scan_positions(
             lambda x: utility.get_biased_gr(
-                x, positions=positions, tank=tank, bins=bins,
-                random_size=number * self.win_size, space_bin_number=space_bin_number
+                frames=x, positions=positions, tank=tank, bins=bins, space_bin_number=space_bin_number
             )
         )
 

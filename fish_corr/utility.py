@@ -99,9 +99,18 @@ def get_centres(trajectories, frames):
 
 def get_best_rotation(r1, r2):
     """
-    calculate the best rotation to relate two sets of vectors
-    see the paper [A solution for the best rotation to relate two sets of vectors] for detail
+    Calculate the best rotation to relate two sets of vectors
+
+    See the paper [A solution for the best rotation to relate two sets of vectors] for detail
+
     all the points were treated equally, which means w_n = 0 (in the paper)
+
+    Args:
+        r1 (:obj:`numpy.ndarray`): a collection of 3D points, shape (n, 3)
+        r2 (:obj:`numpy.ndarray`): a collection of 3D points, shape (n, 3)
+
+    Return:
+        :obj:`numpy.ndarray`: the best rotation matrix R, ``r1 @ R = r2``
     """
     R = r2.T @ r1
     u, a = np.linalg.eig(R.T @ R)  # a[:, i] corresponds to u[i]
@@ -304,10 +313,21 @@ def biased_discrete_nd(variables, bins, size=1):
 
 def get_gr(frames, bins, random_gas):
     """
+    Compare the radial distribution function from a collection of coordinates
+        by comparing the distance distribution of particles in different frames with the random gas
+
+    The density of the system and the random gas is chosen to be the same for each frame
+        which reduced the effect of the possible tracking error
+
+    Sample the random gas in clever ways to consider different boundaries
+
     Args:
         frames (:obj:`numpy.ndarray`): positions of particles in different frames, shape (frame, n, dim)
         bins (:obj:`numpy.ndarray` or int): the bins for the distance histogram
-        random_gas (:obj:`numpy.ndarray`): shape (N, 3)
+        random_gas (:obj:`numpy.ndarray`): positions of uncorrelated ideal gas, shape (N, 3)
+
+    Return:
+        :obj:`numpy.ndarray`: get the rdf values inside each bin
     """
     offset = 0
     distances = []
@@ -315,7 +335,7 @@ def get_gr(frames, bins, random_gas):
     for frame in frames:
         if len(frame) > 2:
             dist = pdist(frame)
-            dist_gas = pdist(random_gas[offset : offset+len(frame)] + 1)
+            dist_gas = pdist(random_gas[offset : offset+len(frame)])
             offset += len(frame)
             distances.append(dist)
             distances_gas.append(dist_gas)
@@ -347,30 +367,33 @@ def get_gr_pbc(frames, bins, random_gas, box):
 
 def get_vanilla_gr(frames, tank, bins, random_size):
     """
-    :param frames: positions of all particles in different frames, shape (frame, n, dim)
-    :param tank: a static.Tank instance
-    :param bins: the bins for the distance histogram
-    :param random_size: the number of random gas particles
+    Args:
+        frames (:obj:`numpy.ndarray`): positions of all particles in different frames, shape (frame, n, dim)
+        tank (:obj:`Tank`): a static.Tank instance
+        bins (:obj:`numpy.ndarray`): the bins for the distance histogram
+        random_size (:obj:`int`): the number of random gas particles, its
                         should be: len(frames) * particle_number_per_frame
     """
+    random_size = np.sum([len(f) for f in frames])
     random_gas = tank.random(random_size)
     return get_gr(frames, bins, random_gas)
 
 
-def get_biased_gr(frames, positions, tank, bins, random_size, space_bin_number):
+def get_biased_gr(frames, positions, tank, bins, space_bin_number):
     """
-    :param frames: positions of all particles in different frames, shape (frame, n, dim)
-    :param positions: all positions in the entire movie, shape (N, 3)
-    :param tank: a static.Tank instance
-    :param bins: the bins for the distance histogram
-    :param random_size: the number of random gas particles
-                        should be: len(frames) * particle_number_per_frame
+    Args:
+        frames (:obj:`numpy.ndarray`): positions of all particles in different frames, shape (frame, n, dim)
+        positions (:obj:`numpy.ndarray`): all positions in the entire movie, shape (N, 3)
+        tank (Tank): a static.Tank instance
+        bins (:obj:`numpy.ndarray` or `int`): the bins for the distance histogram or the bin number
     """
     bins_xyz = (
         np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
         np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
         np.linspace(0, tank.z_max, space_bin_number+1, endpoint=True).ravel(),
     )
+    frames = list(frames)
+    random_size = np.sum([len(f) for f in frames])
     random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
     return get_gr(frames, bins, random_gas)
 
