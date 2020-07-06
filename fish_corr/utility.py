@@ -513,3 +513,25 @@ def fit_acf_exp(data):
         sigma = 1 / acf[1:]
     )
     return popt[0]
+
+
+def pdist_pbc(positions, box):
+    """
+    Get the pair-wise distances of particles in a priodic boundary box
+
+    Args:
+        positiosn (:obj:`numpy.ndarray`): coordinate of particles, shape (N, dim)
+        box (:obj:`float`): the length of the priodic bondary.
+            The box should be cubic
+
+    Return:
+        :obj:`numpy.ndarray`: the pairwise distance, shape ( (N * N - N) / 2, ),
+            use :obj:`scipy.spatial.distance.squareform` to recover the matrix form.
+    """
+    n, dim = positions.shape
+    result = np.zeros(int((n * n - n) / 2), dtype=np.float64)
+    for d in range(dim):
+        dist_1d = pdist(positions[:, d][:, np.newaxis])
+        dist_1d[dist_1d > box / 2] -= box
+        result += np.power(dist_1d, 2)
+    return np.sqrt(result)

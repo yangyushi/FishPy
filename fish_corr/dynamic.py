@@ -17,45 +17,67 @@ class Critic():
     Calculate the dynamical order & correlations from a fish movie
 
     Attributes:
-        movie (:obj:`fish_track.linking.Movie`): a :obj:`fish_track.linking.Movie` instance
+        movie (:obj:`fish_track.linking.Movie` or :obj:`fish_track.linking.SimMovie`): a Movie instance
+            where positiosn and velocities can be retrieved
         trajs (:obj:`list` of :obj:`fish_track.linking.Trajectory`): a list of trajectories
+        is_simulation (:obj:`bool`): set the True if the movie is :obj:`fish_track.linking.SimMovie`
+        is_pbc (:obj:`bool`): set the True if the particles are in a periodic boundary
 
     Abbrs:
         1. flctn_not: non-translational fluctuation (the collective translation is removed)
         2. flctn_noi: non-isometric fluctuation (the collective translation & rotaton is removed)
         3. flctn_nos: non-similar fluctuation (the collective translation & rotation & isotropic scaling is removed)
     """
-    def __init__(self, movie):
+    def __init__(self, movie, is_simulation=False, pbc=0):
         self.movie = movie
         self.trajs = movie.trajs
         self.__pos_pair = {}
         self.__GR = {}
         self.__R = {}
+        self.__velocities = {}
         self.__flctn_not = {}
         self.__flctn_noi = {}
         self.__flctn_nos = {}
+        self.is_simulation = is_simulation
+        self.pbc = pbc
 
-    def get_position_pair(self, frame):
+    def get_position_pair(self, frame, remove_com=True):
         """
-        return the same points in _frame_ and _frame+1_
-        the centres of mass were substrated for both frames
-        r1 - r0 --> velocity fluctuation
+        Retrieve the same points in ``frame`` and ``frame + 1``
+
+        This function is used for calculating the velocities
+
+        Args:
+            frame (:obj:`int`): the frame number
+            remove_com (:obj:`bool`): if true, the centres of mass were substrated for both frames
+
+        Return:
+            :obj:`tuple` ( :obj:`numpy.ndarray`, :obj:`numpy.ndarray` ): r0 (shape (n, dim)) ,  r1 (shape (n, dim))
         """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no position pair in frame {frame}")
         elif frame in self.__pos_pair.keys():
             return self.__pos_pair[frame]
         else:
-            idx_0, idx_1 = self.movie.indice_pair(frame)
-            if len(idx_0) > 0:
-                pos_0 = self.movie[frame+0][idx_0]
-                pos_1 = self.movie[frame+1][idx_1]
-                r0 = pos_0 - np.mean(pos_0, axis=0)
-                r1 = pos_1 - np.mean(pos_1, axis=0)
+            if self.is_simulation:
+                r0 = self.movie[frame]
+                r1 = r0 + self.movie.velocity(frame)  # forget periodic boundary condition
+                if remove_com:
+                    r0 -= np.mean(r0, axis=0)
+                    r1 -= np.mean(r1, axis=0)
                 self.__pos_pair.update({frame: (r0, r1)})
             else:
-                r0 = np.empty((0, 3))
-                r1 = np.empty((0, 3))
+                idx_0, idx_1 = self.movie.indice_pair(frame)
+                if len(idx_0) > 0:
+                    r0 = self.movie[frame+0][idx_0]
+                    r1 = self.movie[frame+1][idx_1]
+                    if remove_com:
+                        r0 = r0 - np.mean(r0, axis=0)
+                        r1 = r1 - np.mean(r1, axis=0)
+                    self.__pos_pair.update({frame: (r0, r1)})
+                else:
+                    r0 = np.empty((0, 3))
+                    r1 = np.empty((0, 3))
             return r0, r1
 
     def get_isometry(self, frame):
@@ -136,6 +158,17 @@ class Critic():
 
         return t_orders, r_orders, d_orders
 
+    def __get_velocities(self, frame):
+        if frame > len(self.movie) - 1:
+            raise IndexError(f"There is no fluctuation in frame {frame}")
+        elif frame in self.__velocities.keys():
+            velocities = self.__velocities[frame]
+        else:
+            r0, r1 = self.get_position_pair(frame, remove_com=False)
+            velocities = r1 - r0
+            self.__velocities.update({frame: velocities})
+        return velocities
+
     def __get_flctn_not(self, frame):
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no fluctuation in frame {frame}")
@@ -175,9 +208,9 @@ class Critic():
             else:
                 flctn_nos = np.empty((0, 3))
             self.__flctn_nos.update({frame: flctn_nos})
-        return flctn_nos
+            return flctn_nos
 
-    def get_corr_flctn(self, bins, start, stop=None, transform="T", get_raw_data=False):
+    def get_corr_flctn(self, bins, start, stop=None, transform="N", get_raw_data=False):
         """
         Get the time-average connected correlation function of the fluctuation
 
@@ -191,17 +224,20 @@ class Critic():
                 1. ``T`` - corr of non-translational fluctuations
                 2. ``I`` - corr of non-isometric fluctuations
                 3. ``S`` - corr of non-similar fluctuations
+                4. ``N`` - corr of vanilla fluctuations
 
             get_raw_data (:obj:`bool`): if True, return the raw data for :obj:`scipy.stats.binned_statistic`
                 otherwise return the mean value of velocity correlation in each bin
         """
         if not stop:
-            stop = len(self.movie) - 2
+            stop = len(self.movie) - 1
 
         distances_multi_frame = []
         fluctuations_multi_frame = []
 
-        if transform == "T":
+        if transform == "N":
+            flctn_func = self.__get_velocities
+        elif transform == "T":
             flctn_func = self.__get_flctn_not
         elif transform == "I":
             flctn_func = self.__get_flctn_noi
@@ -210,20 +246,24 @@ class Critic():
         else:
             raise ValueError(f"Invalid transformation type: {transform}")
 
-        for frame in range(start, stop+1):
-            positions = self.get_position_pair(frame)[0]
+        for frame in range(start, stop):
+            positions = self.get_position_pair(frame, remove_com=False)[0]
 
             if len(positions) < 4:
                 continue
 
             fluctuations = flctn_func(frame)
-            norm = np.mean([f @ f for f in fluctuations])
+            norm = np.mean([f @ f for f in fluctuations])  # follow attanasi2014pcb
 
             if np.isclose(norm, 0):
                 continue
 
             flctn_dimless = fluctuations / np.sqrt(norm)
-            distances = pdist(positions)
+
+            if self.pbc > 0:
+                distances = utility.pdist_pbc(positions, self.pbc)
+            else:
+                distances = pdist(positions)
             flctn_dimless_ij = np.empty(len(distances), dtype=float)
 
             idx = 0
