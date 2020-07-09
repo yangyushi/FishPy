@@ -31,7 +31,6 @@ class Critic():
     def __init__(self, movie, is_simulation=False, pbc=0):
         self.movie = movie
         self.trajs = movie.trajs
-        self.__pos_pair = {}
         self.__GR = {}
         self.__R = {}
         self.__velocities = {}
@@ -41,43 +40,37 @@ class Critic():
         self.is_simulation = is_simulation
         self.pbc = pbc
 
-    def get_position_pair(self, frame, remove_com=True):
+    def get_position_pair(self, frame, want_flctn=True):
         """
-        Retrieve the same points in ``frame`` and ``frame + 1``
-
-        This function is used for calculating the velocities
+        Retrieve the fluctuation of velocities in ``frame`` and ``frame + 1``
 
         Args:
             frame (:obj:`int`): the frame number
-            remove_com (:obj:`bool`): if true, the centres of mass were substrated for both frames
+            want_flctn (:obj:`bool`): if false, the velocities will be returned, instead of their fluctuations
 
         Return:
             :obj:`tuple` ( :obj:`numpy.ndarray`, :obj:`numpy.ndarray` ): r0 (shape (n, dim)) ,  r1 (shape (n, dim))
         """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no position pair in frame {frame}")
-        elif frame in self.__pos_pair.keys():
-            return self.__pos_pair[frame]
         else:
             if self.is_simulation:
-                r0 = self.movie[frame]
-                r1 = r0 + self.movie.velocity(frame)  # forget periodic boundary condition
-                if remove_com:
-                    r0 -= np.mean(r0, axis=0)
-                    r1 -= np.mean(r1, axis=0)
-                self.__pos_pair.update({frame: (r0, r1)})
+                r0 = self.movie[frame].copy()
+                v0 = self.movie.velocity(frame).copy()
+                if want_flctn:
+                    v0 -= np.mean(v0, axis=0)[np.newaxis, :]
+                r1 = r0 + v0
             else:
                 idx_0, idx_1 = self.movie.indice_pair(frame)
                 if len(idx_0) > 0:
-                    r0 = self.movie[frame+0][idx_0]
-                    r1 = self.movie[frame+1][idx_1]
-                    if remove_com:
-                        r0 = r0 - np.mean(r0, axis=0)
-                        r1 = r1 - np.mean(r1, axis=0)
-                    self.__pos_pair.update({frame: (r0, r1)})
+                    r0 = self.movie[frame+0][idx_0].copy()
+                    r1 = self.movie[frame+1][idx_1].copy()
+                    if want_flctn:
+                        r0 = r0 - np.mean(r0, axis=0)[np.newaxis, :]
+                        r1 = r1 - np.mean(r1, axis=0)[np.newaxis, :]
                 else:
-                    r0 = np.empty((0, 3))
-                    r1 = np.empty((0, 3))
+                    r0 = np.zeros((0, 3))
+                    r1 = np.zeros((0, 3))
             return r0, r1
 
     def get_isometry(self, frame):
@@ -164,7 +157,7 @@ class Critic():
         elif frame in self.__velocities.keys():
             velocities = self.__velocities[frame]
         else:
-            r0, r1 = self.get_position_pair(frame, remove_com=False)
+            r0, r1 = self.get_position_pair(frame, want_flctn=False)
             velocities = r1 - r0
             self.__velocities.update({frame: velocities})
         return velocities
@@ -247,7 +240,8 @@ class Critic():
             raise ValueError(f"Invalid transformation type: {transform}")
 
         for frame in range(start, stop):
-            positions = self.get_position_pair(frame, remove_com=False)[0]
+            idx_0, idx_1 = self.movie.indice_pair(frame)
+            positions = self.movie[frame][idx_0]
 
             if len(positions) < 4:
                 continue
