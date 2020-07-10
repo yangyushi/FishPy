@@ -4,7 +4,6 @@ import sys
 import pickle
 import numpy as np
 from scipy.stats import binned_statistic_2d, binned_statistic
-import fish_track as ft
 import fish_corr as fc
 import matplotlib.pyplot as plt
 
@@ -35,7 +34,7 @@ if 'movie.pkl' in os.listdir('.'):
     with open('movie.pkl', 'rb') as f:
         movie = pickle.load(f)
 else:
-    movie = ft.Movie(trajs, blur=1, interpolate=False)
+    movie = fc.Movie(trajs, blur=1, interpolate=False)
     with open('movie.pkl', 'wb') as f:
         pickle.dump(movie, f)
 

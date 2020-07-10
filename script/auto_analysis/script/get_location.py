@@ -2,7 +2,6 @@ import os
 import sys
 import pickle
 import numpy as np
-import fish_track as ft
 import matplotlib.pyplot as plt
 
 if len(sys.argv) < 3:
@@ -34,7 +33,7 @@ want_calculate = traj_location_file not in os.listdir('.')
 
 
 if want_calculate:
-    movie = ft.Movie(trajectories, blur=0, interpolate=False)
+    movie = fc.Movie(trajectories, blur=0, interpolate=False)
     locations = [] # shape is (frame, n, 2)
     for i, frame in enumerate(movie):
         if len(frame) > 0:

@@ -3,7 +3,6 @@ import sys
 import pickle
 import numpy as np
 import fish_corr as fc
-import fish_track as ft
 import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
@@ -30,7 +29,7 @@ max_length = int(sys.argv[4])
 with open(traj_file, 'rb') as f:
     trajectories = pickle.load(f)
 
-movie = ft.Movie(trajectories)
+movie = fc.Movie(trajectories)
 
 nn_locations = []
 nn_dists_mean = []

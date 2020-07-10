@@ -2,7 +2,6 @@ import os
 import sys
 import pickle
 import numpy as np
-import fish_track as ft
 import fish_corr as fc
 import matplotlib.pyplot as plt
 
@@ -38,7 +37,7 @@ if 'movie.pkl' in os.listdir('.'):
     with open('movie.pkl', 'rb') as f:
         movie = pickle.load(f)
 else:
-    movie = ft.Movie(trajectories, blur=1, interpolate=False)
+    movie = fc.Movie(trajectories, blur=1, interpolate=False)
     with open('movie.pkl', 'wb') as f:
         pickle.dump(movie, f)
 
