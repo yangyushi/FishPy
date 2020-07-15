@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pickle
 from . import tower_sample as ts
 import warnings
 from itertools import product

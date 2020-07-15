@@ -9,6 +9,6 @@ voro$(PYEXT): voro.cpp
 	$(CC) $(CPPFLAGS) $(PYFLAGS) voro.cpp $(LFLAG) -o voro$(PYEXT)
 
 tower_sample$(PYEXT): tower_sample.cpp
-	$(CC) $(CPPFLAGS) $(PYFLAGS) $(EXTRAFLAGS) tower_sample.cpp -o tower_sample$(PYEXT)
+	$(CC) $(CPPFLAGS) $(PYFLAGS) tower_sample.cpp -o tower_sample$(PYEXT)
 
 .PHONY: all
