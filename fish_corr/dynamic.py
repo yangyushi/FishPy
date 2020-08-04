@@ -471,7 +471,7 @@ class AverageAnalyser():
                 lambda x: np.nanstd(utility.get_vicsek_order(x, min_number=min_number))
             )
 
-    def scan_rotation(self, sample_points: int):
+    def scan_orientation_acf(self, sample_points: int):
         r"""
         Calculate the averaged rotational relaxation time for the movie
 
@@ -500,12 +500,23 @@ class AverageAnalyser():
                     acf = utility.get_acf(orientations, size=sample_points)
                     acfs.append(acf)
             if len(acfs) == 0:
-                result.append(np.nan)
+                null_acf = np.zeros(sample_points)
+                null_acf[:] = np.nan
+                result.append(null_acf)
             else:
                 acf = np.mean(acfs, axis=0)  # auto-correlation
-                tau = utility.fit_acf_exp(acf)
-                result.append(tau)
-        return np.array(result)
+                result.append(acf)
+        return result
+
+    def scan_rotation(self, sample_points):
+        acfs = self.scan_orientation_acf(sample_points)
+        result = np.empty(len(acfs))
+        for i, acf in enumerate(acfs):
+            if np.nan in acf:
+                result[i] = np.nan
+            else:
+                result[i] = utility.fit_acf_exp(acf)
+        return result
 
     def scan_number(self):
         numbers = np.array([len(frame) for frame in self.movie])

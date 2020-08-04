@@ -306,7 +306,7 @@ def biased_discrete_nd(variables, bins, size=1):
     discrete_pdf, bin_edges = np.histogramdd(variables, bins=bins)
     bin_centres = np.array([(be[1:] + be[:-1]) / 2 for be in bin_edges])
     bin_width = np.array([b[1] - b[0] for b in bins]).reshape(1, len(bins))
-    maps = np.array(list(product(*bin_centres)))# map from bin indices to values in the bin
+    maps = np.array(list(product(*bin_centres)))  # map from bin indices to values in the bin
     random_indices = ts.tower_sampling(size, discrete_pdf.astype(np.int64))
     random_numbers = maps[random_indices]
     return random_numbers + np.random.random(random_numbers.shape) * bin_width
@@ -694,6 +694,7 @@ class Movie:
         return new_trajs
 
     def __sniff(self):
+        self.dim = self.trajs[0].positions.ndim
         self.max_frame = max([t.time.max() for t in self.trajs])
         self.size = len(self.trajs)
 
@@ -751,8 +752,10 @@ class Movie:
                     time_index = np.where(t.time == frame)[0][0]
                     positions.append(t.positions[time_index])
                     labels.append(i)
-
-            positions = np.array(positions)
+            if len(positions) == 0:
+                positions = np.empty((0, self.dim))
+            else:
+                positions = np.array(positions)
             self.movie.update({frame: positions})
 
             labels = np.array(labels)

@@ -14,10 +14,11 @@ def vanilla_pca(images):
         tuple: the projection matrix, the variance and mean
     """
     image_num, dimension = images.shape
-    mean = images.mean(axis=0)
-    normalised = images - mean
+    mean = images.mean(axis=1)[:, np.newaxis]
+    std = images.std(axis=1)[:, np.newaxis]
+    normalised = (images - mean) / std
     if dimension > image_num:
-        covar = normalised @ normalised.T
+        covar = normalised.T @ normalised
         e, vh = np.linalg.eigh(covar)
         e[e < 0] = 0
         tmp = (normalised.T @ vh).T
@@ -26,9 +27,10 @@ def vanilla_pca(images):
         for i in range(projection.shape[1]):
             projection[:, i] /= variance
     else:
-        u, variance, vh = np.linalg.svd(normalised)
+        covar = (normalised.T @ normalised) / image_num
+        u, variance, vh = np.linalg.svd(covar)
         projection = vh[:image_num]
-    return projection, variance, mean
+    return projection, variance, images.mean(axis=0)
 
 
 def plot_pca(dim, mean, pcs, name='pca'):
@@ -59,7 +61,7 @@ def add_shadow(x, sigma):
     return result / result.max()
 
 
-def get_kernels(images, indices, cluster_num, plot=True, sigma=0):
+def get_kernels(images, pc_indices, cluster_num, plot=True, sigma=0):
     """
     1. calculate the principle component of different images
     2. project images on some principles
@@ -69,7 +71,7 @@ def get_kernels(images, indices, cluster_num, plot=True, sigma=0):
 
     Args:
         images (np.ndarray): images obtained from :meth:`fish_track.shape.get_shapes`
-        indices (np.ndarray): indices of the principle components
+        pc_indices (np.ndarray): indices of the principle components
         cluster_num (int): the number of clusters (k)
         sigma (float): the sigma of the "shadow" add around the kernel
     """
@@ -81,7 +83,7 @@ def get_kernels(images, indices, cluster_num, plot=True, sigma=0):
     if plot:
         plot_pca(dim, mean, pcs)
 
-    projected = np.array([pcs[indices] @ (img - img.mean()) for img in for_pca])
+    projected = np.array([pcs[pc_indices] @ (img - img.mean()) for img in for_pca])
     features = vq.whiten(projected)
     centroids, distortion = vq.kmeans(features, cluster_num)
 
@@ -93,8 +95,8 @@ def get_kernels(images, indices, cluster_num, plot=True, sigma=0):
     shape_kernels = []
 
     for k in range(cluster_num):
-        indices = np.where(code == k)[0]
-        shape_images = images[indices]
+        img_indices = np.where(code == k)[0]
+        shape_images = images[img_indices]
         average = shape_images.mean(0)
         kernel = average.reshape(dim, dim)  # - np.mean(average)
         #if sigma > 0:
