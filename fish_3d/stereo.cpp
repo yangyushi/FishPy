@@ -1,7 +1,7 @@
 #include "stereo.h"
 
-const double RII = 0.751879699;  // inverse of water refractive index
-const double RI = 1.33;  // water refractive index
+const double RII = 0.750187547;  // inverse of water refractive index
+const double RI = 1.333;  // water refractive index
 
 namespace stereo {
 
@@ -159,8 +159,42 @@ Vec3D get_poi(Vec2D& xy, ProjMat& P){
     return poi;
 }
 
+static std::complex<double> complex_sqrt(const std::complex<double> & z) {
+    return pow(z, 1. / 2.);
+}
 
-double get_u(double d, double x, double z){
+static std::complex<double> complex_cbrt(const std::complex<double> & z) {
+    return pow(z, 1. / 3.);
+}
+
+void solve_quartic(const complex<double> coefficients[5], complex<double> roots[4])
+{
+    // from https://github.com/sidneycadot/quartic
+    // a * x^4 + b * x^3 + c * x^2 + d * x + e == 0
+
+    const std::complex<double> a = coefficients[4];
+    const std::complex<double> b = coefficients[3] / a;
+    const std::complex<double> c = coefficients[2] / a;
+    const std::complex<double> d = coefficients[1] / a;
+    const std::complex<double> e = coefficients[0] / a;
+
+    const std::complex<double> Q1 = c * c - 3. * b * d + 12. * e;
+    const std::complex<double> Q2 = 2. * c * c * c - 9. * b * c * d + 27. * d * d + 27. * b * b * e - 72. * c * e;
+    const std::complex<double> Q3 = 8. * b * c - 16. * d - 2. * b * b * b;
+    const std::complex<double> Q4 = 3. * b * b - 8. * c;
+
+    const std::complex<double> Q5 = complex_cbrt(Q2 / 2. + complex_sqrt(Q2 * Q2 / 4. - Q1 * Q1 * Q1));
+    const std::complex<double> Q6 = (Q1 / Q5 + Q5) / 3.;
+    const std::complex<double> Q7 = 2. * complex_sqrt(Q4 / 12. + Q6);
+
+    roots[0] = (-b - Q7 - complex_sqrt(4. * Q4 / 6. - 4. * Q6 - Q3 / Q7)) / 4.;
+    roots[1] = (-b - Q7 + complex_sqrt(4. * Q4 / 6. - 4. * Q6 - Q3 / Q7)) / 4.;
+    roots[2] = (-b + Q7 - complex_sqrt(4. * Q4 / 6. - 4. * Q6 + Q3 / Q7)) / 4.;
+    roots[3] = (-b + Q7 + complex_sqrt(4. * Q4 / 6. - 4. * Q6 + Q3 / Q7)) / 4.;
+}
+
+
+double get_u_simple(double d, double x, double z){
     x = x / 1000; d = d / 1000; z = z / 1000; // mm -> m
     double d2 = d * d;
     double x2 = x * x;
@@ -207,6 +241,24 @@ double get_u(double d, double x, double z){
 }
 
 
+double get_u(double d, double x, double z){
+    double n2 = RI * RI;
+    complex<double> coef[5];
+    complex<double> roots[4];
+    coef[4] = {n2 - 1, 0};
+    coef[3] = {2 * x - 2 * n2 * x, 0};
+    coef[2] = {d*d * n2 - x*x + n2 * x*x - z*z, 0};
+    coef[1] = {-2 * d*d * n2 * x, 0};
+    coef[0] = {d*d * n2 * x*x, 0};
+    solve_quartic(coef, roots);
+    for (auto r : roots){
+        if ((r.imag() == 0) and (r.real() > 0) and (r.real() < x)){
+            return r.real();
+        }
+    }
+    throw("root finding failed");
+}
+
 Vec3D get_refraction_ray(Vec3D incidence){
     Vec3D refraction;
     incidence /= incidence.norm();
@@ -242,7 +294,7 @@ Vec2D reproject_refractive(Vec3D point, ProjMat P, Vec3D camera_origin){
     double d = abs(camera_origin[2]);
     double z = abs(point[2]);
     double x = (camera_origin - point).topRows(2).norm();
-    double u = get_u(d, x, z);
+    double u = get_u_simple(d, x, z);
     oq = (point - camera_origin).topRows(2);
     oq /= oq.norm();
     poih.topRows(2) = camera_origin.topRows(2) + u * oq;

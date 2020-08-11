@@ -1,5 +1,6 @@
 #ifndef STEREO
 #define STEREO
+#include <complex>
 #include <vector>
 #include <array>
 #include <Eigen/Dense>
