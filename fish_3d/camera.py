@@ -239,15 +239,15 @@ class Camera():
         """
         Project a 3D position onto the image plane
         """
-        assert position.shape[0] == 3, "Please input an [x, y, z] array"
+        assert position.shape[1] == 3, "Please input an (3, n) array"
         uv, _ = cv2.projectPoints(
-                objectPoints=np.vstack(position).T,
+                objectPoints=np.vstack(position.T).T,
                 rvec=self.rotation.as_rotvec(),
                 tvec=self.t,
                 cameraMatrix=self.k,
                 distCoeffs=self.distortion
         )
-        return np.squeeze(uv).T
+        return np.squeeze(uv)
 
 
     def project_refractive(self, positions):

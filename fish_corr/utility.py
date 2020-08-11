@@ -7,6 +7,7 @@ import numpy as np
 from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
 from scipy.special import gamma
+from scipy import ndimage
 from scipy.spatial.distance import pdist
 from numba import njit
 

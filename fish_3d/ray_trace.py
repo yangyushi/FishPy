@@ -642,12 +642,12 @@ def reproject_refractive(xyz, camera, water_level=0, normal=(0, 0, 1), refractiv
     """
     variable names follwoing https://ieeexplore.ieee.org/document/5957554, figure 1
     """
-    co = -camera.r.T @ camera.t
+    co = camera.o
     d = co[-1] - water_level
     x = np.linalg.norm(co[:2] - xyz[:2])
     z = abs(xyz[-1] - water_level)
-    u = get_u(refractive_index, d, x, z)
-    o = np.hstack((co[:2], water_level))
+    u = get_u(refractive_index, d, x, z).ravel()
+    o = np.hstack((co[:2].ravel(), water_level))
     oq_vec = np.hstack((xyz[:2], water_level)) - o
     oq_vec /= np.linalg.norm(oq_vec)
     poi = o + u * oq_vec
