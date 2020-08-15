@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from scipy import ndimage
+from scipy import sparse
 from collections import deque
 
 
@@ -22,8 +23,14 @@ def get_frame(file_name, frame):
     return None
 
 
-def iter_video(file_name, roi=None):
+def get_frame_number(file_name):
     vidcap = cv2.VideoCapture(file_name)
+    return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
+def iter_video(file_name, roi=None, start=0):
+    vidcap = cv2.VideoCapture(file_name)
+    vidcap.set(1, start)
     success = 1
     while success:
         success, image = vidcap.read()
@@ -47,11 +54,11 @@ def get_background(video_iter, step=1, max_frame=1000, process=lambda x:x):
     return background / count
 
 
-def iter_image_sequence(folder, prefix='frame_'):
+def iter_image_sequence(folder, prefix='frame_', start=0):
     file_names = os.listdir(folder)
     image_names = [folder + '/' + fn for fn in file_names if prefix in fn]
     image_names.sort()
-    for name in image_names:
+    for name in image_names[start:]:
         yield np.array(Image.open(name))
 
 
@@ -156,3 +163,32 @@ def get_trajectories_xyz(filename):
     frames = get_frames_from_xyz(filename)
     trajs = np.moveaxis(frames, 0, 2)
     return trajs
+
+
+def make_difference_movie(
+        filename, start=0, end=0,
+        kind='video', transform=lambda x: x):
+    """
+    Return a movie that stores the difference between successive frames
+    """
+    if kind.lower() == 'video':
+        video_iter = iter_video(filename, start=start)
+    elif kind.lower() == 'image':
+        video_iter = iter_image_sequence(filename, start=start)
+    else:
+        raise TypeError("only [video] and [image] kind is supported")
+
+    total_frame = get_frame_number(filename)
+    if end == 0:
+        end = total_frame
+    elif end > total_frame:
+        end = total_frame
+
+    f0 = transform(next(video_iter))
+    result = []
+    for i in range(end - start - 1):
+        f1 = transform(next(video_iter))
+        diff = sparse.coo_matrix(f1 - f0)
+        f0 = f1
+        result.append(diff)
+    return result
