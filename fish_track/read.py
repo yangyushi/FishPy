@@ -14,13 +14,16 @@ def get_frame(file_name, frame):
     return the frame content as an array
     """
     vidcap = cv2.VideoCapture(file_name)
-    success, count = 1, 0
-    while success:
-        success, image = vidcap.read()
-        if (count == frame) and success:
-            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        count += 1
-    return None
+    if isinstance(frame, (np.integer, int)):
+        vidcap.set(1, frame - 1)
+    elif isinstance(frame, (np.floating, float)):
+        vidcap.set(2, frame)
+    else:
+        raise TypeError(f"frame data type not supported! ({type(frame)})")
+    success, image = vidcap.read()
+    vidcap.release()
+    if success:
+        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
 def get_frame_number(file_name):
@@ -37,6 +40,7 @@ def iter_video(file_name, roi=None, start=0):
         if success:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             yield image
+    vidcap.release()
 
 
 def get_background(video_iter, step=1, max_frame=1000, process=lambda x:x):

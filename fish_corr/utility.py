@@ -400,17 +400,38 @@ def get_biased_gr(frames, positions, tank, bins, space_bin_number):
     return get_gr(frames, bins, random_gas)
 
 
+def get_biased_gr_randomly(frames, positions, tank, bins, space_bin_number):
+    """
+    Args:
+        frames (:obj:`numpy.ndarray`): positions of all particles in different frames, shape (frame, n, dim)
+        positions (:obj:`numpy.ndarray`): all positions in the entire movie, shape (N, 3)
+        tank (Tank): a static.Tank instance
+        bins (:obj:`numpy.ndarray` or `int`): the bins for the distance histogram or the bin number
+    """
+    bins_xyz = (
+        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(0, tank.z_max, space_bin_number+1, endpoint=True).ravel(),
+    )
+    frames = list(frames)
+    random_indices = np.random.randint(0, len(frames), len(frames))
+    random_frames = [frames[i] for i in random_indices]
+    random_size = np.sum([len(f) for f in frames])
+    random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
+    return get_gr(random_frames, bins, random_gas)
+
+
+
 def get_mean_spd(velocity_frames, frame_number, min_number):
     """
-    Calculate the average speed in one frame, given the velocities
-    The calculation is done over many frames
+    Calculate the average speed in many frames, given the velocities
 
     Args:
         velocity_frames (:obj:`numpy.ndarray`): velocity in different frames, shape (frame, n, dim)
         min_number (:obj:`numpy.ndarray`): only include frames if its particle number> min_number
-
+        frame_number (:obj:`int`): the total frame number
     Return:
-        :obj:`numpy.ndarray`: the average speed in each frame, shape (n, )
+        :obj:`int`: the average speed in many frames
     """
     speeds = np.empty(frame_number)
     for i, velocity in enumerate(velocity_frames):
@@ -421,6 +442,28 @@ def get_mean_spd(velocity_frames, frame_number, min_number):
             else:
                 speeds[i] = np.nan
     return np.nanmean(speeds)
+
+
+def get_std_spd(velocity_frames, frame_number, min_number):
+    """
+    Calculate the standard deviation of speed in many frames, given the velocities
+
+    Args:
+        velocity_frames (:obj:`numpy.ndarray`): velocity in different frames, shape (frame, n, dim)
+        min_number (:obj:`numpy.ndarray`): only include frames if its particle number> min_number
+        frame_number (:obj:`int`): the total frame number
+    Return:
+        :obj:`int`: the average speed in many frames
+    """
+    speeds = np.empty(frame_number)
+    for i, velocity in enumerate(velocity_frames):
+        if len(velocity) > 0:
+            spd = np.linalg.norm(velocity, axis=1)
+            if np.logical_not(np.isnan(spd)).sum() > min_number:
+                speeds[i] = np.nanmean(spd)
+            else:
+                speeds[i] = np.nan
+    return np.nanstd(speeds)
 
 
 def get_vicsek_order(velocity_frames, min_number):

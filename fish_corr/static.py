@@ -255,6 +255,10 @@ def get_nn(positions, no_vertices=True):
 def get_nn_iter(frames, no_vertices=True):
     """
     Get an iteractive objectable that yields nn distances in different frames
+
+    Args:
+        frames (:obj:`list` of :obj:`numpy.ndarray`): the positions of particles
+            in many frames
     """
     for i, positions in enumerate(frames):
         if len(positions) < 2:

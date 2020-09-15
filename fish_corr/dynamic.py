@@ -17,16 +17,22 @@ class Critic():
     Calculate the dynamical order & correlations from a fish movie
 
     Attributes:
-        movie (:obj:`fish_track.linking.Movie` or :obj:`fish_track.linking.SimMovie`): a Movie instance
-            where positiosn and velocities can be retrieved
-        trajs (:obj:`list` of :obj:`fish_track.linking.Trajectory`): a list of trajectories
-        is_simulation (:obj:`bool`): set the True if the movie is :obj:`fish_track.linking.SimMovie`
-        is_pbc (:obj:`bool`): set the True if the particles are in a periodic boundary
+        movie (:obj:`Movie` or :obj:`SimMovie`): a Movie instance where
+            positiosn and velocities can be retrieved
+        trajs (:obj:`list` of :obj:`fish_track.linking.Trajectory`): a
+            list of trajectories
+        is_simulation (:obj:`bool`): set the True if the movie is
+            :obj:`SimMovie`
+        is_pbc (:obj:`bool`): set the True if the particles are in a
+            periodic boundary
 
     Abbrs:
-        1. flctn_not: non-translational fluctuation (the collective translation is removed)
-        2. flctn_noi: non-isometric fluctuation (the collective translation & rotaton is removed)
-        3. flctn_nos: non-similar fluctuation (the collective translation & rotation & isotropic scaling is removed)
+        1. flctn_not: non-translational fluctuation
+            (the collective translation is removed)
+        2. flctn_noi: non-isometric fluctuation
+            (the collective translation & rotaton is removed)
+        3. flctn_nos: non-similar fluctuation
+            (the collective translation & rotation & isotropic scaling is removed)
     """
     def __init__(self, movie, is_simulation=False, pbc=0):
         self.movie = movie
@@ -46,10 +52,12 @@ class Critic():
 
         Args:
             frame (:obj:`int`): the frame number
-            want_flctn (:obj:`bool`): if false, the velocities will be returned, instead of their fluctuations
+            want_flctn (:obj:`bool`): if false, the velocities will be returned,
+                instead of their fluctuations
 
         Return:
-            :obj:`tuple` ( :obj:`numpy.ndarray`, :obj:`numpy.ndarray` ): r0 (shape (n, dim)) ,  r1 (shape (n, dim))
+            :obj:`tuple` ( :obj:`numpy.ndarray`, :obj:`numpy.ndarray` ):
+                r0 (shape (n, dim)) ,  r1 (shape (n, dim))
         """
         if frame > len(self.movie) - 1:
             raise IndexError(f"There is no position pair in frame {frame}")
@@ -106,7 +114,8 @@ class Critic():
 
     def get_orders(self, start=0, stop=None, size_threshold=5, report=False):
         """
-        return nan for one frame if the matched pair in that frame is smaller than size_threshold
+        Return nan for one frame if the matched pair in that frame is smaller
+            than `size_threshold`
         """
         if not stop:
             stop = len(self.movie) - 1
@@ -208,7 +217,8 @@ class Critic():
         Get the time-average connected correlation function of the fluctuation
 
         Args:
-            bins (:obj:`int` or :obj:`numpy.ndarray`): the number of bins or the bin edges
+            bins (:obj:`int` or :obj:`numpy.ndarray`): the number of bins or
+                the bin edges
             start (:obj:`int`): the start frame for the analysis
             stop (:obj:`int` or None): the end frame for the analysis,
                 if being `None` the end frame is the last frame
@@ -219,8 +229,9 @@ class Critic():
                 3. ``S`` - corr of non-similar fluctuations
                 4. ``N`` - corr of vanilla fluctuations
 
-            get_raw_data (:obj:`bool`): if True, return the raw data for :obj:`scipy.stats.binned_statistic`
-                otherwise return the mean value of velocity correlation in each bin
+            get_raw_data (:obj:`bool`): if True, return the raw data for
+                :obj:`scipy.stats.binned_statistic`
+                otherwise return the mean value of velocity correlation
         """
         if not stop:
             stop = len(self.movie) - 1
@@ -274,7 +285,9 @@ class Critic():
         if get_raw_data:
             return distances_multi_frame, fluctuations_multi_frame
         else:
-            return binned_statistic(distances_multi_frame, fluctuations_multi_frame, bins=bins)
+            return binned_statistic(
+                distances_multi_frame, fluctuations_multi_frame, bins=bins
+            )
 
 
 class AverageAnalyser():
@@ -282,14 +295,18 @@ class AverageAnalyser():
     Calculate the averaged properties from a movie
 
     Attributes:
-        movie (:obj:`fish_track.linking.Movie`): movie instance with following features,
+        movie (:obj:`fish_track.linking.Movie`): Movie or SimMovie instance
     """
     def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
         """
         Args:
-            movie (:obj:`fish_track.linking.Movie`): the :obj:`fish_track.linking.Movie` instance should be interpolated
-            win_size (:obj:`int`): the size of the window (unit frame), in which the average will be calculated
-            step_size (:obj:`int`): the average window is moved along the time axis, with the step
+            movie (:obj:`fish_track.linking.Movie`):
+                A :obj:`fish_track.linking.Movie` instance, being interpolated
+            win_size (:obj:`int`):
+                the size of the window (unit frame), in which the average will
+                be calculated
+            step_size (:obj:`int`): the average window is moved along the time
+                axis, with the step
         """
         self.movie = movie
         self.start = start
@@ -298,13 +315,18 @@ class AverageAnalyser():
         self.cache = {}
         if end == 0:
             self.end = movie.max_frame
-            #print('max frame: ', movie.max_frame)
         else:
             self.end = end
 
         self.__check_arg()
 
-        self.pairs = [(t0, t0 + win_size) for t0 in range(self.start, self.end - self.win_size, self.step_size)]
+        self.pairs = [
+            (t0, t0 + win_size) for t0 in range(
+                self.start,
+                self.end - self.win_size,
+                self.step_size
+            )
+        ]
         self.pair_ends = [p[1] - self.start for p in self.pairs]
         self.time = np.array([p[0] + win_size//2 for p in self.pairs], dtype=int)
 
@@ -320,7 +342,7 @@ class AverageAnalyser():
         The average is tanken between (t0, t1) in self.pairs
 
         Args:
-            func ( Callable [ :obj:`numpy.ndarray` ] ): a function that operates on a
+            func (Callable): a function that operates on a
         """
         result = []
         for i, pair in enumerate(self.pairs):
@@ -330,10 +352,16 @@ class AverageAnalyser():
             result.append(res)
         return np.array(result)
 
-    def __scan_velocities(self, func: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
+    def __scan_velocities(self, func):
         """
-        The data to be averaged is calculated by func(self.movie.velocities)
+        The data to be averaged is calculated by
         The average is tanken between (t0, t1) in self.pairs
+
+        Args:
+            func (Callable): func(self.movie.velocities) -> feature
+
+        Return:
+            np.ndarray: the average feature value in each average window
         """
         result = []
         for i, pair in enumerate(self.pairs):
@@ -341,9 +369,68 @@ class AverageAnalyser():
             result.append(res)
         return np.array(result)
 
-    def scan_array(self, array: np.ndarray):
+    def get_trimmed_velocities(self, sample_points, t0, t1):
         """
-        the array is assumed to start at frame self.start
+        Find & Trim trajectories that fits in time range between t0 to t1
+            then obtain its velocities
+
+        .. code-block::
+
+                 t0                      t1
+                  │    sample_points     │
+                  │       ......         │ 1. Valid traj, the size between t0 and
+                  │     ─────────▶       │    t1 is larger than sample_points
+                  │                      │
+                  │       ......         │ 2. Invalid traj, being too short
+                  │        ───▶          │
+                  │                      │
+                ..╬...                   │ 3. Invalid traj, the size between t0
+             ─────┼───▶                  │    and t1 is too short, "too_early"
+                  │                      │
+                  │                   ...╬..   4. Invalid traj, "too_late"
+                  │                   ───┼───▶
+                  │                      │
+                  │       ......         │
+             ─────┼──────────────────────┼───▶ 5. Valid traj, but will be trimmed
+                  │                      │
+            ──────┴──────────────────────┴──────▶ Time
+
+        Args:
+            sample_points (:obj:`int`): the length of the obtained ACF
+            t0 (:obj:`int`): the start time point of the average window
+            t1 (:obj:`int`): the end time point of the average window
+
+        Return:
+            :obj:`list` of :obj:`numpy.ndarray`: all the valid velocities
+                from the valid and trimmed trajectories
+        """
+        result = []
+        for traj in self.movie.trajs:
+            too_early = (traj.t_end - sample_points - 1) < t0
+            too_late  = (traj.t_start + sample_points + 1) > t1
+            too_short = (len(traj) - 2) < sample_points
+            if too_late or too_early or too_short:
+                continue
+            else:
+                offset = max(t0 - traj.t_start, 0)
+                stop = min(traj.t_end, t1) - traj.t_start
+                if isinstance(
+                    traj.velocities, type(None)
+                ):  # for experimental data
+                    velocities = traj.positions[offset+1 : stop] -\
+                        traj.positions[offset : stop-1]
+                else:  # for simulation data
+                    velocities = traj.velocities[offset : stop]
+                result.append(velocities)
+        return result
+
+    def scan_array(self, array):
+        """
+        Get the average value of an array in all the average windows
+
+        Args:
+            array (:obj:`numpy.ndarray`): number of a 1D array, being a feature
+                in each frame. The array is assumed to start at frame self.start
         """
         last_pair = 0
         for pe in self.pair_ends:
@@ -370,37 +457,93 @@ class AverageAnalyser():
 
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
-            nn_movie = np.fromiter(static.get_nn_iter(self.movie, no_vertices=no_vertices), dtype=float)
+            nn_movie = np.fromiter(
+                static.get_nn_iter(self.movie, no_vertices=no_vertices),
+                dtype=np.float64
+            )
             return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
-                lambda x: static.get_nn_iter(x, no_vertices=no_vertices),
+                lambda x: np.nanmean(
+                    np.fromiter(
+                        static.get_nn_iter(x, no_vertices=no_vertices),
+                        dtype=np.float64
+                    ),
+                )
             )
 
     def scan_nn_pbc(self, box):
         if self.win_size >= self.step_size:
-            nn_movie = np.fromiter(static.get_nn_iter_pbc(self.movie, box), dtype=float)
+            nn_movie = np.array([
+                np.nanmean(f) for f in static.get_nn_iter_pbc(self.movie, box)
+            ])
             return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
-                lambda x: static.get_nn_iter_pbc(x, box=box),
+                lambda x: np.nanmean(
+                    list(static.get_nn_iter_pbc(x, box=box))
+                ),
+            )
+
+    def scan_nn_std(self, no_vertices=True):
+        if self.win_size >= self.step_size:
+            nn_movie = np.fromiter(
+                static.get_nn_iter(self.movie, no_vertices=no_vertices),
+                dtype=np.float64
+            )
+            return self.scan_array_std(nn_movie)
+        else:
+            return self.__scan_positions(
+                lambda x: np.nanstd(
+                    np.fromiter(
+                        static.get_nn_iter(x, no_vertices=no_vertices),
+                        dtype=np.float64
+                    )
+                ),
+            )
+
+    def scan_nn_pbc_std(self, box):
+        if self.win_size >= self.step_size:
+            nn_movie = np.array([
+                np.nanmean(f) for f in static.get_nn_iter_pbc(self.movie, box)
+            ])
+            return self.scan_array_std(nn_movie)
+        else:
+            return self.__scan_positions(
+                lambda x: np.nanstd(static.get_nn_iter_pbc(x, box=box)),
             )
 
     def scan_speed(self, min_number=0):
         """
         Args:
-            min_number (:obj:`int`): only take frame into consideration if len(velocity) > min_number in this frame
+            min_number (:obj:`int`): only take frame into consideration if
+                len(velocity) > min_number in this frame
         """
         return self.__scan_velocities(
             lambda x: utility.get_mean_spd(
-                x, frame_number=self.win_size, min_number=min_number
+                x, frame_number=self.win_size,
+                min_number=min_number
+            )
+        )
+
+    def scan_speed_std(self, min_number=0):
+        """
+        Args:
+            min_number (:obj:`int`): only take frame into consideration if
+                len(velocity) > min_number in this frame
+        """
+        return self.__scan_velocities(
+            lambda x: utility.get_std_spd(
+                x, frame_number=self.win_size,
+                min_number=min_number
             )
         )
 
     def scan_gr(self, tank, bins, number):
         """
         Args:
-            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank` to perform random sampling
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
+                to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
             number (:obj:`int`): number of (posiible) particles per frame
 
@@ -416,12 +559,15 @@ class AverageAnalyser():
     def scan_biased_gr(self, tank, bins, space_bin_number=50, **kwargs):
         """
         Args:
-            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank` to perform random sampling
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
+                to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
-            space_bin_number (:obj:`int`): number of bins to devide space to generated biased random gas
+            space_bin_number (:obj:`int`): number of bins to devide space to
+                generated biased random gas
 
         Return:
-            :obj:`numpy.ndarray`: The radial distribution function assuming biased density distribution
+            :obj:`numpy.ndarray`: The radial distribution function assuming
+                biased density distribution
         """
         positions = []
         base = tank.base.T
@@ -431,9 +577,61 @@ class AverageAnalyser():
         positions = np.vstack(positions)
         return self.__scan_positions(
             lambda x: utility.get_biased_gr(
-                frames=x, positions=positions, tank=tank, bins=bins, space_bin_number=space_bin_number
+                frames=x, positions=positions,
+                tank=tank, bins=bins, space_bin_number=space_bin_number
             )
         )
+
+    def scan_biased_attraction(self, tank, bins, space_bin_number, **kwargs):
+        """
+        Args:
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
+                to perform random sampling
+            bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
+            space_bin_number (:obj:`int`): number of bins to devide space to
+                generated biased random gas
+
+        Return:
+            :obj:`numpy.ndarray`: the effective attraction in different average windows
+        """
+        biased_rdfs = self.scan_biased_gr(tank, bins, space_bin_number)
+        attractions = -np.log(np.max(biased_rdfs, axis=1))
+        return attractions
+
+    def scan_biased_attraction_err(self, tank, bins, space_bin_number, repeat, **kwargs):
+        """
+        Using the bootstrap method to
+
+        Args:
+            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
+                to perform random sampling
+            bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
+            space_bin_number (:obj:`int`): number of bins to devide space to
+                generated biased random gas
+
+        Return:
+            :obj:`numpy.ndarray`: the strandard error of the effective attraction
+                in different average windows
+        """
+        positions = []
+        base = tank.base.T
+        for frame in self.movie:
+            if len(frame) > 0:
+                positions.append(frame - base)
+        positions = np.vstack(positions)
+
+        result = []
+        for _ in range(repeat):
+            rdfs = self.__scan_positions(
+                lambda x: utility.get_biased_gr_randomly(
+                    x, positions=positions,
+                    tank=tank, bins=bins, space_bin_number=space_bin_number
+                )
+            )
+            attractions = -np.log(np.max(rdfs, axis=1))
+            result.append(attractions)
+        error = np.std(result, axis=0)
+        return error
 
     def scan_vicsek_order(self, min_number=0):
         """
@@ -445,11 +643,15 @@ class AverageAnalyser():
         """
         if self.win_size >= self.step_size:
             velocities = self.movie.velocity((self.start, self.end))
-            vicsek_movie = utility.get_vicsek_order(velocities, min_number=min_number)
+            vicsek_movie = utility.get_vicsek_order(
+                velocities, min_number=min_number
+            )
             return self.scan_array(vicsek_movie)
         else:
             return self.__scan_velocities(
-                lambda x: np.nanmean(utility.get_vicsek_order(x, min_number=min_number))
+                lambda x: np.nanmean(utility.get_vicsek_order(
+                    x, min_number=min_number
+                ))
             )
 
     def scan_vicsek_order_std(self, min_number=0):
@@ -468,7 +670,9 @@ class AverageAnalyser():
             return self.scan_array_std(vicsek_movie)
         else:
             return self.__scan_velocities(
-                lambda x: np.nanstd(utility.get_vicsek_order(x, min_number=min_number))
+                lambda x: np.nanstd(utility.get_vicsek_order(
+                    x, min_number=min_number
+                ))
             )
 
     def scan_orientation_acf(self, sample_points: int):
@@ -476,46 +680,61 @@ class AverageAnalyser():
         Calculate the averaged rotational relaxation time for the movie
 
         Args:
-            sample_points (:obj:`int`): the maximum lag time (:math:`\tau`) in the ACF calculation (:func:`get_acf`)
+            sample_points (:obj:`int`): the maximum lag time (:math:`\tau`)
+                in the ACF calculation (:func:`get_acf`)
+
+        Return:
+            the acf functions in different time windows
         """
         result = []
         for i, (t0, t1) in enumerate(self.pairs):
             acfs = []
-            for traj in self.movie.trajs:
-                too_late = (traj.t_start + sample_points + 1) > t1
-                too_early = (traj.t_end - sample_points - 1) < t0
-                too_short = (len(traj) - 2) < sample_points
-                if too_late or too_early or too_short:
-                    continue
-                else:
-                    offset = max(t0 - traj.t_start, 0)
-                    stop = min(traj.t_end, t1) - traj.t_start
-                    if isinstance(traj.velocities, type(None)):  # for experimental data
-                        velocities = traj.positions[offset+1 : stop] - traj.positions[offset : stop-1]
-                    else:  # for simulation data
-                        velocities = traj.velocities
-                    norms = np.linalg.norm(velocities, axis=1)
-                    norms[np.isclose(norms, 0)] = np.nan
-                    orientations = velocities / norms[:, np.newaxis]  # shape (n, 1)
-                    acf = utility.get_acf(orientations, size=sample_points)
-                    acfs.append(acf)
+            for velocities in self.get_trimmed_velocities(sample_points, t0, t1):
+                norms = np.linalg.norm(velocities, axis=1)
+                norms[np.isclose(norms, 0)] = np.nan
+                orientations = velocities / norms[:, np.newaxis]
+                acf = utility.get_acf(orientations, size=sample_points)
+                acfs.append(acf)
             if len(acfs) == 0:
-                null_acf = np.zeros(sample_points)
+                null_acf = np.zeros((1, sample_points))
                 null_acf[:] = np.nan
                 result.append(null_acf)
             else:
-                acf = np.mean(acfs, axis=0)  # auto-correlation
-                result.append(acf)
+                result.append(np.array(acfs))
         return result
 
     def scan_rotation(self, sample_points):
-        acfs = self.scan_orientation_acf(sample_points)
-        result = np.empty(len(acfs))
-        for i, acf in enumerate(acfs):
+        """
+        Scan the average relaxation time of the orientation
+        """
+        acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
+        result = np.empty(len(acfs_mw))
+        for i, acfs in enumerate(acfs_mw):
+            acf = np.nanmean(acfs, axis=0)
             if np.nan in acf:
                 result[i] = np.nan
             else:
                 result[i] = utility.fit_acf_exp(acf)
+        return result
+
+    def scan_rotation_err(self, sample_points, repeat=10):
+        """
+        Get the standard error of the rotational relaxation time (tau) using
+            bootstrap method
+        """
+        acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
+        result = np.empty(len(acfs_mw))
+        for i, acfs in enumerate(acfs_mw):
+            if np.nan in acfs:
+                result[i] = np.nan
+            else:
+                tau_vals = np.empty(repeat)
+                # bootstrap method to infer the error
+                for j in range(repeat):
+                    random_indices = np.random.randint(0, len(acfs), len(acfs))
+                    acf = np.mean(acfs[random_indices], axis=0)
+                    tau_vals[j] = utility.fit_acf_exp(acf)
+                result[i] = np.nanstd(tau_vals)
         return result
 
     def scan_number(self):
@@ -525,15 +744,18 @@ class AverageAnalyser():
     def decorrelated_scan_2(self, f1, f2):
         """
         Decorrelated version of :any:`scan_array()`
-            the time averaged signals were averaged by randomly selected data points
-            to reduce possible error-induced correlation
+            the time averaged signals were averaged by randomly selected data
+            points to reduce possible error-induced correlation
 
         Args:
-            f1 (:obj:`function`): the function to generate signal, :code:`f1(self) -> signal_1`
-            f2 (:obj:`function`): the function to generate signal, :code:`f2(self) -> signal_2`
+            f1 (:obj:`function`): the function to generate signal,
+                :code:`f1(self) -> signal_1`
+            f2 (:obj:`function`): the function to generate signal,
+                :code:`f2(self) -> signal_2`
 
         Return:
-            :obj:`tuple` ( :obj:`numpy.ndarray` , :obj:`numpy.ndarray` ): the time averaged signals
+            :obj:`tuple` ( :obj:`numpy.ndarray` , :obj:`numpy.ndarray` ):
+                the time averaged signals
         """
         x1 = f1(self)
         x2 = f2(self)
@@ -561,16 +783,19 @@ class AverageAnalyser():
             to reduce possible error-induced correlation
 
         Args:
-            f1 (:obj:`function`): the function to generate signal, :code:`f1(self) -> signal_1`
-            f2 (:obj:`function`): the function to generate signal, :code:`f2(self) -> signal_2`
-            f3 (:obj:`function`): the function to generate signal, :code:`f3(self) -> signal_3`
+            f1 (:obj:`function`): the function to generate signal,
+                :code:`f1(self) -> signal_1`
+            f2 (:obj:`function`): the function to generate signal,
+                :code:`f2(self) -> signal_2`
+            f3 (:obj:`function`): the function to generate signal,
+                :code:`f3(self) -> signal_3`
 
         Return:
-            :obj:`tuple` ( :obj:`numpy.ndarray` , :obj:`numpy.ndarray` , :obj:`numpy.ndarray` ): the time averaged signals
+            :obj:`tuple` of :obj:`numpy.ndarray`: the time averaged signals
         """
         x1, x2, x3 = f1(self), f2(self), f3(self)
         assert (len(x1) == len(x2)) and (len(x1) == len(x3)),\
-        f"can't decorrelate signals with different sizes, ({len(x1)}, {len(x2)}, {len(x3)})"
+        f"Invalid signal sizes, ({len(x1)}, {len(x2)}, {len(x3)})"
         last_pair = 0
         for pe in self.pair_ends:
             if pe <= len(x1):
