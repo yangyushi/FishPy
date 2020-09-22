@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-export prefix=/usr/local
-export PY=python3
+export prefix="/usr/local"
+export PY="python3"
 export CPLEX_ROOT="/Applications/CPLEX_Studio1210"
 export CC="clang++"
 
@@ -14,9 +14,12 @@ export CPLEX_ARCH=${Machine}_${Platform}
 
 
 cd fish_3d
+make clean
 make all
 cd ../fish_corr
+make clean
 make all
 cd ../fish_track
+make clean
 make all
 cd ..
