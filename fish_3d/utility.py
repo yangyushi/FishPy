@@ -456,6 +456,10 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
         dist_coef (:obj:`numpy.ndarray`): distortion coefficients of the camera, shape (5, )
                            k1, k2, p1, p2, k3 (from opencv by default)
         k: (:obj:`numpy.ndarray`) camera calibration matrix (bible, P155)
+
+    Return:
+        :obj:`numpy.array`: labelled image where each chopped regions were labelled with
+            different values
     """
     # setting up bin edges
     be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # bin_edge
@@ -474,7 +478,7 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
     result = np.empty(image.shape, dtype=np.uint64)
     for x in range(image.shape[1]):  # x -> col
         for y in range(image.shape[0]):  # y -> row!
-            # undistort x, y
+            # undistort x, y, shamelessly copied from opencv
             x0 = (x - cx) / fx
             y0 = (y - cy) / fy
             x_ud, y_ud = x0, y0  # ud -> undistorted
@@ -499,7 +503,7 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
             r2 = x_sim**2 + y_sim**2
 
             # label the image
-            if r2 <= be_r2[1]:
+            if r2 <= be_r2[1]:  # assign central part to value 1
                 result[y, x] = 1
             elif r2 <= be_r2[-1]:
                 idx_angle, idx_radius = 0, 0
@@ -516,6 +520,38 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
     return result
 
 
+def get_polar_chop_spatial(radius, n_angle, n_radius):
+    """
+    Retrieve the correspondance between the values from :any:`polar_chop`
+        and the radius/angle values.
+
+    Args:
+        radius (:obj:`int`): maximum radius in the polar coordinate system
+        n_angle (:obj:`int`): number of bins in terms of angle
+        n_radius (:obj:`int`): number of bins in terms of radius
+
+    Return:
+        :obj:`dict`: { label_value : (angle, radius), ... }
+    """
+    result = {}
+    be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # be = bin edge
+    r0 = np.sqrt(radius**2 / (n_angle * (n_radius-1) + 1))
+    be_radius = np.empty(n_radius+1)
+    be_radius[0] = 0
+    be_radius[1] = r0
+    for i in range(2, n_radius+1):
+        be_radius[i] = np.sqrt(((i-1) * n_angle + 1))* r0
+    bc_angle = (be_angle[1:] + be_angle[:-1]) / 2  # bc = bin centre
+    bc_radius = (be_radius[1:] + be_radius[:-1]) / 2
+    value = 1
+    result.update({value : (bc_radius[0], np.nan)})
+    for cr in bc_radius[1:]:
+        for ca in bc_angle:
+            value += 1
+            result.update({value : (cr, ca)})
+    return result
+
+
 def get_indices(labels):
     indices = []
     for val in set(np.ravel(labels)):
@@ -526,21 +562,29 @@ def get_indices(labels):
     return indices
 
 
-def box_count_polar_image(image, indices):
+def box_count_polar_image(image, indices, invert=False, rawdata=False):
     """
+    Calculate the average density inside different regions inside an image
+
     Args:
         image (:obj:`numpy.ndarray`): the image taken by the camera without undistortion
-        labels (:obj:`numpy.ndarray`): labelled image specifying different box regions
+        indices (:obj:`numpy.ndarray`): labelled image specifying different box regions
     """
-    invert = image.max() - image.ravel()
+    if invert:
+        data = image.max() - image.ravel()
+    else:
+        data = image.ravel()
     intensities = np.empty(len(indices))
     for i, idx in enumerate(indices):
-        pixels = invert[idx]
+        pixels = data[idx]
         intensities[i] = np.mean(pixels)
-    return np.std(intensities), np.min(intensities), np.mean(intensities)
+    if rawdata:
+        return intensities
+    else:
+        return np.std(intensities), np.min(intensities), np.mean(intensities)
 
 
-def box_count_polar_video(video, labels, cores=2, report=True):
+def box_count_polar_video(video, labels, cores=2, report=True, invert=False, rawdata=False):
     if report:
         to_iter = tqdm(video)
     else:
@@ -548,7 +592,7 @@ def box_count_polar_video(video, labels, cores=2, report=True):
     indices = get_indices(labels)
     results = Parallel(n_jobs=cores, require='sharedmem')(
         delayed(
-            lambda x: box_count_polar_image(x, indices)
+            lambda x: box_count_polar_image(x, indices, invert, rawdata)
         )(frame) for frame in to_iter
     )
     return np.array(results).T  # (3, n)
