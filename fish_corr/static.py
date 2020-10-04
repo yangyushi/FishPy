@@ -293,7 +293,9 @@ def get_nn_iter_pbc(frames, box):
     get an iteractive objectable that yields nn distances in different frames
     """
     bx, by, bz = box.ravel()
-    neighbours = list(product([0, bx, -bx], [0, by, -by], [0, bz, -bz]))
+    neighbours = np.array(list(
+        product([0, bx, -bx], [0, by, -by], [0, bz, -bz])
+    ))
     for i, positions in enumerate(frames):
         if len(positions) < 2:
             yield np.nan
@@ -306,6 +308,38 @@ def get_nn_iter_pbc(frames, box):
         yield np.mean(nn_dists)
 
 
+def get_nn_pbc(positions, box):
+    """
+    Calculate the NN distances and relative locations of NNs in a
+        periodic box
+
+    Args:
+        positions (:obj:`numpy.ndarray`): positions in one frame, shape (n, dim)
+        velocities (:obj:`numpy.ndarray`): velocities in one frame, shape (n, dim)
+        box (:obj:`float` or :obj:`tuple`): the legnth of the cubic simulation
+            box, or the size along each dimensions (lx, ly, lz, ...)
+
+    Return:
+        tuple: nn_locations and nn_distances
+    """
+    if type(box) in [float, int]:
+        box = np.array([box] * 3)
+    else:
+        box = np.array(box)
+    bx, by, bz = box.ravel()
+    neighbours = np.array(list(
+        product([0, bx, -bx], [0, by, -by], [0, bz, -bz])
+    ))
+    neighbour_positions = np.concatenate([positions + n for n in neighbours])  # (x, n, dim)
+    dist_matrix_nd = [cdist(positions, positions + n) for n in neighbours]
+    np.fill_diagonal(dist_matrix_nd[0], np.inf)
+    dist_matrix = np.concatenate(dist_matrix_nd, axis=1)  # (n, n * (3**dim - 1))
+    nn_dists = dist_matrix.min(axis=1)
+    nn_indices = dist_matrix.argmin(axis=1)
+    nn_locations = neighbour_positions[nn_indices] - positions
+    return nn_locations, nn_dists
+
+
 def get_nn_with_velocity(positions, velocities, no_vertices=True):
     """
     Calculate the NN distances and relative locations of NNs
@@ -315,6 +349,9 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
         positions (:obj:`numpy.ndarray`): positions of all particles in one frame
         velocities (:obj:`numpy.ndarray`): velocities of all particles in one frame
         no_vertices (:obj:`bool`): if being True, ignore the vertices
+
+    Return:
+        tuple: nn_locations and nn_distances
     """
     if no_vertices:
         cv = ConvexHull(positions)
@@ -336,6 +373,45 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
     rot_vecs = np.vstack((np.zeros(len(vx)), -ele, -azi)).T
     rot_mats = Rotation.from_rotvec(rot_vecs).as_dcm()
     nn_locations = positions[nn_indices] - focus
+    nn_locations = np.array([r@n for r, n in zip(rot_mats, nn_locations)])
+    return nn_locations, nn_dists
+
+
+def get_nn_with_velocity_pbc(positions, velocities, box):
+    """
+    Calculate the NN distances and relative locations of NNs
+    The distances were rotated so that the *x-axis* is aligned with
+    the *velocity* of different particles
+
+    Args:
+        positions (:obj:`numpy.ndarray`): positions in one frame, shape (n, dim)
+        velocities (:obj:`numpy.ndarray`): velocities in one frame, shape (n, dim)
+        box (:obj:`float` or :obj:`tuple`): the legnth of the cubic simulation
+            box, or the size along each dimensions (lx, ly, lz, ...)
+
+    Return:
+        tuple: nn_locations and nn_distances
+    """
+    if type(box) in [float, int]:
+        box = np.array([box] * 3)
+    else:
+        box = np.array(box)
+    bx, by, bz = box.ravel()
+    neighbours = np.array(list(
+        product([0, bx, -bx], [0, by, -by], [0, bz, -bz])
+    ))
+    neighbour_positions = np.concatenate([positions + n for n in neighbours])  # (x, n, dim)
+    dist_matrix_nd = [cdist(positions, positions + n) for n in neighbours]
+    np.fill_diagonal(dist_matrix_nd[0], np.inf)
+    dist_matrix = np.concatenate(dist_matrix_nd, axis=1)  # (n, n * (3**dim - 1))
+    nn_dists = dist_matrix.min(axis=1)
+    nn_indices = dist_matrix.argmin(axis=1)
+    vx, vy, vz = velocities.T
+    azi = np.arctan2(vy, vx)
+    ele = np.arctan2(vz, np.sqrt(vx**2 + vy**2))
+    rot_vecs = np.vstack((np.zeros(len(vx)), -ele, -azi)).T
+    rot_mats = Rotation.from_rotvec(rot_vecs).as_dcm()
+    nn_locations = neighbour_positions[nn_indices] - positions
     nn_locations = np.array([r@n for r, n in zip(rot_mats, nn_locations)])
     return nn_locations, nn_dists
 
