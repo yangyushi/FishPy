@@ -9,6 +9,7 @@ from scipy.spatial import ConvexHull
 from scipy.special import gamma
 from scipy import ndimage
 from scipy.spatial.distance import pdist
+import matplotlib.pyplot as plt
 from numba import njit
 
 
@@ -981,3 +982,52 @@ class SimMovie:
             for i in range(len(x)):
                 f.write('A\t{:.8e}\t{:.8e}\t{:.8e}\n'.format(x[i], y[i], z[i]))
         f.close()
+
+
+def plot_spatial_3d(nn_locations, r, bin_num, title='', figsize=(6, 3), axes=[], unit='mm'):
+    hist, bin_edges_nd = np.histogramdd(
+        nn_locations, density=True,
+        bins=(
+            np.linspace(-r, r, bin_num, endpoint=True),
+            np.linspace(-r, r, bin_num, endpoint=True),
+            np.linspace(-r, r, bin_num, endpoint=True)
+        )
+    )
+    bin_centres_nd = [(be[1:] + be[:-1]) / 2 for be in bin_edges_nd]
+    s = int(hist.shape[0] // 2)
+
+    if len(axes) == 0:
+        fig, axes = plt.subplots(1, 2)
+        fig.set_size_inches(*figsize)
+        fig.suptitle(title)
+        fig.suptitle('Orthogonal Slices of the 3D Distribution')
+
+        axes[0].imshow(hist[:, :, s].T)
+        axes[1].imshow(hist[:, s, :].T)
+        axes[0].set_xlabel(f'X / {unit}')
+        axes[0].set_ylabel(f'Y / {unit}')
+        axes[1].set_xlabel(f'X / {unit}')
+        axes[1].set_ylabel(f'Z / {unit}')
+        tick_labels = [bin_edges_nd[0][0], 0, bin_edges_nd[0][-1]]
+        for ax in axes:
+            ax.set_xticks([0, hist.shape[0]//2, hist.shape[0]-1])
+            ax.set_yticks([0, hist.shape[0]//2, hist.shape[0]-1])
+            ax.set_xticklabels([f'{t:.2f}' for t in tick_labels])
+            ax.set_yticklabels([f'{t:.2f}' for t in tick_labels])
+        plt.tight_layout()
+        plt.show()
+    elif len(axes) == 2:
+        axes[0].imshow(hist[:, :, s].T)
+        axes[1].imshow(hist[:, s, :].T)
+        axes[0].set_xlabel(f'X / {unit}')
+        axes[0].set_ylabel(f'Y / {unit}')
+        axes[1].set_xlabel(f'X / {unit}')
+        axes[1].set_ylabel(f'Z / {unit}')
+        tick_labels = [bin_edges_nd[0][0], 0, bin_edges_nd[0][-1]]
+        for ax in axes:
+            ax.set_xticks([0, hist.shape[0]//2, hist.shape[0]-1])
+            ax.set_yticks([0, hist.shape[0]//2, hist.shape[0]-1])
+            ax.set_xticklabels([f'{t:.2f}' for t in tick_labels])
+            ax.set_yticklabels([f'{t:.2f}' for t in tick_labels])
+    else:
+        raise ValueError("Please assign 2 axes for plotting")
