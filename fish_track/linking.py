@@ -11,6 +11,10 @@ from joblib import delayed, Parallel
 from numba.typed import List as nList
 from scipy.spatial.distance import cdist
 from .nrook import solve_nrook, solve_nrook_dense
+try:
+    from fish_corr import Movie, SimMovie
+except ImportError:
+    pass
 
 
 @njit
