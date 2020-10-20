@@ -645,8 +645,8 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
     Re-link short trajectories into longer ones.
 
     Args:
-        trajectories (:obj:`list`): A collection of trajectories.
-        Each trajectory is stored in a tuple, (time, positions)
+        trajectories (:obj:`list`): A collection of trajectories, where
+            each trajectory is stored in a tuple in the form of, (time, positions)
         dx (:obj:`float`): distance threshold, the only trajectories whose 'head' and 'tail'
             is smaller than dx in space were considered as a possible link
         dt (:obj:`int`): time threshold, the only trajectories whose 'head' and 'tail'

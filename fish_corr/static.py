@@ -11,6 +11,83 @@ try:
 except ImportError:
     pass
 
+
+@njit
+def get_rot_mat(r_from, r_to):
+    """
+    Get a rotation matrix R that rotate one vector to another
+
+    .. code-block::
+
+        R @ r_from = r_to
+
+    Args:
+        r_from (np.array): the vector to be rotated, shape (n, 3)
+        r_to (np.array): the vector after the rotation, shape (3,)
+
+    Return:
+        np.array: the rotation matrix, shape (n, 3, 3)
+    """
+    n = r_from.shape[0]
+    result = np.empty((n, 3, 3))
+    B = r_to / np.linalg.norm(r_to)
+    for i in range(n):
+        A = r_from[i] / np.linalg.norm(r_from[i])
+        cos = A @ B
+        sin = np.linalg.norm(np.cross(A, B))
+        G = np.array((
+            (cos, -sin, 0),
+            (sin,  cos, 0),
+            (0, 0, 1)
+        ))
+        u = A
+        v = B - cos * A
+        v = v / np.linalg.norm(v)
+        w = np.cross(A, B)
+        F_inv = np.stack((u, v, w), axis=1)
+        F = np.linalg.inv(F_inv)
+        result[i] = F_inv @ G @ F
+    return result
+
+
+@njit
+def get_poda(positions, velocities):
+    """
+    Calculate the [p]airwise [o]rientational [d]eviation [a]ngles
+        see the graphical illustration for the meaning of poda
+
+    (the idea is from Hartmut Löwen)
+
+    .. code-block::
+
+            ◥ orientation i
+           ╱
+          ╱
+         ╱ ╮ poda
+        ● ─────────▶ ●
+        i            j
+
+    Args:
+        positions (:obj:`numpy.ndarray`): the positions of all the particles, shape (n, dim)
+        velocities (:obj:`numpy.ndarray`): the velocities of all the particles, shape (n, dim)
+
+    Return:
+        :obj:`numpy.ndarray`: the pairwise poda values, shape (n * (n - 1), )
+    """
+    n, dim = positions.shape
+    poda = np.empty(n * (n - 1), dtype=np.float64)
+    poda_idx = 0
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                shift = positions[j] - positions[i]
+                shift = shift / np.linalg.norm(shift)
+                o = velocities[i] / np.linalg.norm(velocities[i])
+                poda[poda_idx] = np.arccos(np.dot(o, shift))
+                poda_idx += 1
+    return poda
+
+
 def a2r_cost(x, c, y):
     length = 0.5 * x * np.sqrt(1 + 4 * c**2 * x**2) +\
             np.arcsinh(2 * c * x) / (4 * c)
@@ -369,13 +446,12 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
     dist_matrix[dist_matrix == 0] = np.inf
     nn_dists = dist_matrix.min(axis=1)
     nn_indices = dist_matrix.argmin(axis=1)
-    vx, vy, vz = velocities.T
-    azi = np.arctan2(vy, vx)
-    ele = np.arctan2(vz, np.sqrt(vx**2 + vy**2))
-    rot_vecs = np.vstack((np.zeros(len(vx)), -ele, -azi)).T
-    rot_mats = Rotation.from_rotvec(rot_vecs).as_dcm()
+    speed = np.linalg.norm(velocities, axis=1)
+    if np.isclose(speed, 0).any():
+        return np.empty((0, 3)), nn_dists
+    rot_mats = get_rot_mat(velocities, np.array((1.0, 0.0, 0.0)))
     nn_locations = positions[nn_indices] - focus
-    nn_locations = np.array([r@n for r, n in zip(rot_mats, nn_locations)])
+    nn_locations = np.array([r @ n for r, n in zip(rot_mats, nn_locations)])
     return nn_locations, nn_dists
 
 

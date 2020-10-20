@@ -9,6 +9,8 @@ from scipy.spatial import ConvexHull
 from scipy.special import gamma
 from scipy import ndimage
 from scipy.spatial.distance import pdist
+from matplotlib import cm
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from numba import njit
 
@@ -768,6 +770,7 @@ class Movie:
 
             label_0 = self.__labels[frame]
             label_1 = self.__labels[frame + 1]
+            # the order of labels is the same as the order of the positions
             label_intersection = [l for l in label_0 if l in label_1]
 
             if label_intersection:
@@ -984,7 +987,10 @@ class SimMovie:
         f.close()
 
 
-def plot_spatial_3d(nn_locations, r, bin_num, title='', figsize=(6, 3), axes=[], unit='mm'):
+def plot_spatial_3d(
+        nn_locations, r, bin_num, title='', figsize=(6, 3), axes=[], unit='mm',
+        show=True, savename=''
+):
     hist, bin_edges_nd = np.histogramdd(
         nn_locations, density=True,
         bins=(
@@ -1001,33 +1007,34 @@ def plot_spatial_3d(nn_locations, r, bin_num, title='', figsize=(6, 3), axes=[],
         fig.set_size_inches(*figsize)
         fig.suptitle(title)
         fig.suptitle('Orthogonal Slices of the 3D Distribution')
-
-        axes[0].imshow(hist[:, :, s].T)
-        axes[1].imshow(hist[:, s, :].T)
-        axes[0].set_xlabel(f'X / {unit}')
-        axes[0].set_ylabel(f'Y / {unit}')
-        axes[1].set_xlabel(f'X / {unit}')
-        axes[1].set_ylabel(f'Z / {unit}')
-        tick_labels = [bin_edges_nd[0][0], 0, bin_edges_nd[0][-1]]
-        for ax in axes:
-            ax.set_xticks([0, hist.shape[0]//2, hist.shape[0]-1])
-            ax.set_yticks([0, hist.shape[0]//2, hist.shape[0]-1])
-            ax.set_xticklabels([f'{t:.2f}' for t in tick_labels])
-            ax.set_yticklabels([f'{t:.2f}' for t in tick_labels])
-        plt.tight_layout()
-        plt.show()
-    elif len(axes) == 2:
-        axes[0].imshow(hist[:, :, s].T)
-        axes[1].imshow(hist[:, s, :].T)
-        axes[0].set_xlabel(f'X / {unit}')
-        axes[0].set_ylabel(f'Y / {unit}')
-        axes[1].set_xlabel(f'X / {unit}')
-        axes[1].set_ylabel(f'Z / {unit}')
-        tick_labels = [bin_edges_nd[0][0], 0, bin_edges_nd[0][-1]]
-        for ax in axes:
-            ax.set_xticks([0, hist.shape[0]//2, hist.shape[0]-1])
-            ax.set_yticks([0, hist.shape[0]//2, hist.shape[0]-1])
-            ax.set_xticklabels([f'{t:.2f}' for t in tick_labels])
-            ax.set_yticklabels([f'{t:.2f}' for t in tick_labels])
-    else:
+    elif len(axes) != 2:
         raise ValueError("Please assign 2 axes for plotting")
+    xy = hist[:, :, s].T
+    xz = hist[:, s, :].T
+    axes[0].imshow(xy, cmap='viridis')
+    axes[1].imshow(xz, cmap='viridis')
+    plt.colorbar(
+        cm.ScalarMappable(
+            norm=mpl.colors.Normalize(xy.min(), xy.max()), cmap=cm.viridis
+        ), ax=axes[0]
+    )
+    plt.colorbar(
+        cm.ScalarMappable(
+            norm=mpl.colors.Normalize(xz.min(), xz.max()), cmap=cm.viridis
+        ), ax=axes[1]
+    )
+    axes[0].set_xlabel(f'X / {unit}')
+    axes[0].set_ylabel(f'Y / {unit}')
+    axes[1].set_xlabel(f'X / {unit}')
+    axes[1].set_ylabel(f'Z / {unit}')
+    tick_labels = [bin_edges_nd[0][0], 0, bin_edges_nd[0][-1]]
+    for ax in axes:
+        ax.set_xticks([0, hist.shape[0]//2, hist.shape[0]-1])
+        ax.set_yticks([0, hist.shape[0]//2, hist.shape[0]-1])
+        ax.set_xticklabels([f'{t:.2f}' for t in tick_labels])
+        ax.set_yticklabels([f'{t:.2f}' for t in tick_labels])
+    plt.tight_layout()
+    if savename:
+        plt.savefig(savename)
+    if show:
+        plt.show()
