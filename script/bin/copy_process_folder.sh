@@ -20,6 +20,9 @@
 #    if the target folder is already created, then skip the existing folder
 #    if you want to serach folders with different prefix, please provide the
 #        script with such prefix as extra argument
+#
+# TODO: modify the content of all the scripts inside auto_process folders
+#
 
 # find the path of fishpy
 SN=${0##*/}  # script name
