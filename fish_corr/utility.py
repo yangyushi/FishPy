@@ -49,6 +49,22 @@ def get_acf(var, size=0, step=1):
     return result
 
 
+@njit
+def get_msd(trajectories, size, step=1):
+    msd = np.empty((len(trajectories), size))
+    for i, traj in enumerate(trajectories):
+        length = len(traj)
+        for tau in np.arange(0, size):
+            if tau < length:
+                msd[i, tau] = np.sum(
+                    (traj[tau : length] - traj[: length - tau]) ** 2,
+                    axis=1
+                ).mean()
+            else:
+                msd[i, tau] = np.nan
+    return np.arange(0, size), msd
+
+
 def get_acf_fft(var, size, nstep, nt):
     """
     not finished

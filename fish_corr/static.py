@@ -80,12 +80,52 @@ def get_poda(positions, velocities):
     for i in range(n):
         for j in range(n):
             if i != j:
+                shift = (positions[j] - positions[i]) / box
+                shift = (shift - np.rint(shift)) * box
+                shift = shift / np.linalg.norm(shift)
+                o = velocities[i] / np.linalg.norm(velocities[i])
+                poda[poda_idx] = np.arccos(np.dot(o, shift))
+                poda_idx += 1
+    return poda
+
+@njit
+def get_poda_pbc(positions, velocities, box):
+    """
+    Calculate the [p]airwise [o]rientational [d]eviation [a]ngles
+        inside a cubic box with periodic boundary condition
+        see the graphical illustration for the meaning of poda
+
+    (the idea is from Hartmut Löwen)
+
+    .. code-block::
+
+            ◥ orientation i
+           ╱
+          ╱
+         ╱ ╮ poda
+        ● ─────────▶ ●
+        i            j
+
+    Args:
+        positions (:obj:`numpy.ndarray`): the positions of all the particles, shape (n, dim)
+        velocities (:obj:`numpy.ndarray`): the velocities of all the particles, shape (n, dim)
+
+    Return:
+        :obj:`numpy.ndarray`: the pairwise poda values, shape (n * (n - 1), )
+    """
+    n, dim = positions.shape
+    poda = np.empty(n * (n - 1), dtype=np.float64)
+    poda_idx = 0
+    for i in range(n):
+        for j in range(n):
+            if i != j:
                 shift = positions[j] - positions[i]
                 shift = shift / np.linalg.norm(shift)
                 o = velocities[i] / np.linalg.norm(velocities[i])
                 poda[poda_idx] = np.arccos(np.dot(o, shift))
                 poda_idx += 1
     return poda
+
 
 
 def a2r_cost(x, c, y):
