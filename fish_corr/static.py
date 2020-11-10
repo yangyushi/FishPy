@@ -51,7 +51,7 @@ def get_rot_mat(r_from, r_to):
 
 
 @njit
-def get_poda(positions, velocities):
+def get_poda_pbc(positions, velocities, box):
     """
     Calculate the [p]airwise [o]rientational [d]eviation [a]ngles
         see the graphical illustration for the meaning of poda
@@ -89,7 +89,7 @@ def get_poda(positions, velocities):
     return poda
 
 @njit
-def get_poda_pbc(positions, velocities, box):
+def get_poda(positions, velocities):
     """
     Calculate the [p]airwise [o]rientational [d]eviation [a]ngles
         inside a cubic box with periodic boundary condition
