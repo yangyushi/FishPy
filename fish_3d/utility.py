@@ -6,6 +6,9 @@ from typing import List
 from joblib import Parallel, delayed
 from scipy import ndimage
 import matplotlib.pyplot as plt
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
+import mpl_toolkits.mplot3d.art3d as art3d
 from . import ray_trace
 from .cutility import join_pairs
 from .cstereo import match_v3
