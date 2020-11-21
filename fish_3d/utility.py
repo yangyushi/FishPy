@@ -8,6 +8,7 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
+from matplotlib.colors import ListedColormap
 import mpl_toolkits.mplot3d.art3d as art3d
 from . import ray_trace
 from .cutility import join_pairs
@@ -1112,6 +1113,28 @@ def get_trajectory_batches(
     return batches
 
 
+def get_brcs(number=1, bias=(1.0, 0.7, 0.8), brightness=(0.25, 1.0)):
+    """
+    Get biased random colours
+
+    Args:
+        number (int): the number of random colours.
+        bias (tuple): the bias towards different base colours, in the format
+            of (r, g, b). The value of r/g/b should range between 0 and 1.
+        brightness (tuple): the brightness in the format of (low, high), the
+            value of low/high should range from 0 to 1.
+
+    Return:
+        np.ndarray: the colors, shape (n, 3) or (3) if number==1
+    """
+    if number > 1:
+        rgbs = np.random.uniform(brightness[0], brightness[1], (number, 3))
+    else:
+        rgbs = np.random.uniform(brightness[0], brightness[1], 3)
+    colors = rgbs * np.array(bias)
+    return colors
+
+
 def draw_fish(positions, ax, size=1):
     """
     Draw fish shaped scatter on a matplotlib Axes object
@@ -1135,7 +1158,7 @@ def draw_fish(positions, ax, size=1):
         v = fish_vertices + shift
         fish = PathPatch(
             Path(v, codes=codes),
-            facecolor=brcs.get(1),
+            facecolor=get_brcs(1),
             edgecolor='k'
         )
         ax.add_patch(fish)
