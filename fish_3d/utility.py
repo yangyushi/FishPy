@@ -1107,3 +1107,86 @@ def get_trajectory_batches(
         ctrajs_3d = remove_spatial_overlap(ctrajs_3d, overlap_num, overlap_rtol)
         batches.append(ctrajs_3d)
     return batches
+
+
+def draw_fish(positions, ax, size=1):
+    """
+    Draw fish shaped scatter on a matplotlib Axes object
+
+    Args:
+        positions (np.ndarray): positions of the 3D points, shape (n, 3)
+        ax (Axes): an Axes instance from matplotlib
+        size (float): the size of the fish
+
+    Return:
+        None
+    """
+    fish_vertices = np.array([
+        (0, 0), (1, 2), (5, 2),
+        (7, 0), (8.5, -1.5), (8.4, 0), (8.5, 1.5), (7, 0),
+        (5, -2.2), (1, -2.5), (0, 0)
+    ]) / 10 * size
+    codes = [1, 4, 4, 4, 2, 2, 2, 2, 4, 4, 4]
+    for p in positions:
+        shift = np.array([p[d] for d in range(3) if d != 1])[np.newaxis, :]
+        v = fish_vertices + shift
+        fish = PathPatch(
+            Path(v, codes=codes),
+            facecolor=brcs.get(1),
+            edgecolor='k'
+        )
+        ax.add_patch(fish)
+        art3d.pathpatch_2d_to_3d(
+            fish, z=p[1], zdir="y",
+        )
+
+
+def plot_cameras(ax, cameras, water_level=0, depth=400):
+    """
+    Draw cameras on the matplotlib Axes instance with water.
+
+    This is typically designed to represent the experiment in my PhD.
+
+    Args:
+        ax (Axes): an Axes instance from matplotlib
+        cameras (Camera): the instance of Camera class
+        water_level (float): the water level in the world coordinate
+        depth (float): the depth of the water
+
+    Return:
+        Axes: the axes with the cameras
+    """
+    origins = []
+    camera_size = 100
+    focal_len = 2
+    ray_length = 500
+    camera_segments = [
+            np.array(([0, 0, 0], [1, -1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [-1, 1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [-1, -1, focal_len])) * camera_size,
+            np.array(([0, 0, 0], [1, 1, focal_len])) * camera_size,
+            np.array(([1, 1, focal_len], [1, -1, focal_len])) * camera_size,
+            np.array(([1, -1, focal_len], [-1, -1, focal_len])) * camera_size,
+            np.array(([-1, -1, focal_len], [-1, 1, focal_len])) * camera_size,
+            np.array(([-1, 1, focal_len], [1, 1, focal_len])) * camera_size
+            ]
+    for cam in cameras:
+        origin = -cam.r.T @ cam.t
+        orient = cam.r.T @ np.array([0, 0, 1])
+        origins.append(origin)
+        for seg in camera_segments:
+            to_plot = np.array([cam.r.T @ p + origin for p in seg])
+            ax.plot(*to_plot.T, color='deeppink')
+        ax.quiver(*origin, *orient * ray_length, color='deeppink')
+    for o in origins:
+        ax.scatter(*o, color='w', edgecolor='deeppink', zorder=6)
+
+    xlim, ylim, zlim = np.array(origins).T
+    mid_x = np.mean(xlim)
+    mid_y = np.mean(ylim)
+    x = np.linspace(mid_x - 1e3, mid_x + 1e3, 11, endpoint=True)
+    y = np.linspace(mid_y - 1e3, mid_y + 1e3, 11, endpoint=True)
+    x, y = np.meshgrid(x, y)
+    ax.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
+    ax.set_zlim(-depth, 2000)
+    return ax
