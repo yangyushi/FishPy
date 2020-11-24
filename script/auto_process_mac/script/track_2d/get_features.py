@@ -88,7 +88,7 @@ for frame, image in enumerate(images):
     x, y, o, s, b, p = maxima
 
     if config.Plot.want_plot == 'True':
-        plt.figure(figsize=(fg.shape[1]/dpi, fg.shape[0]/dpi), dpi=dpi)
+        plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
         length = config.Plot.line_length
 
         for i, m in enumerate(maxima.T):
@@ -102,10 +102,10 @@ for frame, image in enumerate(images):
 
             )
 
-        plt.imshow(image[roi], cmap='gray')
+        plt.imshow(image, cmap='gray')
         plt.scatter(x, y, color='w', edgecolor='tomato', marker='o', linewidth=1, s=12)
-        plt.xlim(0, fg.shape[1])
-        plt.ylim(fg.shape[0], 0)
+        plt.xlim(0, image.shape[1])
+        plt.ylim(image.shape[0], 0)
         plt.gcf().set_frameon(False)
         plt.axis('off')
         plt.gcf().axes[0].get_xaxis().set_visible(False)

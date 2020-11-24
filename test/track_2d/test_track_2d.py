@@ -2,9 +2,10 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import fish_track as ft
-import os
+import os, sys
 
-script_path = os.path.dirname(__file__)
+script_path = os.path.realpath(sys.argv[0])
+script_path = os.path.dirname(script_path)
 
 shape_kernels = np.load(script_path + '/shape_kernels.npy')
 img = np.array(Image.open(script_path + '/fish-50.png').convert('L'))
@@ -23,6 +24,9 @@ def test_oishi_feature():
         likelihood_threshold=2.0,
         intensity_threshold=0.5
     )
+    plt.imshow(img)
+    plt.scatter(*maxima[:2], s=10)
+    plt.show()
 
 
 if __name__ == "__main__":
