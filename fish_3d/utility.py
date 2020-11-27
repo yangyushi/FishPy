@@ -40,13 +40,16 @@ def plot_reproject(
         image, features, pos_3d, camera,
         filename=None, water_level=0, normal=(0, 0, 1)
         ):
+    """
+    Args:
+        pos_3d (np.ndarray): 3d positions, shape (n, 3)
+    """
     fig = plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
     ax = fig.add_subplot(111)
     ax.imshow(image, cmap='gray')
 
-    for point in pos_3d:
-        xy = ray_trace.reproject_refractive(point, camera)
-        ax.scatter(*xy, color='tomato', marker='+', lw=1, s=128)
+    pos_2d = camera.project_refractive(pos_3d)
+    ax.scatter(*pos_2d.T, color='tomato', marker='+', lw=1, s=128)
 
     ax.scatter(
             features[0], features[1],

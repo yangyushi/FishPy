@@ -12,4 +12,4 @@ sphinx/_**
 !build.sh
 fish_3d/env
 test/project/auto_process_1
-test/project/*.avi
+test/project/video_1/*.avi
