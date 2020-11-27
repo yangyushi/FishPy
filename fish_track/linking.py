@@ -715,21 +715,18 @@ def segment_trajectories(trajectories, window_size, max_frame):
     """
     edges = [window_size * i for i in range(max_frame // window_size + 1)]
     edges.append(max_frame)
-    traj_segments = []
-    used_traj_ids = []
-    for left, right in zip(edges[:-1], edges[1:]):
-        traj_segments.append([])
-        for j, traj in enumerate(trajectories):
-            if j not in used_traj_ids:
-                if (traj[0][0] < right) and (traj[0][0] > left):   # traj[0][0] is the start frame number
-                    traj_segments[-1].append(traj)
-                    used_traj_ids.append(j)
+    traj_segments = [[] for _ in range(len(edges) - 1)]
+    for traj in trajectories:
+        start_time = traj[0][0]
+        segment_idx = np.digitize(start_time, edges)
+        traj_segments[segment_idx].append(traj)
     traj_segments = [ts for ts in traj_segments if len(ts) > 0]
+    print([len(t) for t in traj_segments])
     return traj_segments
 
 
 def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
-                       blur=None, blur_velocity=None, debug=False):
+                       blur=None, blur_velocity=None, debug=True):
     """
     Re-link short trajectories into longer ones.
 
