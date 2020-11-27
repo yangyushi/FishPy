@@ -14,22 +14,12 @@ def vanilla_pca(images):
         tuple: the projection matrix, the variance and mean
     """
     image_num, dimension = images.shape
-    mean = images.mean(axis=1)[:, np.newaxis]
-    std = images.std(axis=1)[:, np.newaxis]
-    normalised = (images - mean) / std
-    if dimension > image_num:
-        covar = normalised.T @ normalised
-        e, vh = np.linalg.eigh(covar)
-        e[e < 0] = 0
-        tmp = (normalised.T @ vh).T
-        projection = tmp[::-1]
-        variance = np.sqrt(e)[::-1]
-        for i in range(projection.shape[1]):
-            projection[:, i] /= variance
-    else:
-        covar = (normalised.T @ normalised) / image_num
-        u, variance, vh = np.linalg.svd(covar)
-        projection = vh[:image_num]
+    mean = images.mean(axis=0)[np.newaxis, :]
+    #std = images.std(axis=0)[np.newaxis, :]
+    normalised = (images - mean)# / std  # (n, dim)
+    covar = (normalised.T @ normalised) / image_num
+    u, variance, vh = np.linalg.svd(covar)
+    projection = vh[:image_num]
     return projection, variance, images.mean(axis=0)
 
 
