@@ -717,11 +717,11 @@ def segment_trajectories(trajectories, window_size, max_frame):
     edges.append(max_frame)
     traj_segments = []
     used_traj_ids = []
-    for edge in edges[1:]:
+    for left, right in zip(edges[:-1], edges[1:]):
         traj_segments.append([])
         for j, traj in enumerate(trajectories):
             if j not in used_traj_ids:
-                if traj[0][0] < edge:   # traj[0][0] is the start frame number
+                if (traj[0][0] < right) and (traj[0][0] > left):   # traj[0][0] is the start frame number
                     traj_segments[-1].append(traj)
                     used_traj_ids.append(j)
     traj_segments = [ts for ts in traj_segments if len(ts) > 0]
@@ -729,7 +729,7 @@ def segment_trajectories(trajectories, window_size, max_frame):
 
 
 def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
-                       blur=None, blur_velocity=None):
+                       blur=None, blur_velocity=None, debug=False):
     """
     Re-link short trajectories into longer ones.
 
@@ -752,9 +752,15 @@ def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
         :obj:`list` of :obj:`tuple`: The relink trajectories.
             Each trajectory is stored in a tuple, (time, positions)
     """
-
     traj_segments = segment_trajectories(trajectories, window_size, max_frame)
+    if debug:
+        print("trajectory segmentation finished")
     relinked_segments = []
+    if debug:
+        i = 0
     for trajs in traj_segments:
         relinked_segments += relink(trajs, dx, dt, blur, blur_velocity)
+        if debug:
+            i += 1
+            print(f"relink finished for the {i}th trajectory segment" )
     return relink(relinked_segments, dx, dt, blur, blur_velocity)
