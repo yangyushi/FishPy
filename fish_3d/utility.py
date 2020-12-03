@@ -608,30 +608,29 @@ def box_count_polar_video(video, labels, cores=2, report=True, invert=False, raw
 def get_overlap_pairs(trajs, num, rtol):
     """
     Args:
-        trajs (:obj:`list` of :obj:`numpy.ndarray`): a collections of positions
-            belonging to a single object
+        trajs (:obj:`list`): a collections of trajectories, each trajectory is
+            a tuple, containing (positions [N, 3], reprojection_error)
         num (:obj:`int`): the maximum number of allowed overlapped objects
         rtol (:obj:`float`): the minimum distance between two non-overlapped objects
 
     Return:
         :obj:`list` of :obj:`tuple`: the indices of overlapped objects
     """
+    N, T = len(trajs), len(trajs[0][0])
     overlap_pairs = []
-    overlap_mat = np.zeros((len(trajs), len(trajs)), dtype=bool)
+    dist_mat = np.empty((N, N, T))
     rtol_sq = rtol * rtol
+
+
     for i, t1 in enumerate(trajs):
         for j, t2 in enumerate(trajs):
-            dists_sq = np.sum(np.square(t1[0] - t2[0]), axis=1)
-            overlapped = dists_sq[~np.isnan(dists_sq)] < rtol_sq
-            if overlapped.sum() > num:
-                overlap_mat[i, j] = True
-    overlap_mat = np.triu(overlap_mat, k=1)
-    for i, row in enumerate(overlap_mat):
-        if row.sum() > 0:
-            for j, col in enumerate(row):
-                if col > 0:
-                    overlap_pairs.append((i, j))
-    return overlap_pairs
+            dist_mat[i, j] = np.sum(np.square(t1[0] - t2[0]), axis=1)
+
+    with np.errstate(invalid='ignore'):  # ignore the case like NAN < 5
+        adj_mat = np.sum(dist_mat < rtol_sq, axis=2) >= num
+
+    adj_mat = np.triu(adj_mat, k=1)
+    return np.array(np.nonzero(adj_mat)).T
 
 
 def convert_traj_format(traj, t0):
@@ -641,15 +640,16 @@ def convert_traj_format(traj, t0):
     be replaced by linear interpolation
 
     Args:
-        traj (:obj:`tuple`): each trajectory is represented by (positions, error)
+        traj (:obj:`tuple`): one trajectory, represented by (positions, error)
         t0 (:obj:`int`) : the starting frame of this trajectory
 
     Return:
-        :obj:`list` of :obj:`tuple`: each trajectory is represented by (time, positions)
+        :obj:`list` of :obj:`tuple`: a list of ONE trajectory
+            represented by (time, positions)
     """
     # detect head NAN
     was_nan = True
-    new_trajs = []
+    new_traj = [[], []]
 
     coordinates = traj[0].copy()
     is_valid_array = np.logical_not(np.isnan(coordinates[:, 0]))
@@ -659,14 +659,14 @@ def convert_traj_format(traj, t0):
 
     for t, coord in enumerate(coordinates):
         is_nan = np.isnan(coord).any()
-        if was_nan and (not is_nan):
-            new_trajs.append([[], []])
+        #if was_nan and (not is_nan):
+        #    new_trajs.append([[], []])
         if (not is_nan):
-            new_trajs[-1][0].append(t0 + t)
-            new_trajs[-1][1].append(coord)
+            new_traj[0].append(t0 + t)
+            new_traj[1].append(coord)
         was_nan = is_nan
 
-    return [(np.array(t[0]), np.array(t[1])) for t in new_trajs]
+    return [ (np.array(new_traj[0]), np.array(new_traj[1])) ]
 
 
 def fill_hole_1d(binary, size):
@@ -799,6 +799,7 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
     trajs_3d_filtered = get_valid_ctraj(trajs_3d, z_min, z_max)
     if len(trajs_3d_filtered) == 0:
         return []
+
     # join overlapped trajectories
     op = get_overlap_pairs(trajs_3d_filtered, num, rtol)
     jop = join_pairs(op)
@@ -808,6 +809,7 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
             trajs_3d_opt += convert_traj_format(traj, t0)
         return trajs_3d_opt
     trajs_3d_opt = []
+
     not_unique = np.hstack(jop).ravel().tolist()
     for i, traj in enumerate(trajs_3d_filtered):
         if i not in not_unique:
@@ -927,10 +929,13 @@ def remove_spatial_overlap(trajectories, ntol, rtol):
         return trajs_filtered
     else:
         trajs_opt = []
-        not_unique = np.hstack(jop).ravel().tolist()
-        for i, traj in enumerate(trajs_filtered):
-            if i not in not_unique:
-                trajs_opt.append(traj)
+        not_unique = np.hstack(jop).ravel()
+        unique = np.setdiff1d(
+            np.arange(len(trajs_filtered)), not_unique
+        )
+        for i in unique:
+            trajs_opt.append(trajs_filtered[i])
+
         for p in jop:
             best_idx = np.argmin([trajs_filtered[idx][1] for idx in p])
             chosen_traj = trajs_filtered[p[best_idx]]
@@ -938,10 +943,10 @@ def remove_spatial_overlap(trajectories, ntol, rtol):
         return trajs_opt
 
 
-def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol):
+def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol, unique=True):
     """
     Get pairs that link overlapped trajectories from two batches.
-    The temporal size of trajectories in both batches should be the same
+    The temporal size of trajectories in both batches should be the same.
 
     Args:
         batch_1
@@ -960,17 +965,24 @@ def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol):
         :obj:`numpy.ndarray`: indices of a pair of overlapped trajectories, shape (n, 2)
     """
     rtol_sq = rtol ** 2
-    pairs = []
+    dist_mat = np.empty((len(batch_1), len(batch_2), lag))  # (N1, N2, lag)
     for i, t1 in enumerate(batch_1):
         for j, t2 in enumerate(batch_2):
-            dist_sq = np.sum(np.power(t1[0][-lag:] - t2[0][:lag], 2), axis=1)
-            dist_sq = dist_sq[~np.isnan(dist_sq)]  # remove nan
-            if np.sum(dist_sq < rtol_sq) >= ntol:
-                pairs.append((i, j))
-    if len(pairs) == 0:
-        return np.empty((0, 2), dtype=int)
-    else:
-        return np.array(pairs)
+            dist_sq = np.sum(np.power(t1[0][-lag:] - t2[0][:lag], 2), axis=1)  # (lag,)
+            dist_mat[i, j, :] = dist_sq
+    with np.errstate(invalid='ignore'):  # ignore the case like NAN < 5
+        adj_mat = np.sum(dist_mat < rtol_sq, axis=2) >= ntol  # (N1, N2)
+    if unique and dist_mat.shape[0] > 0:
+        min_dist_mat = dist_mat.min(axis=2)  # (N1, N2)
+        mask_1 = np.isclose(
+            min_dist_mat, np.nanmin(min_dist_mat, axis=0)[np.newaxis, :]
+        )
+        mask_2 = np.isclose(
+            min_dist_mat, np.nanmin(min_dist_mat, axis=1)[:, np.newaxis]
+        )
+        adj_mat *= np.logical_and(mask_1, mask_2)
+    pairs = np.nonzero(adj_mat)
+    return np.array(pairs).T  # (N, 2)
 
 
 def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
@@ -993,7 +1005,7 @@ def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
             (:obj:`list` [ :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ] ]):
             trajectories in different batches
         lag (:obj:`int`): the overlapped time between trajectories in two successive
-            batches.
+            batches.  TODO: fix the bug when lag is odd number
         ntol (:obj:`int`): if two trajectories have more numbers of
             overlapped positions than `ntol`, merge the two.
         rtol (:obj:`float`): positions whose distance is smaller than `rtol`
@@ -1007,45 +1019,63 @@ def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
     t0_extended, t0_fragments = [], []
     previous_pairs = np.empty((0, 2), dtype=int)
     for i, b1 in enumerate(trajectory_batches[1:]):
-        b0 = trajectory_batches[i]   # shape (n_traj, ...)
-        new_indices = [idx for idx in np.arange(len(b0)) if idx not in previous_pairs.T[1]]
-        new_trajs = [b0[ni] for ni in new_indices]
+        b0 = trajectory_batches[i]   # the previous batch, shape (n_traj, ...)
+        pne_indices = np.setdiff1d(  # pne -- previously not extended
+            np.arange(len(b0)),
+            previous_pairs.T[1]
+        )
+        pne_trajs = [b0[ni] for ni in pne_indices]
+
         pairs_extend = get_temporal_overlapped_pairs(extended, b1, lag, ntol, rtol)
-        pairs_new = get_temporal_overlapped_pairs(new_trajs, b1, lag, ntol, rtol)
+        pairs_new = get_temporal_overlapped_pairs(pne_trajs, b1, lag, ntol, rtol)
         new_extended = []
         new_t0_extended = []
+
+        # extended previously not extended trajectories
+        new_extended += [
+            (
+                np.concatenate((pne_trajs[pn][0][:-lag], b1[p1][0]), axis=0),  # xyz coordinates
+                pne_trajs[pn][1] + b1[p1][1]  # reprojection error
+            ) for pn, p1 in pairs_new
+        ]
+        new_t0_extended += [i * lag  for _ in pairs_new]
+
+        # add non-extended previously non-extended trajectories into fragments
+        ne_ne_indices = np.setdiff1d(np.arange(len(pne_trajs)), pairs_new.T[0])
+        fragments    += [pne_trajs[idx] for idx in ne_ne_indices]
+        t0_fragments += [i * lag        for _   in ne_ne_indices]
+
+        ne_pe_indices = []
         if len(extended) > 0:
-            # extended previous extended trajectories, 
+            # extended previously extended trajectories,
             new_extended += [
                 (
-                    np.vstack((extended[pe][0][:-lag], b1[p1][0])),
+                    np.concatenate((extended[pe][0][:-lag], b1[p1][0]), axis=0),
                     extended[pe][1] + b1[p1][1]
                 ) for pe, p1 in pairs_extend
             ]
             new_t0_extended += [t0_extended[pe] for pe, p1 in pairs_extend]
-        # extended  trajectories from current batch
-        new_extended += [
-            (
-                np.vstack((new_trajs[pn][0][:-lag], b1[p1][0])),  # xyz coordinates
-                new_trajs[pn][1] + b1[p1][1]  # reprojection error
-            ) for pn, p1 in pairs_new
-        ]
-        new_t0_extended += [i * lag  for _ in pairs_new]
-        if len(extended) > 0:
-            # add non-extended previous extended trajectories into fragments
-            not_extended_idx = [
-                idx for idx in np.arange(len(extended)) if idx not in pairs_extend.T[0]
-            ]
-            fragments    += [extended[idx] for idx in not_extended_idx]
-            t0_fragments += [t0_extended[idx] for idx in not_extended_idx]
-        # add non-extended trajectories from current batch into fragments
-        not_extended_idx = [idx for idx in np.arange(len(new_trajs)) if idx not in pairs_new.T[0]]
-        fragments += [new_trajs[idx] for idx in not_extended_idx]
-        t0_fragments += [i * lag for _ in not_extended_idx]
 
-        previous_pairs = np.vstack((pairs_extend, pairs_new))
+            # add non-extended previously extended trajectories into fragments
+            ne_pe_indices = np.setdiff1d(np.arange(len(extended)), pairs_extend.T[0])
+            fragments    += [extended[idx]    for idx in ne_pe_indices]
+            t0_fragments += [t0_extended[idx] for idx in ne_pe_indices]
+
+        previous_pairs = np.vstack(  # (n1, 2) + (n2, 2) -> (n1+n2, 2)
+            (pairs_extend, pairs_new)
+        )
         t0_extended = new_t0_extended
         extended = new_extended
+
+    # For the last batch
+    b0 = trajectory_batches[-2]   # the previous batch, shape (n_traj, ...)
+    pne_indices = np.setdiff1d(  # pne -- previously not extended
+        np.arange(len(b0)),
+        previous_pairs.T[1]
+    )
+    pne_trajs = [b0[ni] for ni in pne_indices]
+    fragments += pne_trajs
+    t0_fragments += [(len(trajectory_batches)-1) * lag for _ in pne_trajs]
 
     return extended + fragments, t0_extended + t0_fragments
 
