@@ -453,7 +453,6 @@ class Camera():
         self.distortion = distortion
         self.update()
 
-
     def calibrate_ext(self, ext_image: str, grid_size: float, order='x123', corner_number=(6, 6), win_size=(5, 5), show=True):
         """
         update EXTRINSIC camera matrix using opencv's chessboard detector
@@ -524,7 +523,7 @@ def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    grid_size: float, corner_number: Tuple[int], win_size=(10, 10)) -> None:
     """
     Do extrinsic calibrations multiple times, calculate average *relative displacement & angle*
-    Then use the last calibration image as world coordinate
+    Then use the **last** calibration image as world coordinate
 
     Args:
         cam_1 (Camera): The internal parameters should be correct
