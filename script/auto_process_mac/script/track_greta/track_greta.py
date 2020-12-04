@@ -74,7 +74,7 @@ else:
     ctrajs_resolved, t0_resolved = f3.utility.resolve_temporal_overlap(
         ctraj_batches,
         lag=config.Temporal.tau//2,
-        ntol=config.Temporal.tau//2,
+        ntol=config.PostProcess.overlap_num,
         rtol=config.PostProcess.overlap_rtol
     )
     trajectories = []

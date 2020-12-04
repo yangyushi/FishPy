@@ -7,16 +7,16 @@ cam_3_internal="database/cam_3_int.pkl"
 
 # Calibration Spec
 calib_folder="../calib-ext"
-order_json="../calib-ext/calib-orders.json"
+order_json="../calib-ext/calib-order.json"
 calib_format="tiff"
-grid_size=16   # size of square on the calibration board, unit: mm
-corner_number="23, 15"  # number of inner corners in the row, column
+grid_size=16               # size of square on the calibration board, unit: mm
+corner_number="23, 15"     # number of inner corners in the row, column
 
 # video processing parameters
 background_rolling_length=600
-blur=4
-local=5
-binary_open_size=5
+blur=2
+local=3
+binary_open_size=3
 
 # 2D Tracking parameters
 measure_roi=0
@@ -24,7 +24,7 @@ cam_1_kernels="database/shape_kernels.npy"
 cam_2_kernels="database/shape_kernels.npy"
 cam_3_kernels="database/shape_kernels.npy"
 track_2d_frame_start=0
-track_2d_frame_end=54000
+track_2d_frame_end=54000   # Total frame tracked in 2D
 track_2d_size_min=5
 track_2d_size_max=25
 track_2d_orientation_number=36
@@ -33,25 +33,25 @@ track_2d_want_plot="False"
 
 # 3D Tracking parameters
 track_3d_frame_start=0
-track_3d_frame_end=54000
+track_3d_frame_end=54000   # Total frame tracked in 3D
 track_3d_sample_size=10
-track_3d_tol_2d=5  # tolarance of reprojection error
+track_3d_tol_2d=10         # tolarance of reprojection error
 track_3d_water_depth=400
-track_3d_water_level=0
-track_3d_want_plot=0
+track_3d_water_level=0     # water level in world coordinate
+track_3d_want_plot=0       # use 1 for reprojection plot
 
 # GReTA Tracking parameters
 greta_frame_start=0
-greta_frame_end=54000
+greta_frame_end=54000      # Total frame tracked in 3D
 greta_water_depth=400
-greta_search_range=100
-greta_tol_2d=20
-greta_tau=10
-greta_overlap_num=1
-greta_overlap_rtol=20
-greta_relink_dx=50
-greta_relink_dx_step=5
-greta_relink_dt=40
-greta_relink_blur=2
-greta_relink_window=500
-greta_relink_min=10
+greta_search_range=100     # 2D link range
+greta_tol_2d=10            # tolarance of reprojection error
+greta_tau=10               # length of trajectory fragments
+greta_overlap_num=1        # minimun overlapping particles for overalpping trajectories
+greta_overlap_rtol=20      # maximum distance for overlapping particles, in 3D
+greta_relink_dx=20
+greta_relink_dx_step=2
+greta_relink_dt=10
+greta_relink_blur=1
+greta_relink_window=200
+greta_relink_min=10        # minimum trajectory length after relink
