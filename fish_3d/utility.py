@@ -972,8 +972,8 @@ def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol, unique=True
             dist_mat[i, j, :] = dist_sq
     with np.errstate(invalid='ignore'):  # ignore the case like NAN < 5
         adj_mat = np.sum(dist_mat < rtol_sq, axis=2) >= ntol  # (N1, N2)
-    if unique and dist_mat.shape[0] > 0:
-        min_dist_mat = dist_mat.min(axis=2)  # (N1, N2)
+    if unique and dist_mat.shape[0] > 0 and dist_mat.shape[1] > 0:
+        min_dist_mat = np.nanmin(dist_mat, axis=2)  # (N1, N2)
         mask_1 = np.isclose(
             min_dist_mat, np.nanmin(min_dist_mat, axis=0)[np.newaxis, :]
         )
