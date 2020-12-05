@@ -180,6 +180,7 @@ def get_convex_hull_from_trajs(trajectories, target_num=0):
         if len(points) >= target_num:
             yield ConvexHull(np.array(points))
 
+
 def get_rg_tensor(trajectories, target_num=0):
     frames = list(set(np.hstack([t.time for t in trajectories]).ravel()))
     for frame in frames:
@@ -438,7 +439,6 @@ def get_biased_gr_randomly(frames, positions, tank, bins, space_bin_number):
     random_size = np.sum([len(f) for f in frames])
     random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
     return get_gr(random_frames, bins, random_gas)
-
 
 
 def get_mean_spd(velocity_frames, frame_number, min_number):
@@ -948,6 +948,45 @@ class Movie:
                 traj.interpolate()
         self.trajs = new_trajs
 
+    def get_trimmed_trajs(self, t0, t1):
+        """
+        Get all trajectories that is between frame t0 and t1
+
+        .. code-block::
+
+                 t0                      t1
+                  │                      │ 1. Fully accepted
+                  │     =========▶       │
+          ...................................................
+                  │                      │ 2. Trimmed
+                  │                      │
+                  │                  ====┼──▶
+             ─────┼===▶                  │
+                  │                      │
+             ─────┼======================┼───▶
+          ...................................................
+                  │                      │ 3. Ignored
+                  │                      │
+          ──────▶ │                      │ ──────▶
+                  │                      │
+            ──────┴──────────────────────┴──────▶ Time
+
+        """
+        result = []
+        for traj in self.movie.trajs:
+            too_early = traj.t_end < t0
+            too_late  = traj.t_start > t1
+            if too_late or too_early:
+                continue
+            else:
+                offset = max(t0 - traj.t_start, 0)
+                stop = min(traj.t_end, t1)
+                time = traj.time[offset, offset]
+                positiosn = traj.positions[offset, stop]
+                result.append(Trajectory(time, positions))
+        return result
+
+
 
 class SimMovie:
     def __init__(self, positions, velocities):
@@ -1003,12 +1042,27 @@ class SimMovie:
         f.close()
 
 
-def plot_spatial_3d(
-        nn_locations, r, bin_num, title='', figsize=(6, 3), axes=[], unit='mm',
-        show=True, savename=''
-):
+def plot_spatial_3d(positions, r, bin_num, title='', figsize=(6, 3), axes=[],
+                    unit='mm', show=True, savename=''):
+    """
+    Generate orthogonal slices of a 3D spatial distribution of many points in 3D
+
+    Args:
+        positions (np.ndarray): coordinates measured in 3D space, shape (n, dim)
+        r (float): the distribution is measured in the range of (-r, r)
+        bin_num (int): the number of bins
+        title (str): the titile of the plot
+        figsize (tuple): the (length, width) of the figure in inches
+        axes (list): [optional]
+        unit (str): the unit of the coordinates
+        show (bool): if true, the distribution will be plotted
+        savename (str): if not blank, the plot would be saved to the harddrive
+
+    Return:
+        None
+    """
     hist, bin_edges_nd = np.histogramdd(
-        nn_locations, density=True,
+        positions, density=True,
         bins=(
             np.linspace(-r, r, bin_num, endpoint=True),
             np.linspace(-r, r, bin_num, endpoint=True),
@@ -1054,3 +1108,4 @@ def plot_spatial_3d(
         plt.savefig(savename)
     if show:
         plt.show()
+

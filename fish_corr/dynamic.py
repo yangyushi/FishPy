@@ -871,3 +871,5 @@ def get_order_movie(analyser):
     velocities = analyser.movie.velocity((analyser.start, analyser.end))
     vicsek_movie = utility.get_vicsek_order(velocities, min_number=2)
     return vicsek_movie
+
+
