@@ -417,8 +417,10 @@ class AverageAnalyser():
                 if isinstance(
                     traj.velocities, type(None)
                 ):  # for experimental data
-                    velocities = traj.positions[offset+1 : stop] -\
-                        traj.positions[offset : stop-1]
+                    positions = traj.positions[offset : stop]
+                    velocities = positions[1:] - positions[:-1]
+                    #velocities = traj.positions[offset+1 : stop] -\
+                    #    traj.positions[offset : stop-1]
                 else:  # for simulation data
                     velocities = traj.velocities[offset : stop]
                 result.append(velocities)

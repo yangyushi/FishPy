@@ -968,24 +968,25 @@ class Movie:
                   │                      │ 3. Ignored
                   │                      │
           ──────▶ │                      │ ──────▶
+        too_eraly │                      │ too late
                   │                      │
             ──────┴──────────────────────┴──────▶ Time
 
         """
         result = []
-        for traj in self.movie.trajs:
+        for traj in self.trajs:
             too_early = traj.t_end < t0
             too_late  = traj.t_start > t1
             if too_late or too_early:
                 continue
             else:
                 offset = max(t0 - traj.t_start, 0)
-                stop = min(traj.t_end, t1)
-                time = traj.time[offset, offset]
-                positiosn = traj.positions[offset, stop]
-                result.append(Trajectory(time, positions))
+                stop = min(traj.t_end, t1) - traj.t_start
+                time = traj.time[offset: stop]
+                if len(time) > 1:
+                    positions = traj.positions[offset: stop]
+                    result.append(Trajectory(time, positions))
         return result
-
 
 
 class SimMovie:
