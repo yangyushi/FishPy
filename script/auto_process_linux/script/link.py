@@ -16,6 +16,7 @@ dt_max = int(sys.argv[7])
 blur = int(sys.argv[8])
 threshold = int(sys.argv[9])
 save_folder = sys.argv[10]
+relink_window = int(sys.argv[11])
 
 frame_number = frame_end - frame_start
 
@@ -43,15 +44,21 @@ else:
     with open(f'{save_folder}/vanilla_trajs.pkl', 'rb') as f:
         vanilla_trajs = pickle.load(f)
 
-if len(vanilla_trajs) > 1:
-    trajs = ft.relink(vanilla_trajs, 1, 1, blur=blur)
-    for dt in range(2, dt_max + 2):
+if f'trajectories.pkl' not in os.listdir(save_folder):
+    if len(vanilla_trajs) > 1:
+        trajs = ft.relink(vanilla_trajs, 1, 1, blur_velocity=blur)
         for dx in range(2, dx_max + 2):
-            trajs = ft.relink(trajs, dx, dt, blur=None)
+            trajs = ft.relink_by_segments(
+                trajs,
+                window_size=relink_window,
+                max_frame=frame_end,
+                dx=dx,
+                dt=dt_max,
+                blur_velocity=blur
+            )
+        trajs = [t for t in trajs if len(t[0]) > threshold]
+    else:
+        trajs = vanilla_trajs
 
-    trajs = [t for t in trajs if len(t[0]) > threshold]
-else:
-    trajs = vanilla_trajs
-
-with open(f'{save_folder}/trajectories.pkl', 'wb') as f:
-          pickle.dump(trajs, f)
+    with open(f'{save_folder}/trajectories.pkl', 'wb') as f:
+              pickle.dump(trajs, f)
