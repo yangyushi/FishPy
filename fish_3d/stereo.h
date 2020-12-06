@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <set>
+#include <tuple>
 #include <ilcplex/ilocplex.h>
 
 ILOSTLBEGIN  ///< marco from CPLEX for cross-platform compability
@@ -113,7 +114,9 @@ namespace stereo {
     /**
      * Calculate the 3D coordinates from 3 stereo-matched 2D coordinates
      */
-    Vec3D three_view_reconstruct(array<Vec2D, 3>Cs, array<ProjMat, 3> Ps, array<Vec3D, 3> Os);
+    Vec3D three_view_reconstruct(
+            array<Vec2D, 3>Cs, array<ProjMat, 3> Ps, array<Vec3D, 3> Os
+            );
 
     /**
      * Generating stereo matched indices

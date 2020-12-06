@@ -145,28 +145,32 @@ def greedy_match(
         report=True, order=(0, 1, 2), history=np.empty((0, 3))
         ):
     """
-    use greedy algorithm to match clusters across THREE views
+    Use greedy algorithm to match clusters across THREE views
 
-    start from view_1:
-        start from cluster_1:
+    Starting from view_1:
+        starting from cluster_1:
             1. find all possible correspondance according to epipolar
                relationship in view 2 and view 3
             2. for all possibility in view 2, validate according to ray-tracing
             3. for all possibility in view 3, validate according to ray-tracing
 
-    :param clusters: A collection of points in the 2D image
+    Args:
+
+        clusters: A collection of points in the 2D image
                      with the format of (u, v), NOT (x, y)
-    :param cameras: A collection of Camera instances
-    :param depth: The maximum depth of water used to constrain
+        cameras: A collection of Camera instances
+        depth: The maximum depth of water used to constrain
                   the length of the epipolar relation
-    :param normal: The direction of the normal of the water.
+        normal: The direction of the normal of the water.
                    It should be [0, 0, 1]
-    :param tol_2d: The tolerance on the distance between epipolar line
+        tol_2d: The tolerance on the distance between epipolar line
                    and centers, unit is pixel
-    :param points: the number of points used in 3D stereo matching
+        points: the number of points used in 3D stereo matching
                    for each cluster, choosing randomly
-    :return: The matched indices across different views.
-             The indices are for the clusters.
+    Return:
+        tuple: 1) the matched indices across different views;
+            2) the corresponding 3D centres;
+            3) the corresponding reprojection errors;
     """
     matched = []
     centres = []
@@ -192,16 +196,16 @@ def greedy_match(
         candidates_12, candidates_13 = [], []
 
         for j, cluster in enumerate(clusters[1]):
-            distances =\
-                    np.abs(cluster.T[0] * a12 - cluster.T[1] + b12) /\
-                    np.sqrt(a12**2 + 1)
+            distances = np.abs(
+                cluster.T[0] * a12 - cluster.T[1] + b12
+            ) / np.sqrt(a12**2 + 1)
             if np.min(distances) < tol_2d:
                 candidates_12.append(j)
 
         for j, cluster in enumerate(clusters[2]):
-            distances =\
-                    np.abs(cluster.T[0] * a13 - cluster.T[1] + b13) /\
-                    np.sqrt(a13**2 + 1)
+            distances = np.abs(
+                cluster.T[0] * a13 - cluster.T[1] + b13
+            ) / np.sqrt(a13**2 + 1)
             if np.min(distances) < tol_2d:
                 candidates_13.append(j)
 
@@ -273,7 +277,7 @@ def greedy_match(
                 ))
             cloud, error = match_clusters(
                     par_clusters, cameras_reordered, normal, water_level
-                    )
+            )
 
             # weighted by inverse error
             z = np.sum(cloud.T[-1] / error) / np.sum(1/error)
