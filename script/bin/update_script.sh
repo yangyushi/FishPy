@@ -25,7 +25,6 @@ should_update=0
 update_process=1
 needed_process=(
     'auto_link.sh' 'auto_track_2d.sh' 'auto_track_3d.sh'
-    'see_trajs.py'
 )
 for fn in "${needed_process[@]}"; do
     if [[ ! -e $fn ]]; then
@@ -66,6 +65,8 @@ if [[ $update_process -eq 1 ]]; then
     cp "$fishpy/script/auto_process_$platform/auto_track_greta.sh" "$PWD"
     cp "$fishpy/script/auto_process_$platform/collect.sh" "$PWD"
     cp "$fishpy/script/auto_process_$platform/stat_trajs.py" "$PWD"
+    cp "$fishpy/script/auto_process_$platform/see_trajs.py" "$PWD"
+    cp "$fishpy/script/auto_process_$platform/make_movie.py" "$PWD"
     rm -rf "$PWD/script"
     cp -r "$fishpy/script/auto_process_$platform/script" "$PWD"
     exit 0
