@@ -60,6 +60,7 @@ namespace stereo {
         void report();
         void add(int i, int j, int k, double e);
         void add(Link l);
+        vector<double> get_errors();
         /**
          * collect result in a std containers for pybind11 to export as python objects
         */
@@ -128,6 +129,16 @@ namespace stereo {
             );
 
     /**
+     * Generating stereo matched indices, but also return the
+     *   xyz coordinates and corresponding reprojection errors
+     */
+    tuple<Links, vector<Vec3D>, vector<double>> three_view_match_verbose(
+            Coord2D& centres_1, Coord2D& centres_2, Coord2D& centres_3,
+            ProjMat P1, ProjMat P2, ProjMat P3,
+              Vec3D O1,   Vec3D O2,   Vec3D O3,
+            double tol_2d, bool optimise
+            );
+    /**
      * Generating variables for optimisaing the stereo linking result
      *
      * @param env: the environment required by CPLEX
@@ -162,6 +173,7 @@ namespace stereo {
      * @return: a collection of valid stereo links 
      */
     Links optimise_links(Links system);
+    tuple<Links, vector<int>> optimise_links_verbose(Links system);
 }
 
 #endif

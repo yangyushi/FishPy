@@ -93,16 +93,17 @@ for frame in range(frame_start, frame_end):
     proj_mats = [cam.p for cam in cameras]
     cam_origins = [cam.o for cam in cameras]
 
-    matched_indices, matched_centres, reproj_errors = f3.cstereo.match_v3_verbose(
+    matched_centres, reproj_errors = f3.cstereo.locate_v3(
         *centres_multi_view, *proj_mats, *cam_origins,
         tol_2d=tol_2d, optimise=True
     )
 
-    print(f'frame {frame}', len(matched_centres))
+    in_tank = matched_centres[:, 2] > -water_depth
 
-    if len(matched_indices) == 0:
-        np.save(f'locations_3d/frame_{frame:08}', np.empty((0, 3)))
-        continue
+    print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank')
+
+    matched_centres = matched_centres[in_tank]
+    reproj_errors = reproj_errors[in_tank]
 
     np.save(f'locations_3d/frame_{frame:08}', matched_centres)
 

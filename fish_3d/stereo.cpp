@@ -131,6 +131,14 @@ void Links::add(Link l){
     }
 }
 
+vector<double> Links::get_errors(){
+    vector<double> errors{};
+    for (auto link : links_) {
+        errors.push_back(link.error_);
+    }
+    return errors;
+}
+
 PYLinks Links::to_py(){
     PYLinks result;
     for (auto link : links_){
@@ -420,6 +428,75 @@ Links three_view_match(
 }
 
 
+tuple<Links, vector<Vec3D>, vector<double>> three_view_match_verbose(
+        Coord2D& centres_1, Coord2D& centres_2, Coord2D& centres_3,
+        ProjMat P1, ProjMat P2, ProjMat P3,
+          Vec3D O1,   Vec3D O2,   Vec3D O3,
+        double tol_2d, bool optimise=true
+        ){
+    Vec2D x1, x2, x3;
+    Vec3D poi_1, poi_2, poi_3, ref_1, ref_2, ref_3, xyz;
+    Line l1, l2, l3;
+    vector<double> errors{};
+    vector<Vec3D> positions{};
+    int n1 = centres_1.rows();
+    int n2 = centres_2.rows();
+    int n3 = centres_3.rows();
+    double error{0};
+
+    Links links;
+
+    for (int i = 0; i < n1; i++){
+        x1 = centres_1.row(i);
+        poi_1 = get_poi(x1, P1);
+        ref_1 = get_refraction_ray(poi_1 - O1);
+        l1.row(0) = poi_1;
+        l1.row(1) = ref_1;
+        for (int j = 0; j < n2; j++){
+            x2 = centres_2.row(j);
+            poi_2 = get_poi(x2, P2);
+            ref_2 = get_refraction_ray(poi_2 - O2);
+            l2.row(0) = poi_2;
+            l2.row(1) = ref_2;
+            for (int k = 0; k < n3; k++){
+                x3 = centres_3.row(k);
+                poi_3 = get_poi(x3, P3);
+                ref_3 = get_refraction_ray(poi_3 - O3);
+                l3.row(0) = poi_3;
+                l3.row(1) = ref_3;
+                xyz = get_intersection(Lines{l1, l2, l3});
+                error = get_reproj_error(
+                            xyz,
+                            TriXY{x1, x2, x3},
+                            TriPM{P1, P2, P3},
+                            TriXYZ{O1, O2, O3}
+                        );
+                if (error < tol_2d){
+                    links.add(i, j, k, error);
+                    positions.push_back(Vec3D{xyz});
+                }
+            }
+        }
+    }
+    if (optimise){
+        auto result = optimise_links_verbose(links);
+        auto links_opt = get<0>(result);
+        auto indices_opt = get<1>(result);
+        vector<Vec3D> pos_opt{};
+        for (auto i : indices_opt) {
+            pos_opt.push_back(positions[i]);
+        }
+        return make_tuple(
+            links_opt, pos_opt, links_opt.get_errors()
+        );
+    } else {
+        return make_tuple(
+            links, positions, links.get_errors()
+        );
+    }
+}
+
+
 IloBoolVarArray get_variables(IloEnv& env, Links system){
     IloBoolVarArray x(env);
     for (int i = 0; i < system.size_; i++){
@@ -485,6 +562,38 @@ Links optimise_links(Links system){
     }
     env.end();
     return new_system;
+}
+
+
+tuple<Links, vector<int>> optimise_links_verbose(Links system){
+    Links new_system;
+    vector<int> opt_indices;
+    IloEnv   env;
+    IloModel model(env);
+
+    IloBoolVarArray x = get_variables(env, system);  // variables
+    IloRangeArray constrains = get_constrains(env, x, system);
+    IloExpr cost = get_cost(env, x, system);
+    model.add(IloMinimize(env, cost));
+    model.add(constrains);
+
+    IloCplex cplex(model);
+    cplex.setOut(env.getNullStream());  ///< avoid log msgs on the screen
+    if ( !cplex.solve() ) {
+     env.error() << "Failed to optimize LP" << endl;
+     throw(-1);
+    }
+
+    IloNumArray vals(env);
+    cplex.getValues(vals, x);
+    for (int i = 0; i < system.size_; i++){
+        if (vals[i] == 1){
+            new_system.add(system[i]);
+            opt_indices.push_back(i);
+        }
+    }
+    env.end();
+    return tuple<Links, vector<int>>{new_system, opt_indices};
 }
 
 }

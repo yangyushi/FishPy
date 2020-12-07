@@ -53,8 +53,38 @@ tuple<PYLinks, Coord3D, Arr1D> match_v3_verbose(
         positions_3d.row(index) = xyz;
         index++;
     };
-    return tuple<PYLinks, Coord3D, Arr1D> {links.to_py(), positions_3d, errors};
+    return tuple<PYLinks, Coord3D, Arr1D>{
+        links.to_py(), positions_3d, errors
+    };
 }
+
+
+tuple<Coord3D, Arr1D> locate_v3(
+            Coord2D& centres_1, Coord2D& centres_2, Coord2D& centres_3,
+            ProjMat P1, ProjMat P2, ProjMat P3,
+            Vec3D O1, Vec3D O2, Vec3D O3, double tol_2d, bool optimise
+        ){
+    auto result = three_view_match_verbose(
+            centres_1,  centres_2,  centres_3,
+            P1,  P2,  P3,
+            O1,  O2,  O3,
+            tol_2d, optimise
+        );
+    auto positions = get<1>(result); 
+    auto errors = get<2>(result);
+
+    Coord3D positions_arr{positions.size(), 3};
+
+    Arr1D errors_arr{positions.size(), 1};
+    for (int i = 0; i < positions.size(); i++){
+        positions_arr.row(i) = positions[i];
+        errors_arr.row(i) = errors[i];
+    }
+
+    return make_tuple(positions_arr, errors_arr);
+}
+
+
 
 
 Coord2D refractive_project(Coord3D& points, ProjMat& P, Vec3D& O){
@@ -85,7 +115,13 @@ PYBIND11_MODULE(cstereo, m){
             py::arg("O1"), py::arg("O2"), py::arg("O3"),
             py::arg("tol_2d"), py::arg("optimise")=true
             );
-
+    m.def(
+            "locate_v3", &locate_v3,
+            py::arg("centres_1"), py::arg("centres_2"), py::arg("centres_3"),
+            py::arg("P1"), py::arg("P2"), py::arg("P3"),
+            py::arg("O1"), py::arg("O2"), py::arg("O3"),
+            py::arg("tol_2d"), py::arg("optimise")=true
+            );
     m.def(
             "get_error", &get_error,
             py::arg("centres"), py::arg("Ps"), py::arg("Os")
