@@ -988,6 +988,43 @@ class Movie:
                     result.append(Trajectory(time, positions))
         return result
 
+    def save_xyz(self, filename):
+        """
+        Dump the movie as xyz files. Particle labels indicate the IDs.
+
+        Args:
+            filename (str): the name of the xyz file
+        """
+        if '.xyz' == filename[-4:]:
+            fname = filename
+        else:
+            fname = filename + '.xyz'
+        f = open(fname, 'w')
+        f.close()
+
+        for i, frame in enumerate(self):
+            if len(frame) > 0:
+                num, dim = frame.shape
+                labels = self.label(i)[:, np.newaxis]
+                result = np.concatenate((labels, frame), axis=1)
+                with open(fname, 'a') as f:
+                    np.savetxt(
+                        f, result,
+                        delimiter='\t',
+                        fmt="\t".join(['%d\t%.8e'] + ['%.8e' for i in range(dim - 1)]),
+                        comments='',
+                        header='%s\nframe %s' % (num, i)
+                    )
+            else:
+                with open(fname, 'a') as f:
+                    np.savetxt(
+                        f, np.empty((0, 4)),
+                        delimiter='\t',
+                        fmt="\t".join(['%d\t%.8e'] + ['%.8e' for i in range(dim - 1)]),
+                        comments='',
+                        header='%s\nframe %s' % (0, i)
+                    )
+
 
 class SimMovie:
     def __init__(self, positions, velocities):
