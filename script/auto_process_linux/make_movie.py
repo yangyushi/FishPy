@@ -35,7 +35,7 @@ if sys.argv == 3:
 else:
     blur = 0
 
-movie = fc.Movie(trajs, blur=blur, interpolate=False)
+movie = fc.Movie(trajs, blur=blur, interpolate=True)
 movie.make()
 
 with open(f'movie-{method}.pkl', 'wb') as f:
