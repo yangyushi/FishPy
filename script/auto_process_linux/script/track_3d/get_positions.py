@@ -52,6 +52,7 @@ for frame in range(frame_start):  # skip initial frames
             next(movies[i])
         pickle.load(feature_handlers[i])
 
+frames = []
 for frame in range(frame_start, frame_end):
     if see_reprojection:
         images_multi_view = []
@@ -102,10 +103,7 @@ for frame in range(frame_start, frame_end):
 
     print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank')
 
-    matched_centres = matched_centres[in_tank]
-    reproj_errors = reproj_errors[in_tank]
-
-    np.save(f'locations_3d/frame_{frame:08}', matched_centres)
+    frames.append(matched_centres[in_tank])
 
     if see_reprojection:
         f3.utility.plot_reproject(
@@ -131,8 +129,6 @@ for f in feature_handlers:
     f.close()
 
 f = open('locations_3d.pkl', 'wb')
-frames = glob.glob(r'locations_3d/frame_*.npy')
-frames.sort()
 for frame in frames:
-    pickle.dump(np.load(frame), f)
+    pickle.dump(frame, f)
 f.close()
