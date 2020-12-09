@@ -557,11 +557,9 @@ class AverageAnalyser():
             )
         )
 
-    def scan_biased_gr(self, tank, bins, space_bin_number=50, **kwargs):
+    def scan_biased_gr(self, bins, space_bin_number=50, **kwargs):
         """
         Args:
-            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
-                to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
             space_bin_number (:obj:`int`): number of bins to devide space to
                 generated biased random gas
@@ -571,23 +569,20 @@ class AverageAnalyser():
                 biased density distribution
         """
         positions = []
-        base = tank.base.T
         for frame in self.movie:
             if len(frame) > 0:
-                positions.append(frame - base)
+                positions.append(frame)
         positions = np.vstack(positions)
         return self.__scan_positions(
             lambda x: utility.get_biased_gr(
                 frames=x, positions=positions,
-                tank=tank, bins=bins, space_bin_number=space_bin_number
+                bins=bins, space_bin_number=space_bin_number
             )
         )
 
-    def scan_biased_attraction(self, tank, bins, space_bin_number, **kwargs):
+    def scan_biased_attraction(self, bins, space_bin_number, **kwargs):
         """
         Args:
-            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
-                to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
             space_bin_number (:obj:`int`): number of bins to devide space to
                 generated biased random gas
@@ -595,17 +590,15 @@ class AverageAnalyser():
         Return:
             :obj:`numpy.ndarray`: the effective attraction in different average windows
         """
-        biased_rdfs = self.scan_biased_gr(tank, bins, space_bin_number)
+        biased_rdfs = self.scan_biased_gr(bins, space_bin_number)
         attractions = -np.log(np.max(biased_rdfs, axis=1))
         return attractions
 
-    def scan_biased_attraction_err(self, tank, bins, space_bin_number, repeat, **kwargs):
+    def scan_biased_attraction_err(self, bins, space_bin_number, repeat, **kwargs):
         """
         Using the bootstrap method to
 
         Args:
-            tank (:obj:`fish_corr.static.Tank`): a instance of :obj:`Tank`
-                to perform random sampling
             bins (:obj:`numpy.ndarray`): the bins for :func:`numpy.histogram`
             space_bin_number (:obj:`int`): number of bins to devide space to
                 generated biased random gas
@@ -615,10 +608,9 @@ class AverageAnalyser():
                 in different average windows
         """
         positions = []
-        base = tank.base.T
         for frame in self.movie:
             if len(frame) > 0:
-                positions.append(frame - base)
+                positions.append(frame)
         positions = np.vstack(positions)
 
         result = []
@@ -626,7 +618,7 @@ class AverageAnalyser():
             rdfs = self.__scan_positions(
                 lambda x: utility.get_biased_gr_randomly(
                     x, positions=positions,
-                    tank=tank, bins=bins, space_bin_number=space_bin_number
+                    bins=bins, space_bin_number=space_bin_number
                 )
             )
             attractions = -np.log(np.max(rdfs, axis=1))

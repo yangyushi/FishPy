@@ -401,18 +401,17 @@ def get_vanilla_gr(frames, tank, bins, random_size):
     return get_gr(frames, bins, random_gas)
 
 
-def get_biased_gr(frames, positions, tank, bins, space_bin_number):
+def get_biased_gr(frames, positions, bins, space_bin_number, **kwargs):
     """
     Args:
         frames (:obj:`numpy.ndarray`): positions of all particles in different frames, shape (frame, n, dim)
         positions (:obj:`numpy.ndarray`): all positions in the entire movie, shape (N, 3)
-        tank (Tank): a static.Tank instance
         bins (:obj:`numpy.ndarray` or `int`): the bins for the distance histogram or the bin number
     """
     bins_xyz = (
-        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(-tank.r_max, tank.r_max, space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(0, tank.z_max, space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(positions[:, 0].min(), positions[:, 0].max(), space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(positions[:, 1].min(), positions[:, 1].max(), space_bin_number+1, endpoint=True).ravel(),
+        np.linspace(positions[:, 2].min(), positions[:, 2].max(), space_bin_number+1, endpoint=True).ravel(),
     )
     frames = list(frames)
     random_size = np.sum([len(f) for f in frames])
