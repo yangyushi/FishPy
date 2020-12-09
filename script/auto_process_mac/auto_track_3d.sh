@@ -17,6 +17,7 @@ sed -i '' "s~TRACK3DFRAMESTART~$track_3d_frame_start~" configure.ini
 sed -i '' "s~TRACK3DFRAMEEND~$track_3d_frame_end~" configure.ini
 sed -i '' "s~TRACK3DSAMPLESIZE~$track_3d_sample_size~" configure.ini
 sed -i '' "s~TRACK3DTOL2D~$track_3d_tol_2d~" configure.ini
+sed -i '' "s~TRACK3DOVERLAP3D~$track_3d_overlap_3d~" configure.ini
 sed -i '' "s~TRACK3DWATERDEPTH~$track_3d_water_depth~" configure.ini
 sed -i '' "s~TRACK3DWATERLEVEL~$track_3d_water_level~" configure.ini
 sed -i '' "s~CALIBRATIONFOLDER~\.\./$calib_folder~" configure.ini
