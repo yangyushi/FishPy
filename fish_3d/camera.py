@@ -516,6 +516,9 @@ class Camera():
         self.calibrate_int(int_images, grid_size, corner_number, win_size, show)
         self.calibrate_ext(ext_image, grid_size, order, corner_number, win_size, show)
 
+    def save(self, fname: str):
+        with open(fname, 'wb') as f:
+            pickle.dump(self, f)
 
 def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    images_v1: List[str], images_v2: List[str], images_v3: List[str],
