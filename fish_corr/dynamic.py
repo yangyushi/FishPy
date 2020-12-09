@@ -414,7 +414,6 @@ class AverageAnalyser():
             else:
                 offset = max(t0 - traj.t_start, 0)
                 stop = min(traj.t_end, t1) - traj.t_start + 1
-                print(offset, stop, traj.positions.shape, traj.t_end, traj.t_start)
                 if isinstance(
                     traj.velocities, type(None)
                 ):  # for experimental data
@@ -683,7 +682,6 @@ class AverageAnalyser():
         for i, (t0, t1) in enumerate(self.pairs):
             acfs = []
             for velocities in self.get_trimmed_velocities(sample_points, t0, t1):
-                print(velocities.shape)
                 norms = np.linalg.norm(velocities, axis=1)
                 norms[np.isclose(norms, 0)] = np.nan
                 orientations = velocities / norms[:, np.newaxis]

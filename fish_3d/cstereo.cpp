@@ -85,8 +85,6 @@ tuple<Coord3D, Arr1D> locate_v3(
 }
 
 
-
-
 Coord2D refractive_project(Coord3D& points, ProjMat& P, Vec3D& O){
     Vec3D xyz;
     Coord2D result{points.rows(), 2};
@@ -96,7 +94,6 @@ Coord2D refractive_project(Coord3D& points, ProjMat& P, Vec3D& O){
     }
     return result;
 }
-
 
 
 PYBIND11_MODULE(cstereo, m){

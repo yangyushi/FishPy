@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 from numba import njit
+from scipy.spatial.distance import pdist, squareform
 from typing import List
 from joblib import Parallel, delayed
 from scipy import ndimage
@@ -14,6 +15,8 @@ from . import ray_trace
 from .cutility import join_pairs
 from .cstereo import match_v3
 from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3, get_trajs_3d
+from docplex.mp.model import Model
+from itertools import product
 
 dpi = 150
 
@@ -1280,3 +1283,41 @@ def plot_cameras(ax, cameras, water_level=0, depth=400):
     ax.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
     ax.set_zlim(-depth, 2000)
     return ax
+
+
+def solve_overlap_lp(points, errors, diameter):
+    """
+    Remove overlapped particles using linear programming, following
+
+        1. minimize the total error
+        2. particles do not overlap
+        3. retain most particles
+
+    Args:
+        points (np.ndaray): particle locations, shape (N, dimension)
+        errors (np.ndarray): the error (cost) of each particle, shape (N, )
+        diameter (float): the minimium distance between non-overlap particles
+
+    Return:
+        np.ndarray: the optimised positions, shape (N', dimension)
+    """
+    N, dim = points.shape
+    dist_mat = squareform(pdist(points))  # (N, N)
+    for n_target in range(N, 2, -1):
+        model = Model(name="Overlap Model")
+        x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
+        # total number == n_target
+        model.add_constraint(model.sum(x_vars)==n_target)
+        # no overlap
+        for i, j in product(np.arange(N), repeat=2):
+            if i != j:
+                model.add_constraint(
+                    dist_mat[i, j] * x_vars[i] * x_vars[j] >= diameter * x_vars[i] * x_vars[j]
+                )
+        objective = model.sum(x * e for x, e in zip(x_vars, errors))
+        model.minimize(objective)
+        is_successful = model.solve()
+        if is_successful:
+            indices = np.array([x.solution_value for x in x_vars], dtype=bool)
+            return points[indices]
+    return points[np.argmin(errors)][np.newaxis, :]

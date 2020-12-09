@@ -101,27 +101,33 @@ for frame in range(frame_start, frame_end):
 
     in_tank = matched_centres[:, 2] > -water_depth
 
-    print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank')
+    optimised = f3.utility.solve_overlap_lp(
+        matched_centres[in_tank],
+        reproj_errors[in_tank],
+        config.Stereo.overlap_3d
+    )
 
-    frames.append(matched_centres[in_tank])
+    print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank, {len(optimised): <5} optimised points')
+
+    frames.append(optimised)
 
     if see_reprojection:
         f3.utility.plot_reproject(
             images_multi_view[0],
             features_multi_view[0],
-            matched_centres, cameras[0],
+            optimised, cameras[0],
             filename=f'cam_1-reproject_frame_{frame:08}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[1],
             features_multi_view[1],
-            matched_centres, cameras[1],
+            optimised, cameras[1],
             filename=f'cam_2-reproject_frame_{frame:08}.png'
         )
         f3.utility.plot_reproject(
             images_multi_view[2],
             features_multi_view[2],
-            matched_centres, cameras[2],
+            optimised, cameras[2],
             filename=f'cam_3-reproject_frame_{frame:08}.png'
         )
 
