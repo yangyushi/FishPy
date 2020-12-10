@@ -2,36 +2,38 @@
 import sys
 import pickle
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, writers
 from mpl_toolkits.mplot3d import Axes3D
 
 if len(sys.argv) < 2:
-    exit("fishpy-play Filename [Arrow Length] [Delay]")
+    exit("fishpy-play Filename [Save name] [Arrow Length] [Delay]")
 
 with open(sys.argv[1], 'rb') as f:
     movie = pickle.load(f)
 
 if len(sys.argv) == 3:
-    length = float(sys.argv[2])
+    save = sys.argv[2]
+    length = 2
     delay = 10
 elif len(sys.argv) == 4:
-    length = float(sys.argv[2])
-    delay = float(sys.argv[3])
+    save = False
+    length = float(sys.argv[3])
+    delay = 10
+elif len(sys.argv) == 5:
+    save = False
+    length = float(sys.argv[3])
+    delay = float(sys.argv[4])
 else:
-    length = 10
+    save = False
+    length = 2
     delay = 10
 
 
-xmax = movie[0].T[0].max()
-ymax = movie[0].T[1].max()
-zmax = movie[0].T[2].max()
-
-fig = plt.figure()
+fig = plt.figure(figsize=(5, 5), tight_layout=True)
 ax = fig.add_subplot(111, projection='3d')
-ax.set_xlim(-xmax, xmax)
-ax.set_ylim(-ymax, ymax)
-ax.set_zlim(-zmax, zmax)
-ax.view_init(elev=70, azim=90)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 
 scatter = ax.scatter([], [], [], 'o', color='lightblue', edgecolor='teal')
 quiver = ax.quiver3D([], [], [], [], [], [], color='teal')
@@ -39,7 +41,7 @@ quiver = ax.quiver3D([], [], [], [], [], [], color='teal')
 def update(frame_num):
     global quiver
     global scatter
-    frame = movie[frame_num] - movie[frame_num].mean(axis=0)
+    frame = movie[frame_num]
     if len(frame) > 0:
         v = movie.velocity(frame_num)
         quiver.remove()
@@ -49,6 +51,11 @@ def update(frame_num):
     dummy = ax.plot([], [])[0]
     return [dummy]
 
-ani = FuncAnimation(fig, update, frames=range(len(movie)), blit=True, interval=delay)
+ani = FuncAnimation(fig, update, frames=range(len(movie)), interval=delay)
+
+if save:
+    Writer = writers['ffmpeg']
+    writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+    ani.save(save, writer=writer)
 
 plt.show()
