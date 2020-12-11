@@ -2,9 +2,8 @@
 # request resources:
 #PBS -N fl-
 #PBS -l nodes=1:ppn=1
-#PBS -l walltime=24:00:00
-#PBS -l mem=32g
-#PBS -q himem
+#PBS -l walltime=12:00:00
+
 
 if [ $PBS_O_WORKDIR ]; then
     cd $PBS_O_WORKDIR
@@ -20,7 +19,7 @@ link_range=20
 link_dx_max=25
 link_dt_max=10
 link_blur=1
-link_threshold=3
+link_threshold=10
 relink_window=500
 
 if [ ! $link_frame_end -gt 0 ]; then

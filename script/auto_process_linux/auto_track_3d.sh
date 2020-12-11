@@ -2,7 +2,7 @@
 # request resources:
 #PBS -N ft-3d-
 #PBS -l nodes=1:ppn=1
-#PBS -l walltime=72:00:00
+#PBS -l walltime=48:00:00
 
 if [ $PBS_O_WORKDIR ]; then
     cd $PBS_O_WORKDIR
