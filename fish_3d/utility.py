@@ -1302,7 +1302,12 @@ def solve_overlap_lp(points, errors, diameter):
         np.ndarray: the optimised positions, shape (N', dimension)
     """
     N, dim = points.shape
-    dist_mat = squareform(pdist(points))  # (N, N)
+    dists = pdist(points)
+    if np.all(dists > diameter):  # do not optimise if no overlap
+        return points
+    dist_mat = squareform(dists)  # (N, N)
+    if N <= 1:
+        return points
     for n_target in range(N, 2, -1):
         model = Model(name="Overlap Model")
         x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
@@ -1312,7 +1317,7 @@ def solve_overlap_lp(points, errors, diameter):
         for i, j in product(np.arange(N), repeat=2):
             if i != j:
                 model.add_constraint(
-                    dist_mat[i, j] * x_vars[i] * x_vars[j] >= diameter * x_vars[i] * x_vars[j]
+                    (dist_mat[i, j] - diameter) * x_vars[i] * x_vars[j] >= 0
                 )
         objective = model.sum(x * e for x, e in zip(x_vars, errors))
         model.minimize(objective)
