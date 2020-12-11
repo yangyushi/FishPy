@@ -2,11 +2,11 @@
 link_frame_start=0
 link_frame_end=54000
 link_linker="active"
-link_range=40
-link_dx_max=20
+link_range=20
+link_dx_max=25
 link_dt_max=5
 link_blur=1
-link_threshold=5
+link_threshold=10
 relink_window=500
 
 if [ ! $link_frame_end -gt 0 ]; then
