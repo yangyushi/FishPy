@@ -94,20 +94,23 @@ for frame in range(frame_start, frame_end):
     proj_mats = [cam.p for cam in cameras]
     cam_origins = [cam.o for cam in cameras]
 
-    matched_centres, reproj_errors = f3.cstereo.locate_v3(
-        *centres_multi_view, *proj_mats, *cam_origins,
-        tol_2d=tol_2d, optimise=True
-    )
+    if min([len(v) for v in centres_multi_view]) == 0:
+        optimised = np.empty((0, 3))
+        print(f'frame {frame: <10}: 0 points found')
+    else:
+        matched_centres, reproj_errors = f3.cstereo.locate_v3(
+            *centres_multi_view, *proj_mats, *cam_origins,
+            tol_2d=tol_2d, optimise=True
+        )
 
-    in_tank = matched_centres[:, 2] > -water_depth
+        in_tank = matched_centres[:, 2] > -water_depth
 
-    optimised = f3.utility.solve_overlap_lp(
-        matched_centres[in_tank],
-        reproj_errors[in_tank],
-        config.Stereo.overlap_3d
-    )
-
-    print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank, {len(optimised): <5} optimised points')
+        optimised = f3.utility.solve_overlap_lp(
+            matched_centres[in_tank],
+            reproj_errors[in_tank],
+            config.Stereo.overlap_3d
+        )
+        print(f'frame {frame: <10}: {len(matched_centres): <5} points found, {len(matched_centres) - np.sum(in_tank): <5} outside tank, {len(optimised): <5} optimised points')
 
     frames.append(optimised)
 
