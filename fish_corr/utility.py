@@ -755,7 +755,7 @@ class Movie:
         return new_trajs
 
     def __sniff(self):
-        self.dim = self.trajs[0].positions.ndim
+        self.dim = self.trajs[0].positions.shape[1]
         self.max_frame = max([t.time.max() for t in self.trajs])
         self.size = len(self.trajs)
 
