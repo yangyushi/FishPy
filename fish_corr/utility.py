@@ -8,7 +8,7 @@ from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
 from scipy.special import gamma
 from scipy import ndimage
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, cdist
 from matplotlib import cm
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -369,18 +369,28 @@ def get_gr(frames, bins, random_gas):
 
 def get_gr_pbc(frames, bins, random_gas, box):
     bx, by, bz = box.ravel()
-    neighbours = list(product([0, bx, -bx], [0, by, -by], [0, bz, -bz]))
     offset = 0
     distances = []
     distances_gas = []
     for frame in frames:
-        if len(frame) > 2:
-            dist_4d = [spatial.distance.cdist(frame, positions + n) for n in neighbours]
-            dist = np.triu(np.min(dist_4d, axis=0), k=1)
-            dist_gas = pdist(random_gas[offset : offset+len(frame)] + 1)
-            offset += len(frame)
-            distances.append(dist)
-            distances_gas.append(dist_gas)
+        N = len(frame)
+        if N > 2:
+            dist_nd_sq = np.zeros(N * (N - 1) // 2)  # to match the result of pdist
+            dist_nd_sq_gas = np.zeros(N * (N - 1) // 2)
+            for d in range(dim):
+                # for the 
+                pos_1d = positions[:, d][:, np.newaxis]  # shape (N, 1)
+                dist_1d = pdist(pos_1d)  # shape (N * (N - 1) // 2, )
+                dist_1d[dist_1d > box * 0.5] -= box
+                dist_nd_sq += dist_1d ** 2  # d^2 = dx^2 + dy^2 + dz^2
+                # for the ideal gas
+                pos_1d_gas = random_gas[offset : offset + N + 1, d][:, np.newaxis]
+                dist_1d_gas = pdist(pos_1d_gas)
+                dist_1d_gas[dist_1d_gas > box * 0.5] -= box
+                dist_nd_sq_gas += dist_1d_gas ** 2
+            offset += N
+            distances.append(np.sqrt(dist_nd_sq))
+            distances_gas.append(np.sqrt(dist_nd_sq_gas))
     hist, _ = np.histogram(np.hstack(distances), bins=bins)
     hist_gas, _ = np.histogram(np.hstack(distances_gas), bins=bins)
     hist_gas[hist==0] = 1
