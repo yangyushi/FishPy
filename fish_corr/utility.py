@@ -368,10 +368,10 @@ def get_gr(frames, bins, random_gas):
 
 
 def get_gr_pbc(frames, bins, random_gas, box):
-    bx, by, bz = box.ravel()
     offset = 0
     distances = []
     distances_gas = []
+    dim = frames[0].shape[1]
     for frame in frames:
         N = len(frame)
         if N > 2:
@@ -379,12 +379,12 @@ def get_gr_pbc(frames, bins, random_gas, box):
             dist_nd_sq_gas = np.zeros(N * (N - 1) // 2)
             for d in range(dim):
                 # for the 
-                pos_1d = positions[:, d][:, np.newaxis]  # shape (N, 1)
+                pos_1d = frame[:, d][:, np.newaxis]  # shape (N, 1)
                 dist_1d = pdist(pos_1d)  # shape (N * (N - 1) // 2, )
                 dist_1d[dist_1d > box * 0.5] -= box
                 dist_nd_sq += dist_1d ** 2  # d^2 = dx^2 + dy^2 + dz^2
                 # for the ideal gas
-                pos_1d_gas = random_gas[offset : offset + N + 1, d][:, np.newaxis]
+                pos_1d_gas = random_gas[offset : offset + N, d][:, np.newaxis]
                 dist_1d_gas = pdist(pos_1d_gas)
                 dist_1d_gas[dist_1d_gas > box * 0.5] -= box
                 dist_nd_sq_gas += dist_1d_gas ** 2
