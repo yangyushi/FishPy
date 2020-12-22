@@ -252,10 +252,11 @@ class Critic():
 
         for frame in range(start, stop):
             idx_0, idx_1 = self.movie.indice_pair(frame)
-            positions = self.movie[frame][idx_0]
 
-            if len(positions) < 4:
+            if len(idx_0) <= 4:
                 continue
+
+            positions = self.movie[frame][idx_0]
 
             fluctuations = flctn_func(frame)
             norm = np.mean([f @ f for f in fluctuations])  # follow attanasi2014pcb
