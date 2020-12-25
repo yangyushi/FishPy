@@ -11,6 +11,7 @@ from joblib import delayed, Parallel
 from numba.typed import List as nList
 from scipy.spatial.distance import cdist
 from .nrook import solve_nrook, solve_nrook_dense
+import matplotlib.pyplot as plt
 try:
     from fish_corr import Movie, SimMovie
 except ImportError:
@@ -474,6 +475,7 @@ def squeeze_sparse(array):
         >>> np.allclose(output, squeeze_sparse(output))
         True
     """
+    ## 1, 3, 2, 0 --argsort-> 3, 0, 2, 1 --argsort-> 1, 3, 2, 0
     sort_indices = np.argsort(array)
     remap = np.argsort(sort_indices)
     array_sorted = array[sort_indices]
@@ -623,21 +625,34 @@ def apply_network(trajectories, network):
 
 
 def solve_unique(rows, cols, values):
+    """
+    Find the link between two trajecotires that are both one-to-one and onto
+
+    That is to say, trajectory A only link to B, and B is only only linked by A.
+
+    Example:
+
+    ..code-block:: python
+
+          A           B
+       ------>     ------->
+       (first)     (second)
+
+    Args:
+        rows (np.ndarray): the indices of the first trajectories
+    """
     unsolved_indices, unique_links = [], []
-    for i, (r, c) in enumerate(zip(rows, cols)):
-        is_unique_row = np.sum(rows == r) == 1
-        is_unique_col = np.sum(cols == c) == 1
-        if is_unique_col and is_unique_row:
-            unique_links.append((r, c))
-        else:
-            unsolved_indices.append(i)
-    if len(unique_links) == 0:
-        unique_links = np.empty((0, 2))
-    if len(unsolved_indices) == 0:
-        return np.array([]), np.array([]), np.array([]), np.array(unique_links, dtype=int)
-    else:
-        ui = np.array(unsolved_indices)
-        return rows[ui], cols[ui], values[ui], np.array(unique_links, dtype=int)
+    elements_row, indices_row, counts_row = np.unique(rows, return_index=True, return_counts=True)
+    elements_col, indices_col, counts_col = np.unique(cols, return_index=True, return_counts=True)
+    indices_row_unique = indices_row[counts_row==1]
+    indices_col_unique = indices_col[counts_col==1]
+    unique_indices = np.intersect1d(indices_row_unique, indices_col_unique, assume_unique=True)
+    print(len(unique_indices), len(rows))
+    unsolved_indices = np.setdiff1d(np.arange(len(rows)), unique_indices)
+    unique_links = np.array([
+        (rows[i], cols[i]) for i in unique_indices
+    ], dtype=int)
+    return rows[unsolved_indices], cols[unsolved_indices], values[unsolved_indices], unique_links
 
 
 def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
@@ -671,6 +686,7 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
     )
 
     if len(dist_mat) == 0:
+        print("No conflict")
         return [(t.time, t.positions) for t in trajs_ordered]
 
     if len(dist_mat) >= 100:
@@ -686,8 +702,9 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
         best[i, 1] = col_map[pair[1]]
 
     network = np.concatenate((unique_links, best))
+    reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
 
-    reduced = reduce_network(network)
+    reduced = reduce_network(network[reorder_indices])
     new_trajs = apply_network(trajs_ordered, reduced)
 
     return [(t.time, t.positions) for t in new_trajs]
@@ -701,7 +718,7 @@ def segment_trajectories(trajectories, window_size, max_frame):
 
     .. code-block:: py
 
-        [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5350]
+        [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5400]
 
     Args:
         trajectories (:obj:`list`): A collection of trajectories.
@@ -714,14 +731,15 @@ def segment_trajectories(trajectories, window_size, max_frame):
         :obj:`list`: a list of trajectories in different segments
     """
     edges = [window_size * i for i in range(max_frame // window_size + 1)]
-    edges.append(max_frame)
+    if max_frame % window_size:
+        edges.append(max_frame)
     traj_segments = [[] for _ in range(len(edges) - 1)]
-    for traj in trajectories:
-        start_time = traj[0][0]
-        segment_idx = np.digitize(start_time, edges)
-        traj_segments[segment_idx].append(traj)
+    segment_indices = np.digitize(
+        [t[0][0] for t in trajectories], bins=edges, right=False
+    ) - 1
+    for traj, si in zip(trajectories, segment_indices):
+        traj_segments[si].append(traj)
     traj_segments = [ts for ts in traj_segments if len(ts) > 0]
-    print([len(t) for t in traj_segments])
     return traj_segments
 
 
@@ -760,4 +778,5 @@ def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
         if debug:
             i += 1
             print(f"relink finished for the {i}th trajectory segment" )
-    return relink(relinked_segments, dx, dt, blur, blur_velocity)
+    #return relink(relinked_segments, dx, dt, blur, blur_velocity)
+    return relinked_segments
