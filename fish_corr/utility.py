@@ -578,12 +578,16 @@ def fit_acf_exp(data):
     elif data.ndim == 1:
         acf = data
         lag_time = np.arange(len(acf))
-    popt, pcov = curve_fit(
-        lambda x, a, b: np.exp(-x / a) * b,
-        xdata = lag_time[1:],
-        ydata = acf[1:],
-        sigma = 1 / acf[1:]
-    )
+    try:
+        popt, pcov = curve_fit(
+            lambda x, a, b: np.exp(-x / a) * b,
+            xdata = lag_time[1:],
+            ydata = acf[1:],
+            sigma = 1 / acf[1:]
+        )
+    except RuntimeError:
+        print("ACF Fitting Failed")
+        return np.nan
     return popt[0]
 
 
