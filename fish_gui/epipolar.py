@@ -2,8 +2,8 @@ import re
 import fish_3d as f3
 import sys
 import pickle
-from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel, QGridLayout,\
-                            QApplication, QHBoxLayout, QLineEdit, QFileDialog
+from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel,\
+     QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog
 from PyQt5.QtGui import QColor
 from PIL import Image
 import numpy as np
