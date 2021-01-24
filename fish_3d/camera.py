@@ -234,7 +234,6 @@ class Camera():
         self.distortion = cam.distortion
         self.update()
 
-
     def project(self, position: np.array):
         """
         Project a 3D position onto the image plane
@@ -248,7 +247,6 @@ class Camera():
                 distCoeffs=self.distortion
         )
         return np.squeeze(uv)
-
 
     def project_refractive(self, positions):
         """
@@ -264,7 +262,6 @@ class Camera():
         coord_2d_nodist = refractive_project(positions, self.p, self.o)
         coord_2d = self.redistort_points(coord_2d_nodist.T)
         return coord_2d.T
-
 
     def undistort(self, point: np.array, want_uv=False):
         """
@@ -519,6 +516,7 @@ class Camera():
     def save(self, fname: str):
         with open(fname, 'wb') as f:
             pickle.dump(self, f)
+
 
 def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    images_v1: List[str], images_v2: List[str], images_v3: List[str],
