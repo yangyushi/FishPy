@@ -580,7 +580,7 @@ def fit_acf_exp(data, method='exp', want_par=False):
         lag_time = np.arange(len(acf))
     try:
         if method == 'exp':
-            sigma = np.abs(lag_time[1:] / acf[1:])
+            sigma = np.abs(1 / acf[1:])
             popt, pcov = curve_fit(
                 lambda x, a, b: np.exp(-x / a) * b,
                 xdata = lag_time[1:],
@@ -590,7 +590,7 @@ def fit_acf_exp(data, method='exp', want_par=False):
         elif method == 'se':
             y = np.log(acf[acf > 0])[1:]
             x = lag_time[acf > 0][1:]
-            sigma = x / acf[acf > 0][1:]
+            sigma = 1 / acf[acf > 0][1:]
             popt, pcov = curve_fit(
                 lambda x, a, b: - (x / a) ** b,
                 xdata = x,
@@ -607,6 +607,8 @@ def fit_acf_exp(data, method='exp', want_par=False):
                 ydata = y,
                 sigma = sigma
         )
+        else:
+            raise RuntimeError
 
     except RuntimeError:
         print("ACF Fitting Failed")
