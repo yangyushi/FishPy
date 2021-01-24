@@ -799,7 +799,7 @@ class Movie:
         self.max_frame = max([t.time.max() for t in self.trajs])
         self.size = len(self.trajs)
 
-    def __len__(self): return self.max_frame
+    def __len__(self): return self.max_frame + 1
 
     def __process_velocities(self, frame):
         """
@@ -893,6 +893,46 @@ class Movie:
         else:
             raise KeyError(f"can't index/slice Movie with {type(frame)}")
 
+    def add(self, m2):
+        """
+        Attach another movie to the end of current movie.
+        This function should be used in the case where a large
+            recording is splited into different movie files.
+
+        Args:
+            m2 (Movie): another Movie instance to be attached to the
+                end of current movie.
+        """
+        offset = self.max_frame + 1
+        for traj in m2.trajs:
+            traj.offset(offset)
+            self.trajs.append(traj)
+
+        for frame in list(m2.movie.keys()):
+            new_frame = frame + offset
+            self.movie.update({
+                new_frame: m2[frame]
+            })
+            self.__labels.update({
+                new_frame: m2.label(frame) + self.size
+            })
+            self.__velocities.update({
+                new_frame: m2.velocity(frame)
+            })
+            self.__indice_pairs.update({
+                new_frame: m2.indice_pair(frame)
+            })
+
+        self.movie.update({
+            m2.max_frame + offset: m2[m2.max_frame]
+        })
+        self.__labels.update({
+            m2.max_frame + offset: m2.label(m2.max_frame) + self.size
+        })
+
+        self.max_frame += m2.max_frame + 1
+        self.size += len(m2.trajs)
+
     def velocity(self, frame):
         """
         Retireve velocity at given frame
@@ -951,8 +991,10 @@ class Movie:
         """
         Go through all frames, making code faster with the object
         """
-        for i in range(len(self)):
-            self[i]
+        for frame in range(len(self)):
+            self[frame]
+            self.velocity(frame)
+            self.indice_pair(frame)
 
     def load(self, filename: str):
         """
