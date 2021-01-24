@@ -10,21 +10,98 @@ from .camera import get_fundamental
 from .stereolink import triangulation_v3
 
 
-def get_conic_coef(a: float, b: float, xc: float, yc: float, rotation: float) -> Tuple[float]:
+def get_conic_coef(a, b, xc, yc, rotation):
     """
     Represent an ellipse from geometric form (a, b, x_centre, y_centre, rotation)
     to the algebraic form (α x^2 + β x y + γ y^2 + δ x + ε y + η)
+
+    The parameters are consistense with the parameters of skimage.measure.EllipseModel
+
+    Args:
+        a (float): a
+        b (float): b
+        xc (float): x_centre
+        yc (float): y_centre
+        rotation (float): rotation
+
+    Return:
+        tuple: (α, β, γ, δ, ε, η)
     """
-    c, d, t = xc, yc, rotation
-    sin, cos = np.sin, np.cos  # lazy bone!
-    alpha   = a**2 * sin(t)**2 + b**2 * cos(t) ** 2
-    beta    = 2 * (a**2 - b**2) * sin(t) * cos(t)
-    gamma   = a**2 * cos(t)**2 + b**2 * sin(t)**2
-    delta   = -2 * (d * (a**2 - b**2) * sin(t) * cos(t) + a**2 * c * sin(t)**2 + b**2 * c * cos(t)**2)
-    epsilon = -2 * (c * (a**2 - b**2) * sin(t) * cos(t) + a**2 * d * cos(t)**2 + b**2 * d * sin(t)**2)
-    eta     = sin(t)**2 * (a**2 * c**2 + b**2 * d**2) + cos(t)**2 * (a**2 * d**2 + b**2 * c**2) +\
-              2 * c * d * (a**2 - b**2) * sin(t) * cos(t) - a**2 * b**2
-    return (alpha, beta, gamma, delta, epsilon, eta)
+    st, ct = np.sin(rotation), np.cos(rotation)
+    alpha = st**2/b**2 + ct**2/a**2
+    beta = - 2*st*ct/b**2 + 2*st*ct/a**2
+    gamma = ct**2/b**2 + st**2/a**2
+    delta = -2*xc*st**2/b**2 + 2*yc*st*ct/b**2 - 2*xc*ct**2/a**2 - 2*yc*st*ct/a**2
+    epsilon = 2*xc*st*ct/b**2 - 2*yc*ct**2/b**2 - 2*xc*st*ct/a**2 - 2*yc*st**2/a**2
+    eta = -1 + xc**2*st**2/b**2 - 2*xc*yc*st*ct/b**2 + yc**2*ct**2/b**2
+    eta += xc**2*ct**2/a**2 + 2*xc*yc*st*ct/a**2 + yc**2*st**2/a**2
+    return alpha, beta, gamma, delta, epsilon, eta
+
+
+def get_conic_matrix(conic_coef):
+    """
+    Assemble the conic coefficients into a conic matrix (AQ)
+
+    See the `wiki page <https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections>`_
+
+    Args:
+        conic_coef (iterable): a container with 6 numbers
+
+    Return:
+        np.ndarray: the conic matrix
+    """
+    A, B, C, D, E, F = conic_coef
+    matrix = (
+        (A, B/2, D/2),
+        (B/2, C, E/2),
+        (D/2, E/2, F)
+    )
+    return np.array(matrix)
+
+
+def get_geometric_coef(matrix):
+    r"""
+    Calculate the geometric coefficients of the conic from a conic Matrix:
+
+    $$
+    \\begin{array}{c}
+    A & B/2 & D/2 \\\\
+    B/2 &   C & E/2 \\\\
+    D/2 & E/2 &   F
+    \\end{array}
+    $$
+
+    The conic form is written as,
+
+    $$
+    A x^2 + B xy + C y^2 + D x + E y + F = 0
+    $$
+
+    Reference: `Wikipedia <https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections>`_
+
+
+    Args:
+        matrix (np.ndarray): the conic matrix, being AQ in the wiki.
+
+    Return:
+        tuple: (a, b, xc, yc, rotation)
+    """
+    triu_idx = np.triu_indices_from(matrix)
+    A, B, D, C, E, F = matrix[triu_idx]
+    B, D, E = map(lambda x: 2 * x, (B, D, E))
+    xc = (B*E - 2*C*D) / (4*A*C - B**2)
+    yc = (D*B - 2*A*E) / (4*A*C - B**2)
+    A33 = np.array((
+        (A, B/2),
+        (B/2, C)
+    ))
+    (lambda_1, lambda_2), rot_mat = np.linalg.eigh(A33)
+    rot_mat = rot_mat / np.linalg.norm(rot_mat, axis=0)
+    K = - np.linalg.det(matrix) / np.linalg.det(A33)
+    a = np.sqrt(K / lambda_2)
+    b = np.sqrt(K / lambda_1)
+    theta = 0.5 * np.arctan2(B, A-C)
+    return a, b, xc, yc, theta
 
 
 def parse_ellipses_imagej(csv_file):
