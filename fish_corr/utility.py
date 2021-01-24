@@ -552,7 +552,7 @@ def fit_rot_acf(acf, delta):
     return -b / a
 
 
-def fit_acf_exp(data):
+def fit_acf_exp(data, method='exp', want_par=False):
     """
     Use function :math:`y = exp(-x / a) \cdot b` to fit the acf data
     The fitting result a is a proxy to relaxation time
@@ -579,16 +579,42 @@ def fit_acf_exp(data):
         acf = data
         lag_time = np.arange(len(acf))
     try:
-        popt, pcov = curve_fit(
-            lambda x, a, b: np.exp(-x / a) * b,
-            xdata = lag_time[1:],
-            ydata = acf[1:],
-            sigma = 1 / acf[1:]
+        if method == 'exp':
+            sigma = np.abs(lag_time[1:] / acf[1:])
+            popt, pcov = curve_fit(
+                lambda x, a, b: np.exp(-x / a) * b,
+                xdata = lag_time[1:],
+                ydata = acf[1:],
+                sigma = sigma
+            )
+        elif method == 'se':
+            y = np.log(acf[acf > 0])[1:]
+            x = lag_time[acf > 0][1:]
+            sigma = x / acf[acf > 0][1:]
+            popt, pcov = curve_fit(
+                lambda x, a, b: - (x / a) ** b,
+                xdata = x,
+                ydata = y,
+                sigma = sigma
+            )
+        elif method == 'le':  # line in exp
+            y = np.log(acf[acf > 0])[1:]
+            x = lag_time[acf > 0][1:]
+            sigma = x / acf[acf > 0][1:]
+            popt, pcov = curve_fit(
+                lambda x, a, b: - (x / a) + b,
+                xdata = x,
+                ydata = y,
+                sigma = sigma
         )
+
     except RuntimeError:
         print("ACF Fitting Failed")
         return np.nan
-    return popt[0]
+    if want_par:
+        return popt
+    else:
+        return popt[0]
 
 
 def pdist_pbc(positions, box):
