@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-import numpy as np
 import types
 import pickle
+import functools
+import numpy as np
+from tqdm import tqdm
+from typing import Callable
+import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic
 from scipy.optimize import least_squares
 from scipy.spatial.distance import pdist
 from scipy.spatial.transform import Rotation
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-from typing import Callable
 from . import utility, static
 
 
@@ -297,6 +298,7 @@ class AverageAnalyser():
 
     Attributes:
         movie (:obj:`fish_track.linking.Movie`): Movie or SimMovie instance
+        cache (dict): A collection of all calculated quantities.
     """
     def __init__(self, movie, win_size: int, step_size: int, start=0, end=0):
         """
@@ -317,6 +319,7 @@ class AverageAnalyser():
         self.__win_size = win_size
         self.__step_size = step_size
         self.cache = {}
+        self.__cache_args = {}  # store arguments for the cached calculation
         if end == 0:
             self.end = movie.max_frame
         else:
@@ -348,10 +351,45 @@ class AverageAnalyser():
             self.__step_size = self.step_size
             self.cache = {}
 
+    def __validate_cache_args(self, name, args, kwargs):
+        """
+        If the arguments changed for a calculation, clear the relevant cache.
+
+        Args:
+            name (str): the name of the calculated quantity, also this is the key for self.cache
+            args (tuple): the position argumetns for a new calculation
+            kwargs (dict): the keyward arguments for a new calculation
+        """
+        should_clear = False
+        if name in self.__cache_args:
+            if self.__cache_args[name]['args'] != args:
+                should_clear = True
+            for key in kwargs:  # self.__cache_args[name]['kwargs'] can be contain kwargs
+                new_val = kwargs[key]
+                old_val = self.__cache_args[name]['kwargs'].get(key)
+                should_clear = should_clear or  (new_val != old_val)
+            if should_clear:
+                self.cache.pop(name)
+                self.__cache_args[name] = {'args': args, 'kwargs': kwargs}
+        else:
+            self.__cache_args[name] = {'args': args, 'kwargs': kwargs}
+
     def __caching(name):
+        """
+        Decorator to store the results, avoid unnecessary & repeated calculation
+
+        Args:
+            name (str): the name of the quantity that will be stored in self.cache
+
+        Example:
+            @__cacheing("new_quantity")
+            self.scan_new_quantity(arguments)
+        """
         def decorator(method):
+            @functools.wraps(method)
             def cached_method(self, *args, **kwargs):
                 self.__validate_cache()
+                self.__validate_cache_args(name, args, kwargs)
                 if name in self.cache:
                     return self.cache[name]
                 else:
@@ -859,6 +897,41 @@ class AverageAnalyser():
             result_2[i] = np.nanmean(x2[i2])
             result_3[i] = np.nanmean(x3[i3])
         return result_1, result_2, result_3
+
+    def save_cache(self, filename=''):
+        """
+        Retrieve all the quantities from self.time and self.cache,
+            and also dump them to a csv file.
+
+        Args:
+            filename (str): if it is not empty, the quantities will be dumped
+
+        Return:
+            dict: {name : values_in_average_blocks}
+        """
+        headers = ['time']
+        quantities = [self.time]
+        result = {}
+        keys = list(self.cache.keys())
+        keys.sort()  # put property, property_err together
+        for key in keys:
+            data = self.cache[key]
+            if isinstance(data, np.ndarray):
+                if data.ndim == 1:  # do not if muliple values exists for one time point
+                    print(key, data.shape)
+                    headers.append(key)
+                    quantities.append(data)
+            result[key] = data
+        if filename:
+            quantities = np.array(quantities).T
+            header = ','.join(headers)
+            np.savetxt(
+                fname=filename,
+                X=quantities,
+                delimiter=',',
+                header=header
+            )
+        return result
 
 
 def get_nn_movie(analyser):
