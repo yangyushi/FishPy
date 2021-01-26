@@ -918,7 +918,6 @@ class AverageAnalyser():
             data = self.cache[key]
             if isinstance(data, np.ndarray):
                 if data.ndim == 1:  # do not if muliple values exists for one time point
-                    print(key, data.shape)
                     headers.append(key)
                     quantities.append(data)
             result[key] = data
