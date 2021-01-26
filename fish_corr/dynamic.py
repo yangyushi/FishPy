@@ -313,6 +313,9 @@ class AverageAnalyser():
         self.start = start
         self.win_size = win_size
         self.step_size = step_size
+        self.__start = start
+        self.__win_size = win_size
+        self.__step_size = step_size
         self.cache = {}
         if end == 0:
             self.end = movie.max_frame
@@ -330,6 +333,33 @@ class AverageAnalyser():
         ]
         self.pair_ends = [p[1] - self.start for p in self.pairs]
         self.time = np.array([p[0] + win_size//2 for p in self.pairs], dtype=int)
+
+    def __validate_cache(self):
+        """
+        If parameters were changed, erase the non-framewise cache
+        """
+        if self.__start != self.start:
+            self.__start = self.start
+            self.cache = {}
+        if self.__win_size != self.win_size:
+            self.__win_size = self.win_size
+            self.cache = {}
+        if self.__step_size != self.step_size:
+            self.__step_size = self.step_size
+            self.cache = {}
+
+    def __caching(name):
+        def decorator(method):
+            def cached_method(self, *args, **kwargs):
+                self.__validate_cache()
+                if name in self.cache:
+                    return self.cache[name]
+                else:
+                    result = method(self, *args, **kwargs)
+                    self.cache[name] = result
+                    return result
+            return cached_method
+        return decorator
 
     def __check_arg(self):
         if self.start > self.end:
@@ -456,6 +486,7 @@ class AverageAnalyser():
             result[i] = np.nanstd(array[t0:t1])
         return result
 
+    @__caching('nn')
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
             nn_movie = np.fromiter(
@@ -473,6 +504,7 @@ class AverageAnalyser():
                 )
             )
 
+    @__caching('nn_pbc')
     def scan_nn_pbc(self, box):
         if self.win_size >= self.step_size:
             nn_movie = np.array([
@@ -486,6 +518,7 @@ class AverageAnalyser():
                 ),
             )
 
+    @__caching('nn_std')
     def scan_nn_std(self, no_vertices=True):
         if self.win_size >= self.step_size:
             nn_movie = np.fromiter(
@@ -503,6 +536,7 @@ class AverageAnalyser():
                 ),
             )
 
+    @__caching('nn_pbc_std')
     def scan_nn_pbc_std(self, box):
         if self.win_size >= self.step_size:
             nn_movie = np.array([
@@ -514,6 +548,7 @@ class AverageAnalyser():
                 lambda x: np.nanstd(static.get_nn_iter_pbc(x, box=box)),
             )
 
+    @__caching('speed')
     def scan_speed(self, min_number=0):
         """
         Args:
@@ -527,6 +562,7 @@ class AverageAnalyser():
             )
         )
 
+    @__caching('speed_std')
     def scan_speed_std(self, min_number=0):
         """
         Args:
@@ -540,6 +576,7 @@ class AverageAnalyser():
             )
         )
 
+    @__caching('gr')
     def scan_gr(self, tank, bins, number):
         """
         Args:
@@ -557,6 +594,7 @@ class AverageAnalyser():
             )
         )
 
+    @__caching('biased_gr')
     def scan_biased_gr(self, bins, space_bin_number=50, **kwargs):
         """
         Args:
@@ -580,6 +618,7 @@ class AverageAnalyser():
             )
         )
 
+    @__caching('biased_attraction')
     def scan_biased_attraction(self, bins, space_bin_number, **kwargs):
         """
         Args:
@@ -594,6 +633,7 @@ class AverageAnalyser():
         attractions = -np.log(np.max(biased_rdfs, axis=1))
         return attractions
 
+    @__caching('biased_attraction_err')
     def scan_biased_attraction_err(self, bins, space_bin_number, repeat, **kwargs):
         """
         Using the bootstrap method to
@@ -626,6 +666,7 @@ class AverageAnalyser():
         error = np.std(result, axis=0)
         return error
 
+    @__caching('vicsek_order')
     def scan_vicsek_order(self, min_number=0):
         """
         Args:
@@ -647,6 +688,7 @@ class AverageAnalyser():
                 ))
             )
 
+    @__caching('vicsek_order_std')
     def scan_vicsek_order_std(self, min_number=0):
         """
         Args:
@@ -668,6 +710,7 @@ class AverageAnalyser():
                 ))
             )
 
+    @__caching('orient_acf')
     def scan_orientation_acf(self, sample_points: int):
         r"""
         Calculate the averaged rotational relaxation time for the movie
@@ -696,11 +739,15 @@ class AverageAnalyser():
                 result.append(np.array(acfs))
         return result
 
+    @__caching('rotation')
     def scan_rotation(self, sample_points):
         """
         Scan the average relaxation time of the orientation
         """
-        acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
+        if 'orient_acf' in self.cache:
+            acfs_mw = self.cache['orient_acf']
+        else:
+            acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
         result = np.empty(len(acfs_mw))
         for i, acfs in enumerate(acfs_mw):
             acf = np.nanmean(acfs, axis=0)
@@ -710,12 +757,17 @@ class AverageAnalyser():
                 result[i] = utility.fit_acf_exp(acf)
         return result
 
+    @__caching('rotation_err')
     def scan_rotation_err(self, sample_points, repeat=10):
         """
         Get the standard error of the rotational relaxation time (tau) using
             bootstrap method
         """
-        acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
+
+        if 'orient_acf' in self.cache:
+            acfs_mw = self.cache['orient_acf']
+        else:
+            acfs_mw = self.scan_orientation_acf(sample_points)  # mw = multiple windows
         result = np.empty(len(acfs_mw))
         for i, acfs in enumerate(acfs_mw):
             if np.nan in acfs:
@@ -730,6 +782,7 @@ class AverageAnalyser():
                 result[i] = np.nanstd(tau_vals)
         return result
 
+    @__caching('number')
     def scan_number(self):
         numbers = np.array([len(frame) for frame in self.movie])
         return self.scan_array(numbers)
