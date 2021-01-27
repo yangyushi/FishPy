@@ -319,7 +319,7 @@ class AverageAnalyser():
         self.__win_size = win_size
         self.__step_size = step_size
         self.cache = {}
-        self.__cache_args = {}  # store arguments for the cached calculation
+        self.cache_args = {}  # store arguments for the cached calculation
         if end == 0:
             self.end = movie.max_frame
         else:
@@ -361,18 +361,18 @@ class AverageAnalyser():
             kwargs (dict): the keyward arguments for a new calculation
         """
         should_clear = False
-        if name in self.__cache_args:
-            if self.__cache_args[name]['args'] != args:
+        if name in self.cache_args:
+            if self.cache_args[name]['args'] != args:
                 should_clear = True
-            for key in kwargs:  # self.__cache_args[name]['kwargs'] can be contain kwargs
+            for key in kwargs:  # self.cache_args[name]['kwargs'] can be contain kwargs
                 new_val = kwargs[key]
-                old_val = self.__cache_args[name]['kwargs'].get(key)
+                old_val = self.cache_args[name]['kwargs'].get(key)
                 should_clear = should_clear or  (new_val != old_val)
             if should_clear:
                 self.cache.pop(name)
-                self.__cache_args[name] = {'args': args, 'kwargs': kwargs}
+                self.cache_args[name] = {'args': args, 'kwargs': kwargs}
         else:
-            self.__cache_args[name] = {'args': args, 'kwargs': kwargs}
+            self.cache_args[name] = {'args': args, 'kwargs': kwargs}
 
     def __caching(name):
         """
