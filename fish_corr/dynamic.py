@@ -399,6 +399,24 @@ class AverageAnalyser():
             return cached_method
         return decorator
 
+    def __get_cache(self, name, *args, **kwargs):
+        """
+        Caching quantities calculated frame-by-frame. The key name_movie will be added
+            to self.cache and self.cache_args
+
+        Args:
+            name str: The name of the quantities, should be unique
+            parameters list
+
+        Return:
+            tuple: (does_cache_exist (bool), cached_data)
+        """
+        self.__validate_cache_args(name, args, kwargs)
+        if name in self.cache:
+            return True, self.cache[name]
+        else:
+            return False, None
+
     def __check_arg(self):
         if self.start > self.end:
             raise ValueError("Starting frame >= ending frame")
@@ -527,10 +545,13 @@ class AverageAnalyser():
     @__caching('nn')
     def scan_nn(self, no_vertices=True):
         if self.win_size >= self.step_size:
-            nn_movie = np.fromiter(
-                static.get_nn_iter(self.movie, no_vertices=no_vertices),
-                dtype=np.float64
-            )
+            is_cached, nn_movie = self.__get_cache('nn_movie', no_vertices=no_vertices)
+            if not is_cached:
+                nn_movie = np.fromiter(
+                    static.get_nn_iter(self.movie, no_vertices=no_vertices),
+                    dtype=np.float64
+                )
+                self.cache['nn_movie'] = nn_movie
             return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
@@ -545,9 +566,12 @@ class AverageAnalyser():
     @__caching('nn_pbc')
     def scan_nn_pbc(self, box):
         if self.win_size >= self.step_size:
-            nn_movie = np.array([
-                np.nanmean(f) for f in static.get_nn_iter_pbc(self.movie, box)
-            ])
+            is_cached, nn_movie = self.__cache_movie('nn_pbc_movie', no_vertices=no_vertices)
+            if not is_cached:
+                nn_movie = np.array([
+                    np.nanmean(f) for f in static.get_nn_iter_pbc(self.movie, box)
+                ])
+                self.cache['nn_pbc_movie'] = nn_movie
             return self.scan_array(nn_movie)
         else:
             return self.__scan_positions(
@@ -715,9 +739,12 @@ class AverageAnalyser():
         """
         if self.win_size >= self.step_size:
             velocities = self.movie.velocity((self.start, self.end))
-            vicsek_movie = utility.get_vicsek_order(
-                velocities, min_number=min_number
-            )
+            is_cached, vicsek_movie = self.__get_cache('vicsek_movie', min_number=min_number)
+            if not is_cached:
+                vicsek_movie = utility.get_vicsek_order(
+                    velocities, min_number=min_number
+                )
+                self.cache['vicsek_movie'] = vicsek_movie
             return self.scan_array(vicsek_movie)
         else:
             return self.__scan_velocities(
@@ -989,5 +1016,3 @@ def get_order_movie(analyser):
     velocities = analyser.movie.velocity((analyser.start, analyser.end))
     vicsek_movie = utility.get_vicsek_order(velocities, min_number=2)
     return vicsek_movie
-
-
