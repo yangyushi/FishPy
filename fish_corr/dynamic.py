@@ -944,7 +944,8 @@ class AverageAnalyser():
         for key in keys:
             data = self.cache[key]
             if isinstance(data, np.ndarray):
-                if data.ndim == 1:  # do not if muliple values exists for one time point
+                # do not save functions nor frame-by-frame results
+                if (data.ndim == 1) and (len(data) == len(self.time)):
                     headers.append(key)
                     quantities.append(data)
             result[key] = data
