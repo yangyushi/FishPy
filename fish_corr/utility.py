@@ -994,7 +994,7 @@ class Movie:
         """
         Go through all frames, making code faster with the object
         """
-        for frame in range(len(self)):
+        for frame in range(self.max_frame):
             self[frame]
             self.velocity(frame)
             self.indice_pair(frame)
