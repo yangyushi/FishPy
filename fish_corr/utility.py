@@ -581,6 +581,7 @@ def fit_acf_exp(data, method='exp', want_par=False):
     try:
         if method == 'exp':
             sigma = np.abs(1 / acf[1:])
+            sigma[acf[1:] < 0] = np.inf
             popt, pcov = curve_fit(
                 lambda x, a, b: np.exp(-x / a) * b,
                 xdata = lag_time[1:],

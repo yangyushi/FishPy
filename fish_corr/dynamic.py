@@ -566,7 +566,7 @@ class AverageAnalyser():
     @__caching('nn_pbc')
     def scan_nn_pbc(self, box):
         if self.win_size >= self.step_size:
-            is_cached, nn_movie = self.__cache_movie('nn_pbc_movie', no_vertices=no_vertices)
+            is_cached, nn_movie = self.__get_cache('nn_pbc_movie', box=box)
             if not is_cached:
                 nn_movie = np.array([
                     np.nanmean(f) for f in static.get_nn_iter_pbc(self.movie, box)
