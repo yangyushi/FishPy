@@ -608,6 +608,18 @@ def fit_acf_exp(data, method='exp', want_par=False):
                 ydata = y,
                 sigma = sigma
         )
+        elif method == 'none':
+            ie = 1 / np.e
+            succeed = False
+            for i, (a0, a1) in enumerate(zip(acf[:-1], acf[1:])):
+                if (a0 >= ie) and (a1 < ie):
+                    a = (a1 - a0)
+                    b = a0 - a * i
+                    relaxation_time = (ie - b) / a
+                    fit = np.exp(-(t / relaxation_time))
+                    succeed = True
+                    break
+            popt = [relaxation_time]
         else:
             raise RuntimeError
 
@@ -911,7 +923,7 @@ class Movie:
             traj.offset(offset)
             self.trajs.append(traj)
 
-        for frame in list(m2.movie.keys()):
+        for frame in range(m2.max_frame):
             new_frame = frame + offset
             self.movie.update({
                 new_frame: m2[frame]
