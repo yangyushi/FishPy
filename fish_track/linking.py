@@ -666,7 +666,7 @@ def solve_unique(rows, cols, values, report=True):
             (rows[i], cols[i]) for i in unique_indices
         ], dtype=int)
     else:
-        unique_links = np.empty((0, 2))
+        unique_links = np.empty((0, 2), dtype=int)
     return rows[unsolved_indices], cols[unsolved_indices], values[unsolved_indices], unique_links
 
 
