@@ -499,12 +499,12 @@ def get_u(n, d, x, z):
     raise ValueError("Root finding for u failed, z = %.4f" % z)
 
 
-def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
+def epipolar_la_draw(xy, camera_1, camera_2, image_2, interface=0, depth=400, normal=(0, 0, 1), n=1.33):
     """
     linear approximation for epipolar line under water
     use 3 epipolar points under water and do a linear fit
     """
-    poi_1 = get_poi(camera_1, interface, np.array(uv))
+    poi_1 = get_poi(camera_1, interface, np.array(xy))
     co_1 = -camera_1.r.T @ camera_1.t  # camera origin
     co_2 = -camera_2.r.T @ camera_2.t  # camera origin
     incid = poi_1 - co_1
@@ -522,9 +522,9 @@ def epipolar_la_draw(uv, camera_1, camera_2, image_2, interface=0, depth=400, no
         o = np.hstack((co_2[:2], interface))
         oq_vec = np.hstack((m[:2], interface)) - o
         q = o + u * (oq_vec / np.linalg.norm(oq_vec))
-        uv_2 = camera_2.project(q)
-        X[i, :] = uv_2[0], 1
-        Y[i, 0] = uv_2[1]
+        xy_2 = camera_2.project(q)
+        X[i, :] = xy_2[0], 1
+        Y[i, 0] = xy_2[1]
     a, b = (np.linalg.inv(X.T @ X) @ X.T) @ Y  # least square fit
     x = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
     y = a * x + b
