@@ -624,7 +624,7 @@ def apply_network(trajectories, network):
     return new_trajs
 
 
-def solve_unique(rows, cols, values):
+def solve_unique(rows, cols, values, report=True):
     """
     Find the link between two trajecotires that are both one-to-one and onto
 
@@ -639,7 +639,18 @@ def solve_unique(rows, cols, values):
        (first)     (second)
 
     Args:
-        rows (np.ndarray): the indices of the first trajectories
+        rows (np.ndarray): The indices of the first trajectories
+        cols (np.ndarray): The indices of the second trajectories
+        values (np.ndarray): The distances between the prediction of first trajectory
+            and the start of the second trajectory. Essentially this is the error.
+
+    Return:
+        tupel: (
+            not-unique row indices,
+            not-unique col indices,
+            not-unique distances,
+            unique_links
+        )
     """
     unsolved_indices, unique_links = [], []
     elements_row, indices_row, counts_row = np.unique(rows, return_index=True, return_counts=True)
@@ -647,11 +658,15 @@ def solve_unique(rows, cols, values):
     indices_row_unique = indices_row[counts_row==1]
     indices_col_unique = indices_col[counts_col==1]
     unique_indices = np.intersect1d(indices_row_unique, indices_col_unique, assume_unique=True)
-    print(len(unique_indices), len(rows))
     unsolved_indices = np.setdiff1d(np.arange(len(rows)), unique_indices)
-    unique_links = np.array([
-        (rows[i], cols[i]) for i in unique_indices
-    ], dtype=int)
+    if report:
+        print(f"{len(unique_indices)} unique indices out of {len(rows)} pairs")
+    if len(unique_indices) == 0:
+        unique_links = np.array([
+            (rows[i], cols[i]) for i in unique_indices
+        ], dtype=int)
+    else:
+        unique_links = np.empty((0, 2))
     return rows[unsolved_indices], cols[unsolved_indices], values[unsolved_indices], unique_links
 
 
