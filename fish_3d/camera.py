@@ -237,8 +237,13 @@ class Camera():
     def project(self, position: np.array):
         """
         Project a 3D position onto the image plane
+
+        Args:
+            position (np.ndarray): a collection of 3D poitns, shape (n, 3)
         """
-        assert position.shape[1] == 3, "Please input an (3, n) array"
+        if (position.ndim == 1) and (position.shape[0] == 3):
+            position = position[np.newaxis, :] # try to convert (3,) to (1, 3)
+        assert position.shape[1] == 3, "Please input an (n, 3) array"
         uv, _ = cv2.projectPoints(
                 objectPoints=np.vstack(position.T).T,
                 rvec=self.rotation.as_rotvec(),
