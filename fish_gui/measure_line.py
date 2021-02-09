@@ -3,24 +3,68 @@ import fish_3d as f3
 import sys
 import pickle
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel,\
-     QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog
-from PyQt5.QtGui import QColor
+     QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog,\
+     QDesktopWidget, QMessageBox
+from PyQt5.QtGui import QColor, QVector3D
 from PIL import Image
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 
+"""
+Colors that I like
+"""
+TEAL = QColor(14, 110, 100)
+TOMATO = QColor(249, 82, 60)
+CRIMSON = QColor(209, 0, 46)
+LIGHTSEAGREEN = QColor(33, 165, 153)
+CORNFLOWERBLUE = QColor(82, 127, 232)
+
 pg.setConfigOptions(imageAxisOrder='row-major')
+
+
+def warn(message):
+    msg = QMessageBox()
+    msg.minimumWidth = 300
+    msg.setIcon(QMessageBox.Warning)
+    msg.setText(message)
+    msg.exec_()
 
 
 class Model():
     """
     self.get_ep_methods: the function to calculate epipolar lines for different views
+
+    Attributes:
+        measurements_2d (list): The line segment representing one fish in 3 views,
+            each element is a numpy array, shape: (3 [view], 2 [points], 2 [xy])
+        measurements_3d (list): The 3D line segment representing one fish,
+            each element is a numpy array, shape: (2 [points], 3 [xyz])
     """
     def __init__(self, environment):
         self.images = [None, None, None]
         self.cameras = [None, None, None]
         self.env = environment
+        self.measurements_2d = []  # "shape": (n, 3-view, 2-points, 2-xy)
+        self.measurements_3d = []  # "shape": (n, 2-points, 3-xyz)
+        self.measurements_3d_errors = []  # "shape": (n, 2-points,)
+
+    def calculate(self):
+        self.measurements_3d = []
+        self.measurements_3d_errors = []
+        for lines_v3 in self.measurements_2d:
+            points_3d = np.empty((2, 3))
+            errors_3d = np.empty(2)
+            # iter the two points, with shape (2-points, 3-view, 2-xy)
+            for i, point_v3 in enumerate(np.moveaxis(lines_v3, 1, 0)):
+                point_xyz, error = f3.ray_trace.ray_trace_refractive_faster(
+                    point_v3, self.cameras, self.water_level, self.normal
+                )
+                points_3d[i] = point_xyz
+                errors_3d[i] = error
+            self.measurements_3d.append(points_3d)
+            self.measurements_3d_errors.append(errors_3d)
 
     @property
     def index_map(self):
@@ -81,14 +125,15 @@ class StereoImageItem(pg.ImageItem):
         of the *self.index* view
     self.neighbours (StereoImageItem): the other matching views,
     """
-    def __init__(self, model, label, plot, line):
+    def __init__(self, model, index, epipolar_plots, line, view):
         """
         ImageItem for epipolar representation
         """
         self.model = model
-        self.index = label
+        self.index = index
         self.line = line
-        self.plot = plot
+        self.view = view
+        self.epipolar_plots = epipolar_plots
         self.neighbours = [None, None]
         pg.ImageItem.__init__(self)
 
@@ -121,37 +166,42 @@ class StereoImageItem(pg.ImageItem):
     def mouseClickEvent(self, event):
         if not self.model.is_valid:
             return
-        edge = pg.mkPen(None)
-        fill = pg.mkBrush(color=QColor(249, 82, 60))  # tomato in matplotlib
+        plot_pens = [
+            pg.mkPen(color=TOMATO, width=2),  # color: tomato
+            pg.mkPen(color=LIGHTSEAGREEN, width=2),   # color: crimson
+        ]
 
-        pos = event.pos()
-        xy = self.mapToView(pos)
-        x, y = xy.x(), xy.y()
-        self.plot.clear()
-        self.plot.addPoints(x=[x], y=[y], pen=edge, brush=fill)
         for ni, neighbour in enumerate(self.neighbours):
-            neighbour.plot.clear()
             cam_1 = self.model.cameras[self.index]
             idx_2 = self.model.index_map[self.index][ni]
             im_2 = self.model.images[idx_2]
             cam_2 = self.model.cameras[idx_2]
-            epipolar = f3.ray_trace.epipolar_la_draw(
-                [x, y], cam_1, cam_2, im_2,
-                self.model.water_level, self.model.depth, self.model.normal
-            )
-            if len(epipolar) > 0:
-                neighbour.plot.addPoints(
-                    x=epipolar.T[0], y=epipolar.T[1], pen=edge, brush=fill
+            for pi, (plot, pos) in enumerate(zip(neighbour.epipolar_plots, self.line.listPoints())):
+                pos_view = self.line.mapToView(pos)
+                x, y = pos_view.x(), pos_view.y()
+                epipolar = f3.ray_trace.epipolar_la_draw(
+                    [x, y], cam_1, cam_2, im_2,
+                    self.model.water_level, self.model.depth, self.model.normal
                 )
+                if len(epipolar) > 0:
+                    plot.setData(
+                        x=epipolar.T[0], y=epipolar.T[1], pen=plot_pens[pi],
+                    )
 
 
 class Viewer(QMainWindow):
-    def __init__(self):
+    def __init__(self, size=(1000, 800)):
         super().__init__()
         self.layout = QGridLayout()
         self.window = QWidget()
         self.env = None
         self.model = None
+        self.canvas_items = []
+        self.btn_load_image_items = []
+        self.btn_load_camera_items = []
+        self.measure_plots_2d = []  # shape (n, 3 [view])
+        self.measure_plots_3d = []  # shape (n,)
+        self.size = size
         self.__setup()
 
     def __setup(self):
@@ -159,113 +209,98 @@ class Viewer(QMainWindow):
         self.setCentralWidget(self.window)
         self.__setup_pannel()  # initialise self.env
         self.model = Model(self.env)
-        self.__setup_v1()
-        self.__setup_v2()
-        self.__setup_v3()
+        self.__setup_canvas_2d(index=0, row=0, col=0)
+        self.__setup_canvas_2d(index=1, row=0, col=1)
+        self.__setup_canvas_2d(index=2, row=1, col=0)
+        self.__setup_canvas_3d()
         self.__setup_control()
-        canvases = [self.canvas_v1, self.canvas_v2, self.canvas_v3]
-        self.canvas_v1.add_neighbour(canvases)
-        self.canvas_v2.add_neighbour(canvases)
-        self.canvas_v3.add_neighbour(canvases)
+        for canvas in self.canvas_items:
+            canvas.add_neighbour(self.canvas_items)
+
+        self.resize(*self.size)
+        # move window to the central screen
+        qt_rectangle = self.frameGeometry()
+        centre_point = QDesktopWidget().availableGeometry().center()
+        qt_rectangle.moveCenter(centre_point)
+        self.move(qt_rectangle.topLeft())
+
         self.show()
 
     def __setup_control(self):
-        self.btn_load_image_v1.clicked.connect(self.__load_image_v1)
-        self.btn_load_image_v2.clicked.connect(self.__load_image_v2)
-        self.btn_load_image_v3.clicked.connect(self.__load_image_v3)
-        self.btn_load_camera_v1.clicked.connect(self.__load_camera_v1)
-        self.btn_load_camera_v2.clicked.connect(self.__load_camera_v2)
-        self.btn_load_camera_v3.clicked.connect(self.__load_camera_v3)
+        self.btn_load_image_items[0].clicked.connect(lambda x: self.__load_image(0))
+        self.btn_load_image_items[1].clicked.connect(lambda x: self.__load_image(1))
+        self.btn_load_image_items[2].clicked.connect(lambda x: self.__load_image(2))
+        self.btn_load_camera_items[0].clicked.connect(lambda x: self.__load_camera(0))
+        self.btn_load_camera_items[1].clicked.connect(lambda x: self.__load_camera(1))
+        self.btn_load_camera_items[2].clicked.connect(lambda x: self.__load_camera(2))
+        self.btn_measure.clicked.connect(self.measure)
+        self.btn_save_3d.clicked.connect(self.export)
 
-    def __setup_v1(self):
+    def __setup_canvas_2d(self, index, row, col):
         pannel = QWidget()
         layout = QGridLayout()
         window = pg.GraphicsLayoutWidget()
-        view = window.addViewBox(row=0, col=0, lockAspect=True)
 
-        self.btn_load_image_v1 = QPushButton('Load Image')
-        self.btn_load_camera_v1 = QPushButton('Load Camera')
-        plot = pg.ScatterPlotItem()
-        line = pg.PolyLineROI([(0,0), (10, 10)])
+        btn_load_image = QPushButton('Load Image')
+        btn_load_camera = QPushButton('Load Camera')
+        epipolar_plots = pg.PlotCurveItem(), pg.PlotCurveItem()
+
+        # setup the line segment measurement tool
+        # making sure the color of the line match the color of the epipolar lines
+        line = pg.LineSegmentROI(
+            [(0,0), (10, 10)],
+            pen=pg.mkPen('y', width=2),
+            hoverPen=pg.mkPen('y', width=2)
+        )
+        line.handles[0]['item'].pen = pg.mkPen(TOMATO, width=4)
+        line.handles[1]['item'].pen = pg.mkPen(LIGHTSEAGREEN, width=4)
+
+        # set the view object to contain the widgets
+        view = window.addViewBox(row=0, col=0, lockAspect=True)
 
         # setup ccanvas
-        canvas = StereoImageItem(self.model, label=0, plot=plot, line=line)
+        canvas = StereoImageItem(
+            self.model, index=index,
+            epipolar_plots=epipolar_plots, line=line, view=view
+        )
         canvas.setZValue(-100)
 
         view.addItem(canvas)
-        view.addItem(plot)
+        for plot in epipolar_plots:
+            view.addItem(plot)
         view.addItem(line)
-        self.canvas_v1 = canvas
-        self.plot_v1 = plot
 
         # hack the clicking
         view.mouseClickEvent = canvas.mouseClickEvent
 
+        # place the widgets
         layout.addWidget(window, 0, 0, 1, 2)
-        layout.addWidget(self.btn_load_image_v1, 1, 0)
-        layout.addWidget(self.btn_load_camera_v1, 1, 1)
+        layout.addWidget(btn_load_camera, 1, 0)
+        layout.addWidget(btn_load_image, 1, 1)
 
         pannel.setLayout(layout)
-        self.layout.addWidget(pannel, 0, 0)
+        self.layout.addWidget(pannel, row, col)
 
-    def __setup_v2(self):
+        self.canvas_items.append(canvas)
+        self.btn_load_image_items.append(btn_load_image)
+        self.btn_load_camera_items.append(btn_load_camera)
+
+    def __setup_canvas_3d(self):
         pannel = QWidget()
         layout = QGridLayout()
-        window = pg.GraphicsLayoutWidget()
-        view = window.addViewBox(row=0, col=0, lockAspect=True)
-        plot = pg.ScatterPlotItem()
-        line = pg.PolyLineROI([(0,0), (10, 10)])
+        view_3d = gl.GLViewWidget()
+        view_3d.opts['distance'] = 80
+        self.btn_measure = QPushButton('Measure 3D Line')
+        self.btn_save_3d = QPushButton('Export 3D Results')
 
-        # setup canvas
-        canvas = StereoImageItem(self.model, label=1, plot=plot, line=line)
-        canvas.setZValue(-100)
-
-        # hack the clicking
-        view.mouseClickEvent = canvas.mouseClickEvent
-
-        view.addItem(canvas)
-        view.addItem(plot)
-        view.addItem(line)
-        self.plot_v2 = plot
-        self.canvas_v2 = canvas
-        self.btn_load_image_v2 = QPushButton('Load Image')
-        self.btn_load_camera_v2 = QPushButton('Load Camera')
-
-        layout.addWidget(window, 0, 0, 1, 2)
-        layout.addWidget(self.btn_load_image_v2, 1, 0)
-        layout.addWidget(self.btn_load_camera_v2, 1, 1)
-
+        # place the widgets
+        layout.addWidget(view_3d, 0, 0, 1, 2)
+        layout.addWidget(self.btn_measure, 1, 0)
+        layout.addWidget(self.btn_save_3d, 1, 1)
         pannel.setLayout(layout)
-        self.layout.addWidget(pannel, 0, 1)
 
-    def __setup_v3(self):
-        pannel = QWidget()
-        layout = QGridLayout()
-        window = pg.GraphicsLayoutWidget()
-        view = window.addViewBox(row=0, col=0, lockAspect=True)
-        plot = pg.ScatterPlotItem()
-        line = pg.PolyLineROI([(0,0), (10, 10)])
-
-        # setup canvas
-        canvas = StereoImageItem(self.model, label=2, plot=plot, line=line)
-        canvas.setZValue(-100)
-
-        # hack the clicking
-        view.mouseClickEvent = canvas.mouseClickEvent
-        view.addItem(canvas)
-        view.addItem(plot)
-        view.addItem(line)
-        self.plot_v3 = plot
-        self.canvas_v3 = canvas
-        self.btn_load_image_v3 = QPushButton('Load Image')
-        self.btn_load_camera_v3 = QPushButton('Load Camera')
-
-        layout.addWidget(window, 0, 0, 1, 2)
-        layout.addWidget(self.btn_load_image_v3, 1, 0)
-        layout.addWidget(self.btn_load_camera_v3, 1, 1)
-
-        pannel.setLayout(layout)
-        self.layout.addWidget(pannel, 1, 0)
+        self.layout.addWidget(pannel, 1, 1)
+        self.canvas_3d = view_3d
 
     def __setup_pannel(self):
         pannel = QWidget()
@@ -274,13 +309,9 @@ class Viewer(QMainWindow):
         self.edit_interface = QLineEdit('0')
         self.edit_normal = QLineEdit('0, 0, 1')
         self.edit_depth = QLineEdit('400')
-        self.btn_save_2d = QPushButton('Save 2D Results')
-        self.btn_save_3d = QPushButton('Save 3D Results')
         label_interface  = QLabel('Water Level')
         label_normal  = QLabel('Normal Direction')
         label_step  = QLabel('Water Depth')
-        layout.addWidget(self.btn_save_2d)
-        layout.addWidget(self.btn_save_3d)
         layout.addWidget(label_interface)
         layout.addWidget(self.edit_interface)
         layout.addWidget(label_step)
@@ -291,63 +322,104 @@ class Viewer(QMainWindow):
         env = {'z': self.edit_interface, 'n': self.edit_normal, 'depth': self.edit_depth}
         self.env = env
 
-    def __load_image_v1(self):
+    def __load_image(self, index):
+        camera = self.model.cameras[index]
+        if isinstance(camera, type(None)):
+            warn("Please Load the Corresponding Camera First")
+            return
         image_name, _ = QFileDialog.getOpenFileName(
                 self, "Select the image", "",
                 "Image files (*.tiff *.png *.jpeg);;All Files (*)"
                 )
         if image_name:
             img = np.array(Image.open(image_name))
-            self.canvas_v1.setImage(img)
-            self.model.images[0] = img
+            img = self.model.cameras[index].undistort_image(img)
+            self.canvas_items[index].setImage(img)
+            pos = QtCore.QPoint(img.shape[1]//2, img.shape[0]//2)
+            self.canvas_items[index].line.setPos(pos)
+            self.model.images[index] = img
 
-    def __load_image_v2(self):
-        image_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the image", "",
-                "Image files (*.tiff *.png *.jpeg);;All Files (*)"
-                )
-        if image_name:
-            img = np.array(Image.open(image_name))
-            self.canvas_v2.setImage(img)
-            self.model.images[1] = img
-
-    def __load_image_v3(self):
-        image_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the image", "",
-                "Image files (*.tiff *.png *.jpeg);;All Files (*)"
-                )
-        if image_name:
-            img = np.array(Image.open(image_name))
-            self.canvas_v3.setImage(img)
-            self.model.images[2] = img
-
-    def __load_camera_v1(self):
-        """todo: draw the origin on the image"""
+    def __load_camera(self, index):
         camera_name, _ = QFileDialog.getOpenFileName(
                 self, "Select the camera", "", "camera files (*.pkl);;"
                 )
         with open(camera_name, 'rb') as f:
             camera = pickle.load(f)
-        self.model.cameras[0] = camera
+        self.model.cameras[index] = camera
 
-    def __load_camera_v2(self):
-        camera_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the camera", "", "camera files (*.pkl);;"
+    def __collect_2d_lines(self):
+        """
+        Appending the line measurement to self.model.segmetns_2d
+        """
+        measure_2d = np.empty((3, 2, 2))
+        for i, canvas in enumerate(self.canvas_items):
+            for j, point in enumerate(canvas.line.listPoints()):
+                xy = canvas.line.mapToView(point)
+                measure_2d[i, j, 0] =xy.x()
+                measure_2d[i, j, 1] =xy.y()
+        self.model.measurements_2d.append(measure_2d)
+
+    def __refresh_measure_plots(self):
+        for plots_v3 in self.measure_plots_2d:
+            for i, plot in enumerate(plots_v3):
+                self.canvas_items[i].view.removeItem(plot)
+        self.measure_plots_2d.clear()
+        for measure_2d_v3 in self.model.measurements_2d:
+            plots_v3 = []
+            for i, measure_2d in enumerate(measure_2d_v3):
+                new_plot = pg.PlotCurveItem()
+                new_plot.setData(
+                    *measure_2d.T, pen=pg.mkPen(color=CORNFLOWERBLUE, width=4)
                 )
-        with open(camera_name, 'rb') as f:
-            camera = pickle.load(f)
-        self.model.cameras[1] = camera
+                self.canvas_items[i].view.addItem(new_plot)
+                plots_v3.append(new_plot)
+            self.measure_plots_2d.append(plots_v3)
 
-    def __load_camera_v3(self):
-        camera_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the camera", "", "camera files (*.pkl);;"
-                )
-        with open(camera_name, 'rb') as f:
-            camera = pickle.load(f)
-        self.model.cameras[2] = camera
+    def __refresh_3d_plot(self):
+        for item in self.measure_plots_3d:
+            self.canvas_3d.removeItem(item)
+        self.measure_plots_3d.clear()
+        all_points = np.concatenate(self.model.measurements_3d)
+        self.canvas_3d.opts['center'] = QVector3D(*all_points.mean(axis=0))
+        for line_3d in self.model.measurements_3d:
+            plt = gl.GLLinePlotItem(
+                pos=line_3d,
+                color=(33.0/255, 165.0/255, 153.0/255, 1.0),  # lightseagreen
+                antialias=True,
+                width=4,
+            )
+            self.canvas_3d.addItem(plt)
+            self.measure_plots_3d.append(plt)
+
+    def measure(self):
+        """
+        Adding a permenant line plots for the line segments from each view,
+        Calculate the 3D lines based on the 2D line segments.
+        Renderling the 3D lines in the 3D view.
+        """
+        self.__collect_2d_lines()
+        self.__refresh_measure_plots()
+        if self.model.is_valid:
+            self.model.calculate()
+            self.__refresh_3d_plot()
+
+    def export(self):
+        save_name, _ = QFileDialog.getSaveFileName(
+            caption="Save 3D line measurements",
+            filter="CSV files (*.csv)"
+        )
+        data = np.array(self.model.measurements_3d)  # (n, 2, 3)
+        error = np.array(self.model.measurements_3d_errors)[:, :, np.newaxis]  # (n, 2, 1)
+        data = np.concatenate((data, error), axis=-1)  # (n, 2, 4)
+        n = data.shape[0]
+        data = data.reshape((n, 8), order='C')  # last axis index changing fastest
+        header = "X1,Y1,Z1,Error1,X2,Y2,Z2,Error2"
+        np.savetxt(
+            save_name, data, delimiter=',', header=header, comments=""
+        )
 
 
-def epipolar_app():
+def line_measure_app():
     """
     return the position and size of the ROI
     """
@@ -357,4 +429,4 @@ def epipolar_app():
 
 
 if __name__ == "__main__":
-    epipolar_app()
+    line_measure_app()
