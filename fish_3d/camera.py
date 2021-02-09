@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 import pickle
+import json
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from scipy.io import loadmat
@@ -175,14 +176,15 @@ class Camera():
         self.o: origin of the camera, shape (3, 1)
     """
     def __init__(self):
+        # essential parameters
         self.rotation = R.from_rotvec(np.zeros(3))
         self.distortion = np.zeros(5)
-        self.skew = 0
-        self.o = np.zeros(3)
         self.t = np.zeros(3)
-        self.r = np.zeros((3, 3))
         self.k = np.identity(3)
+        # updated parameters
+        self.r = np.zeros((3, 3))
         self.ext = np.zeros((3, 4))
+        self.o = np.zeros(3)
         self.p = np.zeros((3, 4))
         self.calibration_files = []
         self.update()
@@ -199,7 +201,10 @@ class Camera():
         return info_1 + info_2 + info_3 + info_4
 
     def update(self):
-        self.r = self.rotation.as_dcm()
+        try:
+            self.r = self.rotation.as_matrix()  # scipy > 1.4.0
+        except AttributeError:
+            self.r = self.rotation.as_dcm()  # scipy < 1.4.0
         self.ext = np.hstack([self.r, np.vstack(self.t)])
         self.p = np.dot(self.k, self.ext)
         self.o = np.vstack(-self.r.T @ self.t)
@@ -519,9 +524,54 @@ class Camera():
         self.calibrate_ext(ext_image, grid_size, order, corner_number, win_size, show)
 
     def save(self, fname: str):
+        """
+        Save instance as a python binary object
+        """
         with open(fname, 'wb') as f:
             pickle.dump(self, f)
 
+    def zip_essential(self):
+        """
+        pack all essential parameters into a dict which can be dumped
+            as a json file
+        """
+        try:
+            rot_mat = self.rotation.as_matrix()
+        except AttributeError:
+            rot_mat = self.rotation.as_dcm()
+        data = {
+            "k": self.k.tolist(),
+            "r": rot_mat.tolist(),
+            "t": self.t.tolist(),
+            "distortion": self.distortion.tolist()
+        }
+        return data
+
+    def save_json(self, fname):
+        """
+        Dump essential parameters to a json file
+        """
+        if fname[-5:] != ".json":
+            fname += ".json"
+        data = self.zip_essential()
+        with open(fname, 'w') as f:
+            json.dump(data, f, indent=" " * 4)
+
+    def load_json(self, fname):
+        """
+        Recover essential parameters from a json file
+        """
+        with open(fname, 'r') as f:
+            data = json.load(f)
+        self.r = np.array(data['r'])
+        try:
+            self.rotatin = R.from_matrix(self.r)
+        except AttributeError:
+            self.rotation = R.from_dcm(self.r)
+        self.k = np.array(data['k'])
+        self.t = np.array(data['t'])
+        self.distortion = np.array(data['distortion'])
+        self.update()
 
 def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    images_v1: List[str], images_v2: List[str], images_v3: List[str],
