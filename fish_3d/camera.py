@@ -547,6 +547,21 @@ class Camera():
         }
         return data
 
+    def unzip_essential(self, data):
+        """
+        Unpack essential parameters from a dict and load them as attributes
+        """
+        self.r = np.array(data['r'])
+        try:
+            self.rotation = R.from_matrix(self.r)
+        except AttributeError:
+            self.rotation = R.from_dcm(self.r)
+        self.k = np.array(data['k'])
+        self.t = np.array(data['t'])
+        self.distortion = np.array(data['distortion'])
+        self.update()
+
+
     def save_json(self, fname):
         """
         Dump essential parameters to a json file
@@ -563,15 +578,7 @@ class Camera():
         """
         with open(fname, 'r') as f:
             data = json.load(f)
-        self.r = np.array(data['r'])
-        try:
-            self.rotatin = R.from_matrix(self.r)
-        except AttributeError:
-            self.rotation = R.from_dcm(self.r)
-        self.k = np.array(data['k'])
-        self.t = np.array(data['t'])
-        self.distortion = np.array(data['distortion'])
-        self.update()
+        self.unzip_essential(data)
 
 def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    images_v1: List[str], images_v2: List[str], images_v3: List[str],
