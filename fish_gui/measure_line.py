@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import json
@@ -10,16 +11,18 @@ import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 from io import BytesIO
 from pyqtgraph.Qt import QtCore, QtGui
-from PyQt5.QtGui import QColor, QVector3D, QIcon
+from PyQt5.QtGui import QColor, QVector3D, QIcon, QTableWidgetItem
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel,\
-     QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog,\
-     QDesktopWidget, QMessageBox, QAction, qApp
+     QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog, qApp,\
+     QDesktopWidget, QMessageBox, QAction, QTableWidget, QAbstractScrollArea,\
+     QTableView
 
 """
 Colors that I like
 """
 TEAL = QColor(14, 110, 100)
 PINK = QColor(254, 176, 191)
+GOLD = QColor(254, 208, 9.0)
 TOMATO = QColor(249, 82, 60)
 CRIMSON = QColor(209, 0, 46)
 LIGHTSEAGREEN = QColor(33, 165, 153)
@@ -55,21 +58,25 @@ class Model():
         self.measurements_3d = []  # "shape": (n, 2-points, 3-xyz)
         self.measurements_3d_errors = []  # "shape": (n, 2-points,)
 
-    def calculate(self):
-        self.measurements_3d = []
-        self.measurements_3d_errors = []
-        for lines_v3 in self.measurements_2d:
-            points_3d = np.empty((2, 3))
-            errors_3d = np.empty(2)
-            # iter the two points, with shape (2-points, 3-view, 2-xy)
-            for i, point_v3 in enumerate(np.moveaxis(lines_v3, 1, 0)):
-                point_xyz, error = f3.ray_trace.ray_trace_refractive_faster(
-                    point_v3, self.cameras, self.water_level, self.normal
-                )
-                points_3d[i] = point_xyz
-                errors_3d[i] = error
-            self.measurements_3d.append(points_3d)
-            self.measurements_3d_errors.append(errors_3d)
+    def add_new_measure(self, measure_2d):
+        points_3d = np.empty((2, 3))
+        errors_3d = np.empty(2)
+        # iter the two points, with shape (2-points, 3-view, 2-xy)
+        for i, point_v3 in enumerate(np.moveaxis(measure_2d, 1, 0)):
+            point_xyz, error = f3.ray_trace.ray_trace_refractive_faster(
+                point_v3, self.cameras, self.water_level, self.normal
+            )
+            points_3d[i] = point_xyz
+            errors_3d[i] = error
+        self.measurements_2d.append(measure_2d)
+        self.measurements_3d.append(points_3d)
+        self.measurements_3d_errors.append(errors_3d)
+
+    def remove_measure(self, index):
+        for data in (
+                self.measurements_2d, self.measurements_3d, self.measurements_3d_errors
+        ):
+            del(data[index])
 
     @property
     def index_map(self):
@@ -282,7 +289,16 @@ class Viewer(QMainWindow):
         self.btn_load_camera_items = []
         self.measure_plots_2d = []  # shape (n, 3 [view])
         self.measure_plots_3d = []  # shape (n,)
+        self.highlight_plot_3d = gl.GLLinePlotItem(
+            pos=np.array((np.zeros(3), np.ones(3))),
+            color=(254.0/255, 208.0/255, 9.0/255, 1.0),  # gold
+            antialias=True, width=8,
+        )
+        self.highlight_plots_2d = [
+            pg.PlotCurveItem(), pg.PlotCurveItem(), pg.PlotCurveItem(),
+        ]
         self.size = size
+        self.table_closed = True
         self.__setup()
 
     def __setup(self):
@@ -295,6 +311,7 @@ class Viewer(QMainWindow):
         self.__setup_canvas_2d(index=2, row=1, col=0)
         self.__setup_canvas_3d()
         self.__setup_menu()
+        self.__setup_table()
         self.__setup_control()
         for canvas in self.canvas_items:
             canvas.add_neighbour(self.canvas_items)
@@ -319,12 +336,17 @@ class Viewer(QMainWindow):
         self.btn_load_camera_items[1].clicked.connect(lambda x: self.__load_camera(1))
         self.btn_load_camera_items[2].clicked.connect(lambda x: self.__load_camera(2))
         self.btn_measure.clicked.connect(self.measure)
-        self.btn_export.clicked.connect(self.export)
+        self.action_measure.triggered.connect(self.measure)
+        self.btn_delete.clicked.connect(self.delete)
+        self.action_delete.triggered.connect(self.delete)
         self.action_exit.triggered.connect(qApp.quit)
         self.action_export.triggered.connect(self.export)
         self.action_save.triggered.connect(self.save)
         self.action_load.triggered.connect(self.load)
-        self.action_env_set.triggered.connect(self.__show_pannel)
+        self.action_env.triggered.connect(self.__show_pannel)
+        self.action_table.triggered.connect(self.__show_table)
+        self.table.cellClicked.connect(self.select)
+        self.table.currentCellChanged.connect(self.select)
 
     def __setup_canvas_2d(self, index, row, col):
         pannel = QWidget()
@@ -371,6 +393,12 @@ class Viewer(QMainWindow):
         layout.addWidget(btn_load_camera, 1, 0)
         layout.addWidget(btn_load_image, 1, 1)
 
+        # adjust the margin / padding
+        layout.setContentsMargins(0, 0, 0, 0)
+        window.setContentsMargins(0, 0, 0, 0)
+        view.setContentsMargins(0, 0, 0, 0)
+        window.setRange(padding=0)
+
         pannel.setLayout(layout)
         self.layout.addWidget(pannel, row, col)
 
@@ -394,16 +422,17 @@ class Viewer(QMainWindow):
         self.btn_measure.setStatusTip(
             "Confirm matched line segments and measure the corresponding 3D line segment."
         )
-        self.btn_export = QPushButton('Export 3D Results')
-        self.btn_export.setStatusTip(
-            "Export the 3D line segments to a csv file."
+        self.btn_delete = QPushButton('Delete Measurement')
+        self.btn_delete.setStatusTip(
+            "Deleting selected 3D line segments from the result table."
         )
         view_3d.setStatusTip("View of the 3D line segments.")
 
         # place the widgets
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view_3d, 0, 0, 1, 2)
         layout.addWidget(self.btn_measure, 1, 0)
-        layout.addWidget(self.btn_export, 1, 1)
+        layout.addWidget(self.btn_delete, 1, 1)
         pannel.setLayout(layout)
 
         self.layout.addWidget(pannel, 1, 1)
@@ -428,10 +457,20 @@ class Viewer(QMainWindow):
         layout.addWidget(self.edit_depth)
         layout.addWidget(label_normal)
         layout.addWidget(self.edit_normal)
-        #self.layout.addWidget(pannel, 2, 0, 1, 2)
         env = {'z': self.edit_interface, 'n': self.edit_normal, 'depth': self.edit_depth}
         self.env = env
         self.pannel = pannel
+
+    def __setup_table(self):
+        table = QTableWidget(0, 2)
+        table.setSelectionBehavior(QTableView.SelectRows)
+        table.setHorizontalHeaderLabels([f"{'Point 1':^50}", f"{'Point 2':^50}"])
+        table.setSizeAdjustPolicy(
+            QAbstractScrollArea.AdjustToContents
+        )
+        table.closeEvent = self.__close_table
+        table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table = table
 
     def __setup_menu(self):
         menu_bar = self.menuBar()
@@ -459,10 +498,27 @@ class Viewer(QMainWindow):
         self.action_load = load
 
         # setting up view menu
-        view_menu = menu_bar.addMenu('&View')
-        env_set = view_menu.addAction("Environment Setting")
-        env_set.setStatusTip("Setting the environmental variables.")
-        self.action_env_set = env_set
+        view_menu = menu_bar.addMenu('&Edit')
+
+        measure = view_menu.addAction("Measure")
+        measure.setStatusTip("Measure the 3D line segment")
+        measure.setShortcut('Ctrl+M')
+        self.action_measure = measure
+
+        delete = view_menu.addAction("Delete")
+        delete.setStatusTip("Delete the selected line segment")
+        delete.setShortcut('Ctrl+D')
+        self.action_delete = delete
+
+        table = view_menu.addAction("Result Table")
+        table.setStatusTip("Editting the Measurement Result")
+        table.setShortcut('Ctrl+T')
+        self.action_table = table
+
+        environment = view_menu.addAction("Environment")
+        environment.setStatusTip("Editting the environmental variables.")
+        environment.setShortcut('Ctrl+E')
+        self.action_env = environment
 
     def __load_image(self, index):
         camera = self.model.cameras[index]
@@ -495,6 +551,31 @@ class Viewer(QMainWindow):
         self.pannel.hide()
         self.pannel.show()
 
+    def __refresh_table(self):
+        self.table.setRowCount(0)  # deletign all the rows
+        for row, measure in enumerate(self.model.measurements_3d):
+            self.table.insertRow(self.table.rowCount())
+            for i in range(2):
+                coordinate = [f"{x:^10.1f}" for x in measure[i]]
+                self.table.setItem(row, i, QTableWidgetItem(",".join(coordinate)))
+
+    def __show_table(self):
+        self.table.hide()
+        self.table.resizeRowsToContents()
+        self.table.resizeColumnsToContents()
+        self.__refresh_table()
+        self.table.show()
+        self.table_closed = False
+
+    def __close_table(self, event):
+        if self.highlight_plot_3d in self.canvas_3d.items:
+            self.canvas_3d.removeItem(self.highlight_plot_3d)
+        for view_id, canvas in enumerate(self.canvas_items):
+            if self.highlight_plots_2d[view_id] in canvas.view.addedItems:
+                canvas.view.removeItem(self.highlight_plots_2d[view_id])
+        self.table_closed = True
+        self.table.hide()
+
     def __collect_2d_lines(self):
         """
         Appending the line measurement to self.model.segmetns_2d
@@ -505,7 +586,7 @@ class Viewer(QMainWindow):
                 xy = canvas.line.mapToView(point)
                 measure_2d[i, j, 0] =xy.x()
                 measure_2d[i, j, 1] =xy.y()
-        self.model.measurements_2d.append(measure_2d)
+        return measure_2d
 
     def __refresh_measure_plots(self):
         """
@@ -521,7 +602,8 @@ class Viewer(QMainWindow):
             for i, measure_2d in enumerate(measure_2d_v3):
                 new_plot = pg.PlotCurveItem()
                 new_plot.setData(
-                    *measure_2d.T, pen=pg.mkPen(color=CORNFLOWERBLUE, width=4)
+                    *measure_2d.T,
+                    pen=pg.mkPen(color=CORNFLOWERBLUE, width=4)
                 )
                 self.canvas_items[i].view.addItem(new_plot)
                 plots_v3.append(new_plot)
@@ -574,12 +656,40 @@ class Viewer(QMainWindow):
         Renderling the 3D lines in the 3D view.
         """
         if self.model.is_valid:
-            self.__collect_2d_lines()
+            measure_2d = self.__collect_2d_lines()
+            self.model.add_new_measure(measure_2d)
             self.__refresh_measure_plots()
-            self.model.calculate()
             self.__refresh_3d_plot()
         else:
             warn("Please load the images and cameras")
+
+    def select(self):
+        index = self.table.currentRow()
+        self.highlight_plot_3d.setData(
+            pos=self.model.measurements_3d[index]
+        )
+        if self.highlight_plot_3d not in self.canvas_3d.items:
+            self.canvas_3d.addItem(self.highlight_plot_3d)
+        for view_id, canvas in enumerate(self.canvas_items):
+            plot = self.highlight_plots_2d[view_id]
+            plot.setData(
+                *self.model.measurements_2d[index][view_id].T,
+                pen=pg.mkPen(color=GOLD, width=4)
+            )
+            if plot not in canvas.view.addedItems:
+                canvas.view.addItem(self.highlight_plots_2d[view_id])
+
+    def delete(self):
+        if self.table_closed:
+            warn("Please select a line from the table view")
+            return
+        else:
+            index = self.table.currentRow()
+            self.model.remove_measure(index)
+            self.__refresh_measure_plots()
+            self.__refresh_3d_plot()
+            self.__close_table(None)
+            self.__show_table()
 
     def save(self):
         save_name = self.__check_and_get_save_name(
@@ -587,11 +697,13 @@ class Viewer(QMainWindow):
         )
         if save_name:
             self.model.export_json(save_name)
+            self.setWindowTitle(os.path.basename(save_name))
 
     def load(self):
         filename, _ = QFileDialog.getOpenFileName(
                 self, "Select the Project File", "", "json files (*.json);;"
                 )
+        self.setWindowTitle(os.path.basename(filename))
         if filename:
             self.model.load_json(filename)
             for i, img in enumerate(self.model.images):
