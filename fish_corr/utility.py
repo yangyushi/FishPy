@@ -616,7 +616,6 @@ def fit_acf_exp(data, method='exp', want_par=False):
                     a = (a1 - a0)
                     b = a0 - a * i
                     relaxation_time = (ie - b) / a
-                    fit = np.exp(-(t / relaxation_time))
                     succeed = True
                     break
             popt = [relaxation_time]
