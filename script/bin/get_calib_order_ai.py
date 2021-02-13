@@ -96,14 +96,20 @@ bin_folder = os.path.dirname(file_path)
 model =  tf.keras.models.load_model(f'{bin_folder}/calib_order_model.h5')
 orders = { f'cam_{i}': []  for i in range(1, cam_num + 1) }
 
+
 for i in range(1, cam_num+1):
-    filenames = glob("{f}/{p}".format(
-        f=folder, p=pattern.format(i=i)
-    ))
-    filenames.sort()
+    file_pattern = pattern.format(i=f"{i}")
+    match_pattern = re.sub(r"\*", r"(\\d+)", file_pattern)
+    filenames = glob(
+        "{f}/{p}".format(f=folder, p=file_pattern)
+    )
+
+    filenames.sort(
+        key=lambda x: int(re.search(match_pattern, x).group(1))
+    )
+
     corner_images = []
     for fn in filenames:
-        print("processing", fn)
         img = np.array(Image.open(fn).convert('L'))
         ret, corners = cv2.findChessboardCorners(
             img, corner_number,
@@ -128,11 +134,14 @@ for i in range(1, cam_num+1):
         exit("Calibration image detection failed!")
     corner_images = np.array(corner_images)
     predictions = model.predict(corner_images)
-    for pred in predictions:
-        if pred < 0.5:
+    for j, pred in enumerate(predictions):
+        if pred[0] < 0.5:
             orders[f'cam_{i}'].append('321x')
+            result = '3'
         else:
             orders[f'cam_{i}'].append('x123')
+            result = 'X'
+        print(f"processing {filenames[j]:<20}, P={pred[0]:.4f}, result: [{result}]")
 
 with open('calib-order.json', 'w') as f:
-    json.dump(orders, f)
+    json.dump(orders, f, indent=" "*4)
