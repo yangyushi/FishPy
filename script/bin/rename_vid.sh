@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-r1='Basler acA2040-120um \(22673660\)_[0-9]+_[0-9]+\.mp4'
-r2='Basler acA2040-120um \(22890181\)_[0-9]+_[0-9]+\.mp4'
-r3='Basler acA2040-55um \(23065350\)_[0-9]+_[0-9]+\.mp4'
+r1='Basler.*acA2040.*120um.*22673660.*\.mp4'
+r2='Basler.*acA2040.*120um.*22890181.*\.mp4'
+r3='Basler.*acA2040.*55um.*23065350.*\.mp4'
 
 for file in *.mp4
 do
