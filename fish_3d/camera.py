@@ -583,7 +583,8 @@ class Camera():
 def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
                    images_v1: List[str], images_v2: List[str], images_v3: List[str],
                    orders_v1: List[str], orders_v2: List[str], orders_v3: List[str],
-                   grid_size: float, corner_number: Tuple[int], win_size=(10, 10)) -> None:
+                   grid_size: float, corner_number: Tuple[int], win_size=(10, 10), debug=False
+                   ) -> None:
     """
     Do extrinsic calibrations multiple times, calculate average *relative displacement & angle*
     Then use the **last** calibration image as world coordinate
@@ -665,6 +666,11 @@ def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
 
     print(f'Rotation between view#1 and view#3 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(r13_xyz, r13_xyz_std)]}')
     print(f'Translation between view#1 and view#3 is {[f"{m:.4f} ± {s:.4f}" for m, s in zip(t13, t13_std)]}')
+
+    if debug:
+        with np.printoptions(precision=2, suppress=True):
+            for i, (ti, tj) in enumerate(zip(translations_12, translations_13)):
+                print(f"Image #{i+1}, relative shift 12: {ti}; 13: {tj}")
 
     cam_2.rotation = R.from_dcm(r12 @ cam_1.r)
     cam_2.t = r12 @ cam_1.t + t12
