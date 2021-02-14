@@ -127,7 +127,6 @@ cd track_2d/cam-3
 if [ $has_kernel_cam_3 -gt 0 ]; then
     make feature
 else
-    make shape
     make kernel
     make feature
 fi

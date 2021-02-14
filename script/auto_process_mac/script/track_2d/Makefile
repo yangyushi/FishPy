@@ -12,7 +12,7 @@ VPATH=result
 
 features.pkl: shape_kernels.npy
 	python3 get_features.py
-shape_kernels.npy:
+shape_kernels.npy: fish_shape_collection.npy
 	python3 get_kernels.py
 fish_shape_collection.npy:
 	python3 get_shapes.py
