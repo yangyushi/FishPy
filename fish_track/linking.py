@@ -493,7 +493,7 @@ def squeeze_sparse(array):
     return result[remap]
 
 
-def build_dist_matrix_sparse(trajs_sorted, dt, dx):
+def build_dist_matrix_sparse(trajs_sorted, dt, dx, debug=False):
     """
     Build a sparse distance matrix, then squeeze it
 
@@ -527,7 +527,7 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx):
     rows = np.array(rows, dtype=int)
     cols = np.array(cols, dtype=int)
     values = np.array(values, dtype=float)
-    rows, cols, values, unique_links = solve_unique(rows, cols, values)
+    rows, cols, values, unique_links = solve_unique(rows, cols, values, debug=debug)
     if len(rows) == 0:
         return np.empty((0, 0)), {}, {}, unique_links
     rows_sqz = squeeze_sparse(rows)
@@ -624,7 +624,7 @@ def apply_network(trajectories, network):
     return new_trajs
 
 
-def solve_unique(rows, cols, values, report=True):
+def solve_unique(rows, cols, values, debug=False):
     """
     Find the link between two trajecotires that are both one-to-one and onto
 
@@ -659,18 +659,18 @@ def solve_unique(rows, cols, values, report=True):
     indices_col_unique = indices_col[counts_col==1]
     unique_indices = np.intersect1d(indices_row_unique, indices_col_unique, assume_unique=True)
     unsolved_indices = np.setdiff1d(np.arange(len(rows)), unique_indices)
-    if report:
+    if debug:
         print(f"{len(unique_indices)} unique indices out of {len(rows)} pairs")
     if len(unique_indices) == 0:
+        unique_links = np.empty((0, 2), dtype=int)
+    else:
         unique_links = np.array([
             (rows[i], cols[i]) for i in unique_indices
         ], dtype=int)
-    else:
-        unique_links = np.empty((0, 2), dtype=int)
     return rows[unsolved_indices], cols[unsolved_indices], values[unsolved_indices], unique_links
 
 
-def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
+def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
     """
     Re-link short trajectories into longer ones.
 
@@ -697,20 +697,25 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None):
     trajs_ordered = sort_trajectories(trajs)
 
     dist_mat, row_map, col_map, unique_links = build_dist_matrix_sparse(
-        trajs_ordered, dx=dx, dt=dt
+        trajs_ordered, dx=dx, dt=dt, debug=debug
     )
 
     if len(dist_mat) == 0:
-        print("No conflict")
+        if debug:
+            print("No conflict")
         return [(t.time, t.positions) for t in trajs_ordered]
 
     if len(dist_mat) >= 100:
-        print("Solving LARGE linking matrix")
+        if debug:
+            print("Solving LARGE linking matrix")
 
     max_row = max(row_map.keys())+1
     networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
 
     best = choose_network(dist_mat, networks)
+    if debug:
+        print("best shape (should be n, 2)", best.shape)
+        print("unique_links shape (should be n, 2)", unique_links.shape)
 
     for i, pair in enumerate(best):
         best[i, 0] = row_map[pair[0]]
@@ -789,9 +794,11 @@ def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
     if debug:
         i = 0
     for trajs in traj_segments:
-        relinked_segments += relink(trajs, dx, dt, blur, blur_velocity)
+        relinked_segments += relink(trajs, dx, dt, blur, blur_velocity, debug=debug)
         if debug:
             i += 1
-            print(f"relink finished for the {i}th trajectory segment" )
+            message =  f"relink finished for the {i}th trajectory segment, "
+            message += f"({(i + 1) / len(traj_segments) * 100:.2f} %)"
+            print(message)
     #return relink(relinked_segments, dx, dt, blur, blur_velocity)
     return relinked_segments
