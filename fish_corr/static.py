@@ -292,7 +292,7 @@ class Tank:
         while not succeed:
             x, y, z = np.random.random((3, number * 10)) * np.array(
                     (self.r_max, self.r_max, self.z_max)
-                    )
+            )[:, np.newaxis]
             mask = np.zeros(len(z), dtype=bool)
             r = np.sqrt(x**2 + y**2)
             mask[z > self.z(r)] = True

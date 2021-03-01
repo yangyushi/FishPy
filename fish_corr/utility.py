@@ -1110,14 +1110,55 @@ class Movie:
                         header='%s\nframe %s' % (num, i)
                     )
             else:
+                num, dim = 0, self.dim
                 with open(fname, 'a') as f:
                     np.savetxt(
-                        f, np.empty((0, 4)),
+                        f, np.empty((0, self.dim + 1)),
                         delimiter='\t',
                         fmt="\t".join(['%d\t%.8e'] + ['%.8e' for i in range(dim - 1)]),
                         comments='',
                         header='%s\nframe %s' % (0, i)
                     )
+
+    def save_xyz_with_tank(self, filename, tank):
+        """
+        Dump the movie as xyz files. Particle labels indicate the IDs.
+
+        Args:
+            filename (str): the name of the xyz file
+        """
+        if '.xyz' == filename[-4:]:
+            fname = filename
+        else:
+            fname = filename + '.xyz'
+        f = open(fname, 'w')
+        f.close()
+
+        for i, frame in enumerate(self):
+            if len(frame) > 0:
+                num, dim = frame.shape
+                frame -= tank.base.T
+                labels = self.label(i)[:, np.newaxis]
+                result = np.concatenate((labels, frame), axis=1)
+                with open(fname, 'a') as f:
+                    np.savetxt(
+                        f, result,
+                        delimiter='\t',
+                        fmt="\t".join(['%d\t%.8e'] + ['%.8e' for i in range(dim - 1)]),
+                        comments='',
+                        header='%s\nframe %s' % (num, i)
+                    )
+            else:
+                num, dim = 0, self.dim
+                with open(fname, 'a') as f:
+                    np.savetxt(
+                        f, np.empty((0, self.dim + 1)),
+                        delimiter='\t',
+                        fmt="\t".join(['%d\t%.8e'] + ['%.8e' for i in range(dim - 1)]),
+                        comments='',
+                        header='%s\nframe %s' % (0, i)
+                    )
+
 
 
 class SimMovie:
