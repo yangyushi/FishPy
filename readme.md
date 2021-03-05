@@ -21,9 +21,8 @@ IMHO, the package is *good* in terms of these feaures,
 
 ### Install the package
 
-First of all, add the **full path** of folder `FishPy` to the `PYTHONPATH`.
-
-If you know what you are doing, you can also paste the folder to the `site-package` of the pyhton that you are using.
+1. Add the full path of folder `FishPy/lib` to the `PYTHONPATH`.
+2. Add the full path of folder `FishPy/bin` to the `PATH`.
 
 ### Use different modules
 
