@@ -127,9 +127,9 @@ for i in range(1, cam_num+1):
                 corner_img = corner_img / corner_img.std()
                 corner_images.append(corner_img)
             else:
-                exit(f"corder detection failed for {fn}")
+                exit(f"corner detection failed for {fn}")
         else:
-            exit(f"corder detection failed for {fn}")
+            exit(f"corner detection failed for {fn}")
     if len(corner_images) != len(filenames):
         exit("Calibration image detection failed!")
     corner_images = np.array(corner_images)
