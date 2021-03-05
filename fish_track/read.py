@@ -101,15 +101,28 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     vidcap.release()
 
 
-def get_foreground_movie(video, background, output='foreground.avi', process=lambda x: x, fps=15, local=5, thresh_flag=0, bop=0):
+def get_foreground_movie(
+        video, background, output='foreground.avi', process=lambda x: x,
+        fps=15, local=5, thresh_flag=0, bop=0
+):
     """
-    video: name of the video to be processed (raw video recorded from camera)
-    background: background video. It is assumend the foreground is *darker*, so foreground = backgroudn - video
-    preprocess: a python function to process *both* foreground and background before the substraction
-    fps: the frame rate of the obtained video
-    local: the range of the local threshold
-    threh_flag: flags for the global threshold, 0 - otsu; 1 - triangle; >1 - fixed value threshold, value is given number
-    bop: the binary open morphological transformation, 0 - don't use; >0 - size of the kernel
+    Generate a movie that only has foreground pixels
+
+    Args:
+        video (str): name of the video to be processed (from camera)
+        background (str): name of the background video. It is assumend
+            that the foreground is *darker*, so foreground = backgroudn - video
+        preprocess (Callable): a python function to process *both* foreground
+            and background before the substraction
+        fps (int or float): the frame rate of the obtained video
+        local (int): the range of the local threshold
+        threh_flag (int): flags for the global threshold,
+            0 - otsu;
+            1 - triangle;
+            >1 - fixed value threshold, value is given number
+        bop (int): the binary open morphological transformation, 0 - don't use; >0 - size of the kernel
+
+    Return: None, but create a movie file
     """
     im_cap = cv2.VideoCapture(video)
     bg_cap = cv2.VideoCapture(background)
@@ -134,9 +147,13 @@ def get_foreground_movie(video, background, output='foreground.avi', process=lam
             _, binary = cv2.threshold(fg, 0, 255,cv2.THRESH_BINARY+cv2.THRESH_TRIANGLE)
         elif thresh_flag > 1:
             _, binary = cv2.threshold(fg, thresh_flag, 255,cv2.THRESH_BINARY)
-        binary_adpt = cv2.adaptiveThreshold(fg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY, local, 0)
-        binary = binary * binary_adpt
+        if local > 1:
+            binary_adpt = cv2.adaptiveThreshold(
+                fg, 255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY, local, 0
+            )
+            binary = binary * binary_adpt
         if bop > 0:
             binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel=np.ones(int(bop)))
         fg[binary == 0] = 0
