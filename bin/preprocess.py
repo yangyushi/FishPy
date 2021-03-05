@@ -1,3 +1,6 @@
+"""
+This script process a movie file to remove the static background
+"""
 import fish_track as ft
 from scipy import ndimage
 import sys
