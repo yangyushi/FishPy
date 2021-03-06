@@ -13,7 +13,7 @@ fi
 export CPLEX_ARCH=${Machine}_${Platform}
 
 
-cd fish_3d
+cd lib/fish_3d
 make clean
 make all
 cd ../fish_corr
