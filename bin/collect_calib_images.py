@@ -44,7 +44,7 @@ for i in range(1, cam_num+1):
     filenames = glob(file_pattern)
     filenames.sort()
     for j, fn in enumerate(filenames):
-        shutil.copy(fn, f"cam_{i}-{j}.{suffix}")
+        shutil.copy(fn, f"cam_{i}-{j+1}.{suffix}")
 
 if archive_name in os.listdir('.'):
     os.rmdir(archive_name)

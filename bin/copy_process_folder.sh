@@ -26,7 +26,7 @@
 
 # find the path of fishpy
 SN=${0##*/}  # script name
-fishpy=${0%/script/bin/$SN}  # path to fishpy
+fishpy=${0%/bin/$SN}  # path to fishpy
 
 # detect the current platform, mac or linux
 platform=$(python -mplatform)
