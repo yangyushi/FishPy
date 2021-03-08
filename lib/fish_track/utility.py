@@ -76,7 +76,7 @@ def join_pairs(pairs):
 def validate(images, model, fail_mark=0.25, shape=(40, 40)):
     """
     validate shapes with trained keras model
-    good shape <- probability of being a bad < fail_mark
+    good shape: probability of being good > fail_mark
     """
     size_x, size_y = images[0].shape
     zoom = (1, shape[0] / size_x, shape[1] / size_y)
