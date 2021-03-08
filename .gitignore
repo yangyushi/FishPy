@@ -8,7 +8,7 @@
 **/test.py
 !.gitignore
 sphinx/_**
-*.sh
+build*.sh
 !build.sh
 fish_3d/env
 test/project/auto_process_1
