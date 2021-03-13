@@ -35,21 +35,23 @@ ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 
-scatter = ax.scatter([], [], [], 'o', color='lightblue', edgecolor='teal')
-quiver = ax.quiver3D([], [], [], [], [], [], color='teal')
 
 def update(frame_num):
-    global quiver
-    global scatter
     frame = movie[frame_num]
+    limits = [list(ax.get_xlim()), list(ax.get_ylim()), list(ax.set_zlim())]
+    for dim in range(3):
+        if limits[dim][0]   > frame.min(axis=0)[dim]:
+            limits[dim][0] = frame.min(axis=0)[dim]
+        if limits[dim][1] <= frame.max(axis=0)[dim]:
+            limits[dim][1] = frame.max(axis=0)[dim]
+    ax.clear()
     if len(frame) > 0:
         v = movie.velocity(frame_num)
-        quiver.remove()
-        scatter.remove()
         quiver = ax.quiver3D(*frame.T, *v.T, color='teal', length=length)
         scatter = ax.scatter(*frame.T, color='lightblue', edgecolor='teal', s=10)
-    dummy = ax.plot([], [])[0]
-    return [dummy]
+    ax.set_xlim(limits[0])
+    ax.set_ylim(limits[1])
+    ax.set_zlim(limits[2])
 
 ani = FuncAnimation(fig, update, frames=range(len(movie)), interval=delay)
 
