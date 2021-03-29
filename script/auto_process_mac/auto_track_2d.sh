@@ -3,9 +3,9 @@ source configure.sh
 
 # preprocessing videos
 ./script/rename_vid.sh $video_folder
-python3 script/preprocess.py "${video_folder}/cam-1.mp4" $background_rolling_length $blur $local $binary_open_size
-python3 script/preprocess.py "${video_folder}/cam-2.mp4" $background_rolling_length $blur $local $binary_open_size
-python3 script/preprocess.py "${video_folder}/cam-3.mp4" $background_rolling_length $blur $local $binary_open_size
+python3 script/preprocess.py "${video_folder}/cam-1.mp4" $background_rolling_length $blur $local $binary_open_size $background_cache
+python3 script/preprocess.py "${video_folder}/cam-2.mp4" $background_rolling_length $blur $local $binary_open_size $background_cache
+python3 script/preprocess.py "${video_folder}/cam-3.mp4" $background_rolling_length $blur $local $binary_open_size $background_cache
 
 # create folders for 2D tracking
 if [ ! -d "track_2d" ]; then

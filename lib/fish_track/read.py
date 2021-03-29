@@ -66,11 +66,12 @@ def iter_image_sequence(folder, prefix='frame_', start=0):
         yield np.array(Image.open(name))
 
 
-def get_background_movie(file_name, length=300, output='background.avi', fps=15):
+def get_background_movie(file_name, length=1500, output='background.avi', fps=15, cache='deque'):
     """
     Get a movie of background, being a box-average along time series with length of `length`
     Save bg every segment (25 frames), and save difference otherwise
     """
+    print(f"Background movie calculation with {cache} method for cache")
     vidcap = cv2.VideoCapture(file_name)
 
     width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -80,23 +81,33 @@ def get_background_movie(file_name, length=300, output='background.avi', fps=15)
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
 
-    history = deque()
-    bg_sum = np.zeros((height, width), dtype=np.uint64)
+    bg_sum = np.zeros((height, width), dtype=np.float64)
+
+    if cache == 'deque':
+        history = deque()
 
     for frame in range(frame_count):
         success, image = vidcap.read()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        history.append(image)
-        frame += 1
+
+        if cache == 'deque':
+            history.append(image)
         bg_sum += image
+
         if frame == length:
             bg = (bg_sum / length).astype(np.uint8)
             for _ in range(length):
                 out.write(bg)
         elif frame > length:
-            bg_sum -= history.popleft()
+            if cache == 'deque':
+                bg_sum -= history.popleft()
+            elif cache == 'mean':
+                bg_sum -= bg_sum / length
+            else:
+                raise RuntimeError("Invalid cache method: ", cache)
             bg = (bg_sum / length).astype(np.uint8)
             out.write(bg)
+
     out.release()
     vidcap.release()
 

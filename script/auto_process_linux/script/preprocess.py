@@ -12,6 +12,10 @@ length = int(sys.argv[2])
 blur = int(sys.argv[3])
 local = int(sys.argv[4])
 bop = int(sys.argv[5])
+if len(sys.argv) == 6:
+    cache_method = 'deque'
+else:
+    cache_method = sys.argv[6]
 
 if name not in os.listdir(folder):
     print(f"file not found ({name}), exit")
@@ -23,7 +27,7 @@ else:
 
     if bg_name not in os.listdir(folder):
         ft.get_background_movie(
-                path, length=length, output=bg_path
+                path, length=length, output=bg_path, cache=cache_method
                 )
 
     if fg_name not in os.listdir(folder):
