@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Extract 1st frames of all videos
+# Extract a frame from all videos
 
 format="mp4"
 
@@ -13,9 +13,7 @@ if [[ -n $2 ]]; then
 fi
 
 for fn in ./*.${format}; do
-    echo getting first frame from $fn
+    echo grabbing frame from ${fn} at ${delay} s
     img_name="${fn%.${format}}.png"
-    if [[ ! -e $img_name ]]; then
-        ffmpeg -ss ${delay} -y -i ${fn} -vframes 1 ${fn%.${format}}.png  &> /dev/null
-    fi
+    ffmpeg -ss ${delay} -y -i ${fn} -vframes 1 ${fn%.${format}}.png  &> /dev/null
 done
