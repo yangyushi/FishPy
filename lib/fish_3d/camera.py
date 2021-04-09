@@ -580,11 +580,11 @@ class Camera():
             data = json.load(f)
         self.unzip_essential(data)
 
-def calib_mult_ext(cam_1: 'Camera', cam_2: 'Camera', cam_3: 'Camera',
-                   images_v1: List[str], images_v2: List[str], images_v3: List[str],
-                   orders_v1: List[str], orders_v2: List[str], orders_v3: List[str],
-                   grid_size: float, corner_number: Tuple[int], win_size=(10, 10), debug=False
-                   ) -> None:
+def calib_mult_ext(
+    cam_1, cam_2, cam_3, images_v1, images_v2, images_v3,
+    orders_v1, orders_v2, orders_v3, grid_size, corner_number,
+    win_size=(10, 10), debug=False
+):
     """
     Do extrinsic calibrations multiple times, calculate average *relative displacement & angle*
     Then use the **last** calibration image as world coordinate
