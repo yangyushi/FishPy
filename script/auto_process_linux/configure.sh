@@ -1,6 +1,6 @@
 # Specifying files
 script_folder="script"
-video_folder="../video_1"
+video_folder="../video"
 cam_1_internal="database/cam_1_int.pkl"
 cam_2_internal="database/cam_2_int.pkl"
 cam_3_internal="database/cam_3_int.pkl"
@@ -17,7 +17,7 @@ blur=2
 local=3
 binary_open_size=3
 background_cache="mean"
-background_rolling_length=600
+background_rolling_length=3000
 
 # 2D Tracking parameters
 measure_roi=0

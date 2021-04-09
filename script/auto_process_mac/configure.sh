@@ -1,6 +1,6 @@
 # Specifying files
 script_folder="script"
-video_folder="../video_1"
+video_folder="../video"
 cam_1_internal="database/cam_1_int.pkl"
 cam_2_internal="database/cam_2_int.pkl"
 cam_3_internal="database/cam_3_int.pkl"
@@ -13,7 +13,7 @@ grid_size=16               # size of square on the calibration board, unit: mm
 corner_number="23, 15"     # number of inner corners in the row, column
 
 # video processing parameters
-background_rolling_length=600
+background_rolling_length=3000
 blur=2
 local=3
 binary_open_size=3
