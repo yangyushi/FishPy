@@ -43,9 +43,20 @@ def get_acf(var, size=0, step=1):
     result = np.empty(size, dtype=np.float64)
     for dt in range(0, size):
         stop = length - dt
-        corr = np.sum(flctn[: stop : step] * flctn[dt : stop + dt : step], axis=1)
-        c0   = np.sum(flctn[: stop : step] * flctn[: stop : step], axis=1)  # normalisation factor
-        result[dt] = np.nansum(corr) / np.nansum(c0)
+        if dt >= stop:
+            result[dt] = np.nan
+        else:
+            corr = np.sum(
+                flctn[: stop : step] * flctn[dt : stop + dt : step],
+                axis=1
+            )
+            c0   = np.sum(
+                flctn[: stop : step] * flctn[: stop : step], axis=1
+            )  # normalisation factor
+            if np.nansum(c0) == 0:
+                result[dt] = np.nan
+            else:
+                result[dt] = np.nansum(corr) / np.nansum(c0)
     return result
 
 
