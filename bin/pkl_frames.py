@@ -11,7 +11,7 @@ while f:
     try:
         pickle.load(f)
         frames += 1
-    except:
+    except EOFError:
         break
 
 print(frames)

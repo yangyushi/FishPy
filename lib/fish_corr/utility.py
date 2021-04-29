@@ -1171,7 +1171,6 @@ class Movie:
                     )
 
 
-
 class SimMovie:
     def __init__(self, positions, velocities):
         """
