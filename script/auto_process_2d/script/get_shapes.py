@@ -34,7 +34,7 @@ def get_shapes(image, threshold, win_size):
                     sub_img, want_ar=True
                 )
                 shapes.append(aligned_image)
-        return shapes
+    return shapes
 
 
 conf = configparser.ConfigParser(allow_no_value=True)
