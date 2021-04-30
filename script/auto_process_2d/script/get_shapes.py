@@ -27,14 +27,14 @@ def get_shapes(image, threshold, win_size):
         sub_images = ft.shape.get_sub_images(fg, maxima, win_size)
         shapes = []
         for i, sub_img in enumerate(sub_images):
-            if not ndimage.label(sub_img > 0)[1] < 2:
-                continue
-
-            aligned_image, aspect_ratio = ft.shape.align_sub_image(
-                sub_img, want_ar=True
-            )
-            shapes.append(aligned_image)
-    return shapes
+            is_connected = ndimage.label(sub_img > 0)[1] < 2
+            not_small = np.sum(sub_img > 0) > win_size
+            if is_connected and not_small:
+                aligned_image, aspect_ratio = ft.shape.align_sub_image(
+                    sub_img, want_ar=True
+                )
+                shapes.append(aligned_image)
+        return shapes
 
 
 conf = configparser.ConfigParser(allow_no_value=True)
