@@ -26,14 +26,17 @@ if 'cameras.pkl' not in os.listdir('.'):
         ) if x
     ])
 
-
     cameras = []
     for img_fn in glob.glob(os.path.join(calib_folder, f"*.{calib_format}")):
         cam = f3.Camera()
         cam.read_int(calib_int)
-        cam.calibrate_ext(
-            img_fn, grid_size=grid_size, corner_number=corner_number, show=False
-        )
+        try:
+            cam.calibrate_ext(
+                img_fn, grid_size=grid_size,
+                corner_number=corner_number, show=False
+            )
+        except RuntimeError:
+            continue
         cameras.append(cam)
 
     with open('cameras.pkl', 'wb') as f:
