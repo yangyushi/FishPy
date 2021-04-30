@@ -49,6 +49,35 @@ def get_rot_mat(r_from, r_to):
         result[i] = F_inv @ G @ F
     return result
 
+def get_rot_mat_2d(r_from, r_to):
+    """
+    Get a rotation matrix R that rotate one vector to another
+
+    .. code-block::
+
+        R @ r_from = r_to
+
+    Args:
+        r_from (np.array): the vector to be rotated, shape (n, 2)
+        r_to (np.array): the vector after the rotation, shape (2,)
+
+    Return:
+        np.array: the rotation matrix, shape (n, 2, 2)
+    """
+    n = r_from.shape[0]
+    result = np.empty((n, 2, 2))
+    r0 = r_from / np.linalg.norm(r_from, axis=1)[:, np.newaxis]
+    r1 = r_to / np.linalg.norm(r_to)
+    t1 = np.arctan2(r1[1], r1[0])
+    rot_1 = np.array(((np.cos(t1), -np.sin(t1)), (np.sin(t1), np.cos(t1))))
+    for i in range(n):
+        t0 = np.arctan2(r0[i][1], r0[i][0])
+        rot_0 = np.array((
+            (np.cos(t0), -np.sin(t0)),
+            (np.sin(t0), np.cos(t0)),
+        ))
+        result[i] = rot_1 @ rot_0.T
+    return result
 
 @njit
 def get_poda_pbc(positions, velocities, box):
@@ -488,8 +517,47 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
     nn_indices = dist_matrix.argmin(axis=1)
     speed = np.linalg.norm(velocities, axis=1)
     if np.isclose(speed, 0).any():
-        return np.empty((0, 3)), nn_dists
+        return np.empty((0, 2)), nn_dists
     rot_mats = get_rot_mat(velocities, np.array((1.0, 0.0, 0.0)))
+    nn_locations = positions[nn_indices] - focus
+    nn_locations = np.array([r @ n for r, n in zip(rot_mats, nn_locations)])
+    return nn_locations, nn_dists
+
+
+def get_nn_with_velocity_2d(positions, velocities, no_vertices=True):
+    """
+    Calculate the NN distances and relative locations of NNs
+    The distances were rotated so that the *x-axis* is aligned with
+        the *velocity* of different particles
+
+    Args:
+        positions (:obj:`numpy.ndarray`): positions of all particles
+            in one frame, shape (N, 2)
+        velocities (:obj:`numpy.ndarray`): velocities of all particles
+            in one frame, shape (N, 2)
+        no_vertices (:obj:`bool`): if being True, ignore the vertices
+
+    Return:
+        tuple: nn_locations and nn_distances
+    """
+    if no_vertices:
+        cv = ConvexHull(positions)
+        not_vertices = np.array([
+            x for x in np.arange(len(cv.points)) if x not in cv.vertices
+        ], dtype=int)
+        if len(not_vertices) == 0:
+            return np.empty((0, 2)), np.empty(0)
+        focus = cv.points[not_vertices]
+    else:
+        focus = positions
+    dist_matrix = cdist(focus, positions)
+    dist_matrix[dist_matrix == 0] = np.inf
+    nn_dists = dist_matrix.min(axis=1)
+    nn_indices = dist_matrix.argmin(axis=1)
+    speed = np.linalg.norm(velocities, axis=1)
+    if np.isclose(speed, 0).any():
+        return np.empty((0, 2)), nn_dists
+    rot_mats = get_rot_mat_2d(velocities, np.array((1.0, 0.0)))
     nn_locations = positions[nn_indices] - focus
     nn_locations = np.array([r @ n for r, n in zip(rot_mats, nn_locations)])
     return nn_locations, nn_dists
