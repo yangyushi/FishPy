@@ -842,7 +842,7 @@ class AverageAnalyser():
                 # bootstrap method to infer the error
                 for j in range(repeat):
                     random_indices = np.random.randint(0, len(acfs), len(acfs))
-                    acf = np.mean(acfs[random_indices], axis=0)
+                    acf = np.nanmean(acfs[random_indices], axis=0)
                     tau_vals[j] = utility.fit_acf_exp(acf)
                 result[i] = np.nanstd(tau_vals)
         return result
