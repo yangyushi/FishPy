@@ -569,8 +569,15 @@ def fit_acf_exp(data, method='exp', want_par=False):
     The fitting result a is a proxy to relaxation time
 
     Args:
-        data (:obj:`numpy.ndarray`): the data to be fit, it can be either (tau, acf) or just acf
-                           shape, (2, n) or (n,)
+        data (:obj:`numpy.ndarray`): the data to be fit, it can be either
+            (tau, acf) or just acf, with the  shape of (2, n) or (n,)
+        method (str): different methods to extract a relaxation time.
+            - exp: expoential decay;
+            - se: stretched exponential;
+            - le: linear fit of the log data;
+            - none: take the x value when y approaches 1/e;
+        want_par (bool): if true, extra fitting parameter will be returned
+            to construct the fitting function
 
     Return:
         float: fitting parameter a, relaxation time
