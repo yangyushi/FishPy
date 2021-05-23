@@ -38,6 +38,8 @@ ax.set_zlabel('Z')
 
 def update(frame_num):
     frame = movie[frame_num]
+    if len(frame) == 0:
+        return
     limits = [list(ax.get_xlim()), list(ax.get_ylim()), list(ax.set_zlim())]
     for dim in range(3):
         if limits[dim][0]   > frame.min(axis=0)[dim]:
@@ -45,10 +47,9 @@ def update(frame_num):
         if limits[dim][1] <= frame.max(axis=0)[dim]:
             limits[dim][1] = frame.max(axis=0)[dim]
     ax.clear()
-    if len(frame) > 0:
-        v = movie.velocity(frame_num)
-        quiver = ax.quiver3D(*frame.T, *v.T, color='teal', length=length)
-        scatter = ax.scatter(*frame.T, color='lightblue', edgecolor='teal', s=10)
+    v = movie.velocity(frame_num)
+    quiver = ax.quiver3D(*frame.T, *v.T, color='teal', length=length)
+    scatter = ax.scatter(*frame.T, color='lightblue', edgecolor='teal', s=10)
     ax.set_xlim(limits[0])
     ax.set_ylim(limits[1])
     ax.set_zlim(limits[2])
