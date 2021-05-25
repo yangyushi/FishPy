@@ -17,7 +17,7 @@ blur=2
 local=3
 binary_open_size=3
 background_cache="mean"
-background_rolling_length=3000
+background_rolling_length=9000
 
 # 2D Tracking parameters
 measure_roi=0
@@ -36,7 +36,7 @@ track_2d_want_plot="False"
 track_3d_frame_start=0
 track_3d_frame_end=54000   # Total frame tracked in 3D
 track_3d_sample_size=10
-track_3d_tol_2d=5  # tolarance of reprojection error
+track_3d_tol_2d=10  # tolarance of reprojection error
 track_3d_overlap_3d=10  # the minimum distance between non-overlapping particles
 track_3d_water_depth=400
 track_3d_water_level=0     # water level in world coordinate

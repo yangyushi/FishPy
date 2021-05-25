@@ -16,11 +16,11 @@ link_frame_start=0
 link_frame_end=0
 link_linker="active"
 link_range=20
-link_dx_max=25
+link_dx_max=40
 link_dt_max=10
-link_blur=1
+link_blur=2
 link_threshold=10
-relink_window=500
+relink_window=5000
 
 if [ ! $link_frame_end -gt 0 ]; then
     link_frame_end=$track_3d_frame_end
