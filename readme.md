@@ -19,6 +19,23 @@ IMHO, the package is *good* in terms of these feaures,
 
 ## How to use the code
 
+### Dependencies
+
+- pybind11
+- Eigen3
+- Voro++
+- cplex
+- opencv-python
+- numba
+- pandas
+- pillow
+- joblib
+- trackpy
+- numpy
+- scipy
+- matplotlib
+- tensorflow (optional)
+
 ### Install the package
 
 1. Add the full path of folder `FishPy/lib` to the `PYTHONPATH`.
