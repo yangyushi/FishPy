@@ -77,17 +77,20 @@ for f, frame in enumerate(range(frame_start, frame_end)):
             feature = pickle.load(feature_handlers[i])
         except EOFError:
             print(f"not enough featuers from view {i+1}")
-            break
+            exit(1)
 
         centres = cam.undistort_points(feature[:2].T, want_uv=True) # shape (m, 2)
         if len(centres) > max_num:
-            if f == 0:
+            if (f == 0):
                 cost = -feature[5]
-                centres = refine(centres, cost, max_num, eps)
             else:
-                dist = cdist(centres, centres_multi_view_history[i]).min(axis=1)
+                centres_past = centres_multi_view_history[i]
+                try:
+                    dist = cdist(centres, centres_past).min(axis=1)
+                except:
+                    dist = np.ones(feature.shape[1])
                 cost = -feature[5] * dist
-                centres = refine(centres, cost, max_num, eps)
+            centres = refine(centres, cost, max_num, eps)
         centres_multi_view.append(centres)
 
     centres_multi_view_history = [c for c in centres_multi_view]
