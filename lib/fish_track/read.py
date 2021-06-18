@@ -71,12 +71,16 @@ def get_background_movie(file_name, length=1500, output='background.avi', fps=15
     Get a movie of background, being a box-average along time series with length of `length`
     Save bg every segment (25 frames), and save difference otherwise
     """
-    print(f"Background movie calculation with {cache} method for cache")
     vidcap = cv2.VideoCapture(file_name)
 
     width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    print(
+        f"Background movie calculation with {cache} method for cache" +\
+        f"for {frame_count} frames"
+    )
 
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
@@ -88,6 +92,10 @@ def get_background_movie(file_name, length=1500, output='background.avi', fps=15
 
     for frame in range(frame_count):
         success, image = vidcap.read()
+        if not success:
+            out.release()
+            vidcap.release()
+            exit("failed to read the video")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         if cache == 'deque':
