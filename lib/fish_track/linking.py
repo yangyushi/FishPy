@@ -66,7 +66,7 @@ class Trajectory():
         self.t_start = self.time[0]
         self.t_end = self.time[-1]
         self.velocities = velocities
-        if not isinstance(self.velocities, type(None)):
+        if not isinstance(self.velocities, type(None)):  # for simulation data
             self.v_end = self.velocities[-1]
         else:
             if blur_velocity:
@@ -76,6 +76,7 @@ class Trajectory():
             else:
                 self.v_end = (self.positions[-1] - self.positions[-2]) /\
                              (self.time[-1] - self.time[-2])
+
     def predict(self, t):
         """
         predict the position of the particle at time t
@@ -700,34 +701,44 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
         trajs_ordered, dx=dx, dt=dt, debug=debug
     )
 
-    if len(dist_mat) == 0:
-        if debug:
-            print("No conflict")
+    if (len(dist_mat) == 0) and (len(unique_links) == 0):
+        if debug: print("No conflict")
         return [(t.time, t.positions) for t in trajs_ordered]
 
-    if len(dist_mat) >= 100:
+    elif (len(dist_mat) == 0):  # all the links were unique
+        print("all links are unique")
+        network = unique_links
+        reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
+        reduced = reduce_network(network[reorder_indices])
+        new_trajs = apply_network(trajs_ordered, reduced)
+        return [(t.time, t.positions) for t in new_trajs]
+
+    else:  # conflict links exist
+        print("solving conflicts")
+        if len(dist_mat) >= 100:
+            if debug:
+                print("Solving LARGE linking matrix")
+
+        max_row = max(row_map.keys())+1
+        networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
+
+        best = choose_network(dist_mat, networks)
+
         if debug:
-            print("Solving LARGE linking matrix")
+            print("best shape (should be n, 2)", best.shape)
+            print("unique_links shape (should be n, 2)", unique_links.shape)
 
-    max_row = max(row_map.keys())+1
-    networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
+        for i, pair in enumerate(best):
+            best[i, 0] = row_map[pair[0]]
+            best[i, 1] = col_map[pair[1]]
 
-    best = choose_network(dist_mat, networks)
-    if debug:
-        print("best shape (should be n, 2)", best.shape)
-        print("unique_links shape (should be n, 2)", unique_links.shape)
+        network = np.concatenate((unique_links, best))
+        reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
 
-    for i, pair in enumerate(best):
-        best[i, 0] = row_map[pair[0]]
-        best[i, 1] = col_map[pair[1]]
+        reduced = reduce_network(network[reorder_indices])
+        new_trajs = apply_network(trajs_ordered, reduced)
 
-    network = np.concatenate((unique_links, best))
-    reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
-
-    reduced = reduce_network(network[reorder_indices])
-    new_trajs = apply_network(trajs_ordered, reduced)
-
-    return [(t.time, t.positions) for t in new_trajs]
+        return [(t.time, t.positions) for t in new_trajs]
 
 
 def segment_trajectories(trajectories, window_size, max_frame):
