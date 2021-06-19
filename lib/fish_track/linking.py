@@ -68,22 +68,58 @@ class Trajectory():
         self.velocities = velocities
         if not isinstance(self.velocities, type(None)):  # for simulation data
             self.v_end = self.velocities[-1]
+            self.v_start = self.velocities[0]
         else:
             if blur_velocity:
                 positions_smooth = ndimage.gaussian_filter1d(positions, blur_velocity, axis=0)
                 self.v_end = (positions_smooth[-1] - positions_smooth[-2]) /\
                              (self.time[-1] - self.time[-2])
+                self.v_start = (positions_smooth[1] - positions_smooth[0]) /\
+                             (self.time[1] - self.time[0])
             else:
                 self.v_end = (self.positions[-1] - self.positions[-2]) /\
                              (self.time[-1] - self.time[-2])
+                self.v_start = (self.positions[1] - self.positions[0]) /\
+                             (self.time[1] - self.time[0])
 
     def predict(self, t):
         """
-        predict the position of the particle at time t
+        predict the position of the particle at future time-point t
         """
         assert t > self.t_end, "We predict the future, not the past"
         pos_predict = self.p_end + self.v_end * (t - self.t_end)
         return pos_predict
+
+    def retrace(self, t):
+        """
+        retrace the position of the particle at previous time-point t
+        """
+        assert t < self.t_start, "We retrace the past, not the future"
+        pos_retrace = self.p_start + self.v_start * (t - self.t_start)
+        return pos_retrace
+
+    def distance(self, traj):
+        """
+        Calculate the distance between self and another trajectory
+
+        the distance is defined as the distance where the earlier trajectory
+            travel to future, and the later trajectory travel to past, and the
+            distance where they meet in time.
+
+        The purpose of such calculation is to improve the linking success rate.
+        """
+        if self.t_end <= traj.t_start:  # self is earlier
+            t = (traj.t_start - self.t_end) / 2
+            p0 = self.p_end + self.v_end * t  # forwards
+            p1 = traj.p_start - traj.v_start * t  # backward
+            return np.linalg.norm(p0 - p1)
+        elif self.t_start >= traj.t_end:  # self is later
+            t = (self.t_start - traj.t_end) / 2
+            p0 = traj.p_end + traj.v_end * t  # forwards
+            p1 = self.p_start - self.v_start * t  # backward
+            return np.linalg.norm(p0 - p1)
+        else:
+            return np.inf
 
     def __len__(self):
         return len(self.positions)
@@ -416,43 +452,23 @@ def sort_trajectories(trajectories):
     Sort trajectories according to the first time point in each traj
 
     Args:
-        trajectories (List[Trajectory]): a collection of :class:`Trajectory`
+        trajectories (List): a collection of :class:`Trajectory` or obj:`tuple`
+            which contains the time points and positions of each trajectory
 
     Return:
-        List[Trajectory]: the sorted trajectories
+        list: the sorted trajectories, each trajectory maintains the same type.
     """
     start_time_points = np.empty(len(trajectories))
-    for i, traj in enumerate(trajectories):
-        start_time_points[i] = traj.t_start
+    if type(trajectories[0]) == Trajectory:
+        for i, traj in enumerate(trajectories):
+            start_time_points[i] = traj.t_start
+    elif type(trajectories[0]) == tuple:
+        for i, traj in enumerate(trajectories):
+            start_time_points[i] = traj[0][0]
+    else:
+        raise TypeError("Unsupported trajectory type:", type(trajectories[0]))
     sorted_indices = np.argsort(start_time_points)
     return [trajectories[si] for si in sorted_indices]
-
-
-def build_dist_matrix(trajs_sorted, dt, dx):
-    """
-    Args:
-        trajs_sorted (list): trajectories obtained from :meth:`sort_trajectories`
-        dt (int): if the time[-1] of traj #1 + dt > time[0] of traj #2
-                  consider a link being possible
-        dx (float): if within dt, the distance between
-                    traj #1's prediction and
-                    traj #2's first point
-                    is smaller than dx, assign a link
-
-    Return:
-        np.ndarray: the distance (cost) of the link, if such link is possible
-    """
-    traj_num = len(trajs_sorted)
-    dist_matrix = np.zeros((traj_num, traj_num), dtype=float)
-    for i, traj_1 in enumerate(trajs_sorted):
-        for j, traj_2 in enumerate(trajs_sorted[i+1:]):
-            if (traj_2.t_start - traj_1.t_end) > dt:
-                break
-            elif traj_2.t_start > traj_1.t_end:
-                distance = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
-                if distance < dx:
-                    dist_matrix[i, i+j+1] = distance
-    return dist_matrix
 
 
 def squeeze_sparse(array):
@@ -494,7 +510,45 @@ def squeeze_sparse(array):
     return result[remap]
 
 
-def build_dist_matrix_sparse(trajs_sorted, dt, dx, debug=False):
+def cost_dist(traj_1, traj_2):
+    """
+    Args:
+        traj_1 (Trajectory): earlier trajectory
+        traj_2 (Trajectory): later trajectory
+
+    Return:
+        float: the cost value
+    """
+    d1 = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
+    d2 = np.linalg.norm(traj_2.retrace(traj_1.t_end) - traj_1.p_end)
+    d3 = traj_1.distance(traj_2)
+    return min((d1, d2, d3))
+
+
+def cost_xu(traj_1, traj_2):
+    shift_x = traj_1.predict(traj_2.t_start) - traj_1.p_start
+    shift_v = (traj_1.v_end - traj_2.v_start) * (traj_2.t_start - traj_1.t_end)
+    return np.sqrt(np.sum(shift_x ** 2 + shift_v ** 2))
+
+def time_filter_link(traj_1, traj_2, dt):
+    """
+    Return ture if two trajectories would form portational link
+    """
+    gap = traj_2.t_start - traj_1.t_end
+    return (gap > 0) and (gap <= dt)
+
+
+def time_filter_merge(traj_1, traj_2, dt):
+    """
+    Return ture if two trajectories would form portational link
+    """
+    gap =traj_1.t_end - traj_2.t_start
+    return (gap >=0) and (gap <= dt)
+
+
+def build_dist_matrix_sparse(
+        trajs_sorted, dt, dx, cost, time_filter, debug=False
+):
     """
     Build a sparse distance matrix, then squeeze it
 
@@ -506,6 +560,8 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx, debug=False):
                     * trajectory #1's prediction and
                     * trajectory #2's first point
                     is smaller than dx, assign a link
+        cost (callable): the function to calculate cost between two
+            trajectories, trajectories with smaller cost will be linked
 
     Return:
         tuple: (distance matrix (scipy.sparse.coo_matrix), row_map, col_map)
@@ -515,10 +571,8 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx, debug=False):
     values, rows, cols = [], [], []
     for i, traj_1 in enumerate(trajs_sorted):
         for j, traj_2 in enumerate(trajs_sorted[i+1:]):
-            if (traj_2.t_start - traj_1.t_end) > dt:
-                break
-            elif traj_2.t_start > traj_1.t_end:
-                distance = np.linalg.norm(traj_1.predict(traj_2.t_start) - traj_2.p_start)
+            if time_filter(traj_1, traj_2, dt):
+                distance = cost(traj_1, traj_2)
                 if distance < dx:
                     rows.append(i)
                     cols.append(i+j+1)
@@ -528,15 +582,20 @@ def build_dist_matrix_sparse(trajs_sorted, dt, dx, debug=False):
     rows = np.array(rows, dtype=int)
     cols = np.array(cols, dtype=int)
     values = np.array(values, dtype=float)
-    rows, cols, values, unique_links = solve_unique(rows, cols, values, debug=debug)
+    rows, cols, values, unique_links = solve_unique(
+        rows, cols, values, debug=debug
+    )
     if len(rows) == 0:
         return np.empty((0, 0)), {}, {}, unique_links
     rows_sqz = squeeze_sparse(rows)
     cols_sqz = squeeze_sparse(cols)
-    row_map = {r1 : r0 for r0, r1 in zip(rows, rows_sqz)}  # map from squeezed to origional
+    # map from squeezed to origional
+    row_map = {r1 : r0 for r0, r1 in zip(rows, rows_sqz)}
     col_map = {c1 : c0 for c0, c1 in zip(cols, cols_sqz)}
     larger = max(max(rows_sqz), max(cols_sqz)) + 1
-    dist_mat = coo_matrix((values, (rows_sqz, cols_sqz)), shape=(larger, larger), dtype=float).toarray()
+    dist_mat = coo_matrix(
+        (values, (rows_sqz, cols_sqz)), shape=(larger, larger), dtype=float
+    ).toarray()
     return dist_mat, row_map, col_map, unique_links
 
 
@@ -601,7 +660,7 @@ def choose_network(distance_matrix, networks) -> np.ndarray:
     return networks[np.argmin(distances)]
 
 
-def apply_network(trajectories, network):
+def apply_network_link(trajectories, network):
     """
     Args:
         trajectories (:obj:`list` of :obj:`Trajectory`): unlinked trajectories
@@ -616,6 +675,37 @@ def apply_network(trajectories, network):
     to_modify = np.hstack(network)
     for link in network:
         to_sum = [trajectories[idx] for idx in link]
+        for t in to_sum[1:]:
+            to_sum[0] = to_sum[0] + t
+        new_trajs.append(to_sum[0])
+    for i, t in enumerate(trajectories):
+        if i not in to_modify:
+            new_trajs.append(t)
+    return new_trajs
+
+
+def apply_network_merge(trajectories, network):
+    """
+    Merge the trajectories. The earlier trajecotires will be clipped and
+        connectd to later trajectories
+
+    Args:
+        trajectories (:obj:`list` of :obj:`Trajectory`): unmerged trajectories
+        network (:obj:`list` of :obj:`numpy.ndarray`): the chosen network to
+            merge trajectories. Each network may have different sizes.
+
+    Return:
+        :obj:`list` of :obj:`Trajectory`: trajectories that were merged
+            according to the given network
+    """
+    new_trajs = []
+    to_modify = np.hstack(network)
+    for link in network:
+        to_sum = [trajectories[idx] for idx in link]
+        for i, traj_1 in enumerate(to_sum[:-1]):
+            traj_2 = to_sum[i + 1]
+            t1 = np.argmin(np.abs(traj_1.time - traj_2.t_start))
+            to_sum[i] = Trajectory(traj_1.time[:t1], traj_1.positions[:t1])
         for t in to_sum[1:]:
             to_sum[0] = to_sum[0] + t
         new_trajs.append(to_sum[0])
@@ -671,7 +761,7 @@ def solve_unique(rows, cols, values, debug=False):
     return rows[unsolved_indices], cols[unsolved_indices], values[unsolved_indices], unique_links
 
 
-def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
+def relink(trajectories, dx, dt, blur=None, blur_velocity=None, cost='dist', debug=False):
     """
     Re-link short trajectories into longer ones.
 
@@ -697,8 +787,16 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
 
     trajs_ordered = sort_trajectories(trajs)
 
+    if cost == 'xu':
+        cost = cost_xu
+    elif cost == 'dist':
+        cost = cost_dist
+    else:
+        raise ValueError("Unsupported cost option:", cost)
+
     dist_mat, row_map, col_map, unique_links = build_dist_matrix_sparse(
-        trajs_ordered, dx=dx, dt=dt, debug=debug
+        trajs_ordered, dx=dx, dt=dt, debug=debug,
+        cost=cost, time_filter=time_filter_link
     )
 
     if (len(dist_mat) == 0) and (len(unique_links) == 0):
@@ -706,20 +804,19 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
         return [(t.time, t.positions) for t in trajs_ordered]
 
     elif (len(dist_mat) == 0):  # all the links were unique
-        print("all links are unique")
+        if debug: print("all links are unique")
         network = unique_links
         reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
         reduced = reduce_network(network[reorder_indices])
-        new_trajs = apply_network(trajs_ordered, reduced)
+        new_trajs = apply_network_link(trajs_ordered, reduced)
         return [(t.time, t.positions) for t in new_trajs]
 
     else:  # conflict links exist
-        print("solving conflicts")
-        if len(dist_mat) >= 100:
-            if debug:
-                print("Solving LARGE linking matrix")
+        if debug: print("solving conflicts")
+        if (len(dist_mat) >= 100) and debug:
+            print("Solving LARGE linking matrix")
 
-        max_row = max(row_map.keys())+1
+        max_row = max(row_map.keys()) + 1
         networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
 
         best = choose_network(dist_mat, networks)
@@ -736,7 +833,78 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None, debug=False):
         reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
 
         reduced = reduce_network(network[reorder_indices])
-        new_trajs = apply_network(trajs_ordered, reduced)
+        new_trajs = apply_network_link(trajs_ordered, reduced)
+
+        return [(t.time, t.positions) for t in new_trajs]
+
+
+def cost_merge(traj_1, traj_2):
+    t1 = np.argmin(np.abs(traj_1.time - traj_2.t_start))
+    p1 = traj_1.positions[t1]
+    return np.linalg.norm(p1 - traj_2.p_start)
+
+
+def merge_trajectories(trajectories, dx, dt, debug=False):
+    """
+    Merge two trajectories, t1 and t2, if the end of t1 matches the head of t2.
+
+    Args:
+        trajectories (:obj:`list`): A collection of trajectories.
+            Each trajectory is stored in a tuple, (time, positions)
+        dx (:obj:`float`): distance threshold, t1 and t2 were considered to be
+            matched if the distance between the end of t1 and the head of t2 were
+            is smaller than dx.
+
+    Return:
+        (:obj:`list`): a collection of merged trajectories
+    """
+    if type(trajectories[0]) in (tuple, np.ndarray, list):
+        trajs = [Trajectory(t[0], t[1]) for t in trajectories if len(t[0]) > 1 ]
+    else:
+        raise TypeError("Invalid Trajectory Data Type")
+
+    trajs_ordered = sort_trajectories(trajs)
+
+    dist_mat, row_map, col_map, unique_links = build_dist_matrix_sparse(
+        trajs_ordered, dx=dx, dt=dt, debug=debug,
+        cost=cost_merge, time_filter=time_filter_merge
+    )
+
+    if (len(dist_mat) == 0) and (len(unique_links) == 0):
+        if debug: print("Nothing to merge")
+        return [(t.time, t.positions) for t in trajs_ordered]
+
+    elif (len(dist_mat) == 0):  # all the links were unique
+        if debug: print("All links are unique")
+        network = unique_links
+        reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
+        reduced = reduce_network(network[reorder_indices])
+        new_trajs = apply_network_merge(trajs_ordered, reduced)
+        return [(t.time, t.positions) for t in new_trajs]
+
+    else:  # conflict links exist
+        if debug: print("solving conflicts")
+        if (len(dist_mat) >= 100) and debug:
+            print("Solving LARGE linking matrix")
+
+        max_row = max(row_map.keys()) + 1
+        networks = solve_nrook_dense(dist_mat.astype(bool), max_row=max_row)
+
+        best = choose_network(dist_mat, networks)
+
+        if debug:
+            print("best shape (should be n, 2)", best.shape)
+            print("unique_links shape (should be n, 2)", unique_links.shape)
+
+        for i, pair in enumerate(best):
+            best[i, 0] = row_map[pair[0]]
+            best[i, 1] = col_map[pair[1]]
+
+        network = np.concatenate((unique_links, best))
+        reorder_indices = np.argsort(network[:, 0])  # sort for `reduce_network`
+
+        reduced = reduce_network(network[reorder_indices])
+        new_trajs = apply_network_merge(trajs_ordered, reduced)
 
         return [(t.time, t.positions) for t in new_trajs]
 
@@ -775,7 +943,7 @@ def segment_trajectories(trajectories, window_size, max_frame):
 
 
 def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
-                       blur=None, blur_velocity=None, debug=True):
+                       blur=None, blur_velocity=None, cost='dist', debug=False):
     """
     Re-link short trajectories into longer ones.
 
@@ -805,11 +973,10 @@ def relink_by_segments(trajectories, window_size, max_frame, dx, dt,
     if debug:
         i = 0
     for trajs in traj_segments:
-        relinked_segments += relink(trajs, dx, dt, blur, blur_velocity, debug=debug)
+        relinked_segments += relink(trajs, dx, dt, blur, blur_velocity, cost=cost, debug=debug)
         if debug:
             i += 1
             message =  f"relink finished for the {i}th trajectory segment, "
             message += f"({(i + 1) / len(traj_segments) * 100:.2f} %)"
             print(message)
-    #return relink(relinked_segments, dx, dt, blur, blur_velocity)
     return relinked_segments
