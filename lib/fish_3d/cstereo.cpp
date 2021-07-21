@@ -85,6 +85,35 @@ tuple<Coord3D, Arr1D> locate_v3(
 }
 
 
+tuple<Coord3D, Arr1D> refractive_triangulate(
+            Coord2D& C1, Coord2D& C2, Coord2D& C3,
+            ProjMat P1, ProjMat P2, ProjMat P3,
+            Vec3D O1, Vec3D O2, Vec3D O3
+        ){
+    if ((C1.rows() != C2.rows()) or (C1.rows() != C3.rows())){
+        throw("inconsistence frame numbers from different views.");
+    }
+    int n_frame = C1.rows();
+
+    Vec3D xyz;
+
+    TriPM Ps{P1, P2, P3};
+    TriXYZ Os{O1, O2, O3};
+
+    Coord3D positions{n_frame, 3};
+    Arr1D errors{n_frame, 1};
+
+    for (int f = 0; f < n_frame; f++){
+        TriXY centres{C1.row(f), C2.row(f), C3.row(f)};
+        xyz = three_view_reconstruct(centres, Ps, Os);
+        positions.row(f) = xyz;
+        errors.row(f) = get_error_with_xyz(centres, Ps, Os, xyz);
+    }
+
+    return make_tuple(positions, errors);
+}
+
+
 Coord2D refractive_project(Coord3D& points, ProjMat& P, Vec3D& O){
     Vec3D xyz;
     Coord2D result{points.rows(), 2};
@@ -122,6 +151,12 @@ PYBIND11_MODULE(cstereo, m){
     m.def(
             "get_error", &get_error,
             py::arg("centres"), py::arg("Ps"), py::arg("Os")
+            );
+    m.def(
+            "refractive_triangulate", &refractive_triangulate,
+            py::arg("C1"), py::arg("C2"), py::arg("C3"),
+            py::arg("P1"), py::arg("P2"), py::arg("P3"),
+            py::arg("O1"), py::arg("O2"), py::arg("O3")
             );
     m.def(
             "refractive_project", &refractive_project,
