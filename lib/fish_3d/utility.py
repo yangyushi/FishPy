@@ -13,7 +13,7 @@ from matplotlib.colors import ListedColormap
 import mpl_toolkits.mplot3d.art3d as art3d
 from . import ray_trace
 from .cutility import join_pairs
-from .cstereo import match_v3
+from .cstereo import match_v3, refractive_triangulate
 from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3, get_trajs_3d
 from docplex.mp.model import Model
 from itertools import product
@@ -1326,3 +1326,58 @@ def solve_overlap_lp(points, errors, diameter):
             indices = np.array([x.solution_value for x in x_vars], dtype=bool)
             return points[indices]
     return points[np.argmin(errors)][np.newaxis, :]
+
+
+def refine_trajectory(trajectory, cameras, features, tol_2d):
+    """
+    Refine the trajectory so that each reprojected position
+        matches the features detected in different cameras.
+
+    The purpose of the function is to optimise the linearly
+        interpolated trajectories.
+
+    Args:
+        trajectory (numpy.ndarray): a fully interpolated trajectory,
+            shape (n_frame, 3).
+        cameras (list): a collections of cameras.
+        features (list): the positions of 2D features from
+            different cameras, shape of element: (n_frame, 2).
+        tol_2d (float): the tolerance for 2D reprojection errors.
+            The very problematic 3D points will be replaced by the
+            origional points in the `trajectory`.
+
+    Return:
+        numpy.ndarray: a optimised trajectory, where 3D locations
+            are re-calculated from the 2D features.
+    """
+    n_frame = len(trajectory)
+    n_view = len(cameras)
+
+    traj_reproj = np.array([cam.project_refractive(trajectory) for cam in cameras])
+    traj_2d_nview = np.empty((n_view, n_frame, 2))
+
+
+    for f in range(n_frame):
+        for v in range(n_view):
+            reproj = traj_reproj[v][f]
+            nearest = np.argmin(
+                np.linalg.norm(features[v][f] - reproj, axis=1)
+            )
+            traj_2d_nview[v][f] = features[v][f][nearest]
+
+    undist = np.array([
+        cameras[v].undistort_points(
+            traj_2d, want_uv=True
+        ) for v, traj_2d in enumerate(traj_2d_nview)
+    ])
+
+    refined, errors = refractive_triangulate(
+        *undist,
+        *[cam.p for cam in cameras],
+        *[cam.o for cam in cameras],
+    )
+
+    use_traj = errors > tol_2d
+    refined[use_traj] = trajectory[use_traj]
+
+    return refined
