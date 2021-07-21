@@ -158,7 +158,7 @@ class Trajectory():
         return self
 
     def interpolate(self):
-        if len(self.positions) == self.time[-1] - self.time[0]:
+        if len(np.unique(np.diff(self.time))) == 0:
             return
         else:
             dimensions = range(self.positions.shape[1])
@@ -172,6 +172,16 @@ class Trajectory():
             self.positions = np.vstack(pos_nd_interp).T
 
     def break_into_two(self, time_index):
+        """
+        Break one trajectory into two trajectories.
+
+        Args:
+            time_index (int): the *index* of self.time at which the trajectory
+                will be break down.
+
+        Return:
+            list: a list of two trajecotires
+        """
         p1 = self.positions[:time_index]
         t1 = self.time[:time_index]
         p2 = self.positions[time_index:]

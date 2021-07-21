@@ -738,7 +738,7 @@ class Trajectory():
         return pos_predict
 
     def interpolate(self):
-        if len(self.positions) == self.time[-1] - self.time[0]:
+        if len(np.unique(np.diff(self.time))) == 0:
             return
         else:
             dimensions = range(self.positions.shape[1])
@@ -1140,7 +1140,11 @@ class Movie:
         Dump the movie as xyz files. Particle labels indicate the IDs.
 
         Args:
-            filename (str): the name of the xyz file
+            filename (str): the name of the xyz file.
+            tank (Tank): the Tank object.
+
+        Return:
+            None
         """
         if '.xyz' == filename[-4:]:
             fname = filename
