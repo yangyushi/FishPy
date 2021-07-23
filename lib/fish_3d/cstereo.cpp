@@ -85,7 +85,7 @@ tuple<Coord3D, Arr1D> locate_v3(
 }
 
 
-tuple<Coord3D, Arr1D> refractive_triangulate(
+Coord3D refractive_triangulate(
             Coord2D& C1, Coord2D& C2, Coord2D& C3,
             ProjMat P1, ProjMat P2, ProjMat P3,
             Vec3D O1, Vec3D O2, Vec3D O3
@@ -101,16 +101,14 @@ tuple<Coord3D, Arr1D> refractive_triangulate(
     TriXYZ Os{O1, O2, O3};
 
     Coord3D positions{n_frame, 3};
-    Arr1D errors{n_frame, 1};
 
     for (int f = 0; f < n_frame; f++){
         TriXY centres{C1.row(f), C2.row(f), C3.row(f)};
         xyz = three_view_reconstruct(centres, Ps, Os);
         positions.row(f) = xyz;
-        errors.row(f) = get_error_with_xyz(centres, Ps, Os, xyz);
     }
 
-    return make_tuple(positions, errors);
+    return positions;
 }
 
 

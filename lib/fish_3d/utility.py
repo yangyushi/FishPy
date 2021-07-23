@@ -1356,28 +1356,31 @@ def refine_trajectory(trajectory, cameras, features, tol_2d):
     traj_reproj = np.array([cam.project_refractive(trajectory) for cam in cameras])
     traj_2d_nview = np.empty((n_view, n_frame, 2))
 
+    mask = np.ones(n_frame).astype(bool)
+
 
     for f in range(n_frame):
         for v in range(n_view):
             reproj = traj_reproj[v][f]
-            nearest = np.argmin(
-                np.linalg.norm(features[v][f] - reproj, axis=1)
-            )
+            distances = np.linalg.norm(features[v][f] - reproj, axis=1)
+            nearest = np.argmin(distances)
+            if distances[nearest] > tol_2d:
+                mask[f] = False
             traj_2d_nview[v][f] = features[v][f][nearest]
 
     undist = np.array([
         cameras[v].undistort_points(
-            traj_2d, want_uv=True
+            traj_2d[mask], want_uv=True
         ) for v, traj_2d in enumerate(traj_2d_nview)
     ])
 
-    refined, errors = refractive_triangulate(
+    refined = refractive_triangulate(
         *undist,
         *[cam.p for cam in cameras],
         *[cam.o for cam in cameras],
     )
 
-    use_traj = errors > tol_2d
-    refined[use_traj] = trajectory[use_traj]
+    new_traj = trajectory.copy()
+    new_traj[mask] = refined
 
-    return refined
+    return new_traj
