@@ -312,7 +312,7 @@ class Camera():
         """
         return cv2.undistort(image, self.k, self.distortion)
 
-    def undistort_points(self, points: np.array, want_uv=False):
+    def undistort_points(self, points: np.array, want_uv=True):
         """
         Undistort many points in an image, coordinate is (u, v), NOT (x, y)
 
@@ -708,6 +708,38 @@ def get_fundamental(cam_1: 'Camera', cam_2: 'Camera'):
     ])
     F = np.linalg.inv(cam_2.k).T @ r12 @ cam_1.k.T @ cross
     return F
+
+
+def detect_chessboard(image, corner_number, win_size=5):
+    """
+    Find the corners on a chessboard
+
+    Args:
+        image (np.ndarray): a 2D image.
+        corner_number (tuple): the number of points on each side
+        win_size (float): for optimisation
+
+    Return:
+        np.ndarray: the location of corners in the image. shape (n, 2)
+    """
+    ret, corners = cv2.findChessboardCorners(
+        image, corner_number,
+        flags=sum((
+            cv2.CALIB_CB_FAST_CHECK,
+            cv2.CALIB_CB_ADAPTIVE_THRESH
+            ))
+    )
+    if ret:
+        corners_refined = cv2.cornerSubPix(
+            image, corners, (win_size, win_size), (-1, -1),
+            criteria=(
+                cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
+                100, 0.1
+            )
+        )
+        return np.squeeze(corners_refined)
+    else:
+        return np.empty((0, 2))
 
 
 if __name__ == "__main__":
