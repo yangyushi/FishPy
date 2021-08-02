@@ -10,7 +10,7 @@ from .camera import get_fundamental
 from .stereolink import triangulation_v3
 
 
-def get_conic_coef(a, b, xc, yc, rotation):
+def get_conic_coef(xc, yc, a, b, rotation):
     """
     Represent an ellipse from geometric form (a, b, x_centre, y_centre, rotation)
     to the algebraic form (α x^2 + β x y + γ y^2 + δ x + ε y + η)
@@ -18,10 +18,10 @@ def get_conic_coef(a, b, xc, yc, rotation):
     The parameters are consistense with the parameters of skimage.measure.EllipseModel
 
     Args:
-        a (float): a
-        b (float): b
         xc (float): x_centre
         yc (float): y_centre
+        a (float): a
+        b (float): b
         rotation (float): rotation
 
     Return:
@@ -84,7 +84,7 @@ def get_geometric_coef(matrix):
         matrix (np.ndarray): the conic matrix, being AQ in the wiki.
 
     Return:
-        tuple: (a, b, xc, yc, rotation)
+        tuple: (xc, yc, a, b, rotation)
     """
     triu_idx = np.triu_indices_from(matrix)
     A, B, D, C, E, F = matrix[triu_idx]
@@ -98,10 +98,13 @@ def get_geometric_coef(matrix):
     (lambda_1, lambda_2), rot_mat = np.linalg.eigh(A33)
     rot_mat = rot_mat / np.linalg.norm(rot_mat, axis=0)
     K = - np.linalg.det(matrix) / np.linalg.det(A33)
-    a = np.sqrt(K / lambda_2)
-    b = np.sqrt(K / lambda_1)
     theta = 0.5 * np.arctan2(B, A-C)
-    return a, b, xc, yc, theta
+    if K < 0:
+        return xc, yc, np.nan, np.nan, theta
+    else:
+        a = np.sqrt(K / lambda_2)
+        b = np.sqrt(K / lambda_1)
+        return xc, yc, a, b, theta
 
 
 def parse_ellipses_imagej(csv_file):
@@ -113,7 +116,7 @@ def parse_ellipses_imagej(csv_file):
     rotation = rotation / 180 * np.pi
     a = major / 2
     b = minor / 2
-    return np.vstack((a, b, xc, yc, rotation)).T
+    return np.vstack((xc, yc, a, b, rotation)).T
 
 
 def draw_ellipse(angle: np.ndarray, ellipse: List[float]) -> np.ndarray:
@@ -121,7 +124,8 @@ def draw_ellipse(angle: np.ndarray, ellipse: List[float]) -> np.ndarray:
     return (u, v) coordinates for plotting
     no need to use `np.flip` to plot with figure
     """
-    a, b, xc, yc, rotation = ellipse
+    xc, yc, a, b, rotation = ellipse
+    rotation *= -1
     x_eb = np.cos(angle) * a  # ellipse basis
     y_eb = np.sin(angle) * b
     rot_mat = np.array([
@@ -141,7 +145,7 @@ def find_projection(ellipse, line):
     I am sorry for the inconsistent notations
     """
     Sqrt = np.sqrt
-    al, be, xc, yc, t = ellipse
+    xc, yc, al, be, t = ellipse
     a1, b1, c1 = line
     a = a1 * np.cos(t) + b1 * np.sin(t)
     b = b1 * np.cos(t) - a1 * np.sin(t)
