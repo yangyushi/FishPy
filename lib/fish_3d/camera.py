@@ -690,8 +690,8 @@ def get_fundamental(cam_1: 'Camera', cam_2: 'Camera'):
     (ref: https://sourishghosh.com/2016/fundamental-matrix-from-camera-matrices/)
 
     Args:
-        cam_1 (Camera): Camera instance  whose P, K, R, t, C are all known
-        cam_2 (Camera): Camera instance  whose P, K, R, t, C are all known
+        cam_1 (Camera): Camera instance  whose P, K, R, t, o are all known
+        cam_2 (Camera): Camera instance  whose P, K, R, t, o are all known
 
     Return:
         np.ndarray: the fundamental matrix F, where
@@ -699,7 +699,7 @@ def get_fundamental(cam_1: 'Camera', cam_2: 'Camera'):
             2. F @ x1 = l2  (epipolar line)
     """
     r12 = cam_2.r @ cam_1.r.T
-    t12 = cam_2.r @ (cam_2.c - cam_1.c)
+    t12 = cam_2.r @ (cam_2.o - cam_1.o)
     A = cam_1.k @ r12.T @ t12
     cross = np.array([
         [0, -A[2], A[1]],
