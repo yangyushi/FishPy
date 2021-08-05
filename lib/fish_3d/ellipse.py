@@ -11,6 +11,92 @@ from .stereolink import triangulation_v3
 from scipy.spatial.transform import Rotation
 
 
+def fit_ellipse(data):
+    """
+    Estimate circle model from data using total least squares.
+
+    I copied it from the scikit-image library
+
+    References: Halir, R.; Flusser, J. "Numerically stable direct\
+        least squares fitting of ellipses"
+
+    Args:
+        data (numpy.ndarray): 2d features, shape (n, 2)
+
+    Return:
+        numpy.ndarray: the coefficients of the conic in the form of\
+            :math:`c_1 x^2 + c_2 xy + c^3 y^2 + c^4 x + c^5 y + c_6 = 0`
+    """
+    # to prevent integer overflow
+    float_type = np.promote_types(data.dtype, np.float32)
+    x, y = data.astype(float_type).T
+
+    # Quadratic part of design matrix [eqn. 15] from [1]
+    D1 = np.vstack([x ** 2, x * y, y ** 2]).T
+
+    # Linear part of design matrix [eqn. 16] from [1]
+    D2 = np.vstack([x, y, np.ones_like(x)]).T
+
+    # forming scatter matrix [eqn. 17]
+    S1 = D1.T @ D1
+    S2 = D1.T @ D2
+    S3 = D2.T @ D2
+
+    # Constraint matrix [eqn. 18]
+    C1 = np.array([[0., 0., 2.], [0., -1., 0.], [2., 0., 0.]])
+
+    try:
+        M = np.linalg.inv(C1) @ (S1 - S2 @ np.linalg.inv(S3) @ S2.T)  # [eqn. 29]
+    except np.linalg.LinAlgError:  # LinAlgError: Singular matrix
+        return False
+
+    eig_vals, eig_vecs = np.linalg.eig(M) # [eqn. 28]
+
+    # eigenvector must meet constraint 4ac - b^2 to be valid.
+    cond = 4 * np.multiply(eig_vecs[0, :], eig_vecs[2, :]) \
+           - np.power(eig_vecs[1, :], 2)
+    a1 = eig_vecs[:, (cond > 0)]
+
+    # seeks for empty matrix
+    if 0 in a1.shape or len(a1.ravel()) != 3:
+        return False
+    a, b, c = a1.ravel()
+
+    # |d f g> = -S3^(-1)*S2^(T)*|a b c> [eqn. 24]
+    a2 = -np.linalg.inv(S3) @ S2.T @ a1
+    d, f, g = a2.ravel()
+
+    # eigenvectors are the coefficients of an ellipse in general form
+    # a*x^2 + 2*b*x*y + c*y^2 + 2*d*x + 2*f*y + g = 0 (eqn. 15) from [2]
+    b /= 2.
+    d /= 2.
+    f /= 2.
+
+    # finding center of ellipse
+    x0 = (c * d - b * f) / (b ** 2. - a * c)  # b = B*2
+    y0 = (a * f - b * d) / (b ** 2. - a * c)
+
+    # Find the semi-axes lengths
+    numerator = a * f ** 2 + c * d ** 2 + g * b ** 2 \
+                - 2 * b * d * f - a * c * g
+    term = np.sqrt((a - c) ** 2 + 4 * b ** 2)
+    denominator1 = (b ** 2 - a * c) * (term - (a + c))
+    denominator2 = (b ** 2 - a * c) * (- term - (a + c))
+    width = np.sqrt(2 * numerator / denominator1)
+    height = np.sqrt(2 * numerator / denominator2)
+
+    phi = 0.5 * np.arctan((2. * b) / (a - c))
+    if a > c:
+        phi += 0.5 * np.pi
+
+    params = np.nan_to_num([x0, y0, width, height, phi]).tolist()
+    params = [float(np.real(x)) for x in params]
+    return get_conic_coef(*params)
+
+
+    return coef
+
+
 def get_conic_coef(xc, yc, a, b, rotation):
     """
     Represent an ellipse from geometric form (a, b, x_centre, y_centre, rotation)
@@ -203,7 +289,10 @@ def get_intersection(ellipse, line):
         return np.array([[x1, x2], [y1, y2]])
 
 
-def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N: int, min_diff=250, max_cost=10):
+def match_ellipse_sloopy(
+    cameras: List['Camera'], ellipses: List[List[float]], N: int,
+    min_diff=250, max_cost=10
+):
     """
     .. code-block::
 
