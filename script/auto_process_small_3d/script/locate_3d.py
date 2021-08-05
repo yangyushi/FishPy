@@ -46,8 +46,16 @@ cameras = []
 feature_handlers = []
 for idx in range(1, 4):
     idx = str(idx)
-    with open(conf['camera'][idx], 'rb') as f:
-        cameras.append(pickle.load(f))
+    filename = conf['camera'][idx]
+    if filename[-4:] == ".pkl":
+        with open(filename, 'rb') as f:
+            cameras.append(pickle.load(f))
+    elif filename[-5:] == ".json":
+        cam = f3.Camera()
+        cam.load_json(filename)
+        cameras.append(cam)
+    else:
+        exit("Can't load the camera file", filename)
 
     feature_handlers.append(open(conf['feature'][idx], 'rb'))
 

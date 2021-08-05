@@ -566,7 +566,6 @@ class Camera():
         self.distortion = np.array(data['distortion'])
         self.update()
 
-
     def save_json(self, fname):
         """
         Dump essential parameters to a json file
