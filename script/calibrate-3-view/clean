@@ -1,0 +1,4 @@
+rm -f *.pkl
+rm -f *.npy
+rm -f *.json
+rm -f *.pdf

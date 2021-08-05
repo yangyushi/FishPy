@@ -18,7 +18,7 @@ from .cutility import join_pairs
 from .cstereo import match_v3, refractive_triangulate
 from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3, get_trajs_3d
 from .camera import Camera
-from .ellipse import cost_conic, cost_conic_triple
+from .ellipse import cost_conic, cost_conic_triple, cost_circle_triple
 from docplex.mp.model import Model
 from itertools import product
 
@@ -1455,6 +1455,7 @@ def optimise_c2c(R, T, K, C, p2d, p3dh, method='Nelder-Mead'):
 
 def optimise_triplet_c2c(
     R1, T1, R2, T2, R3, T3, K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh,
+    force_circle
 ):
     """
     Optimise three camera extrinsic parameters by measuring the ellipse (conic)\
@@ -1487,6 +1488,8 @@ def optimise_triplet_c2c(
             problem from camera 3, shape (n, 2)
         p3dh (numpy.ndarray): the homogeneous representations of 3d points\
             for the PnP problem, shape (n, 3)
+        force_circle (bool): if True, the cost function will force the\
+            reconstructed conic to be a circle.
 
     Return:
         tuple: the optimised :math:`\\mathbf{R} \\in so(3)` and\
@@ -1494,10 +1497,16 @@ def optimise_triplet_c2c(
 
     """
     RT123 = np.concatenate((R1, T1, R2, T2, R3, T3))
-    result = minimize(
-        fun=cost_conic_triple, x0=RT123,
-        args=(K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh)
-    )
+    if force_circle:
+        result = minimize(
+            fun=cost_circle_triple, x0=RT123,
+            args=(K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh)
+        )
+    else:
+        result = minimize(
+            fun=cost_conic_triple, x0=RT123,
+            args=(K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh)
+        )
     opt = result.x
     return opt.reshape((6, 3), order="C")
 
@@ -1531,7 +1540,7 @@ def get_optimised_camera_c2c(
 
 
 def get_optimised_camera_triplet_c2c(
-    cameras, conic_matrices, p2ds, p3d, method="Nelder-Mead"
+    cameras, conic_matrices, p2ds, p3d, force_circle, method="Nelder-Mead"
 ):
     """
     Optimise 3 cameras with 2D-3D correspondances as well as a measured
@@ -1542,6 +1551,8 @@ def get_optimised_camera_triplet_c2c(
         conic_matrices(list): three conic matrices with shape (3, 3)
         p2ds (list): three *distorted* 2d locations whose shape is (n, 2)
         p3d (numpy.ndarray): the 3d locations, shape (n, 3)
+        force_circle (bool): if True the cost function will force the\
+            reconstructed ellipse to be a circle.
         method (str): the method for the non-lienar optimisation
 
     Return:
@@ -1558,11 +1569,15 @@ def get_optimised_camera_triplet_c2c(
             distCoeffs=cam.distortion,
             flags=cv2.SOLVEPNP_ITERATIVE
         )
-        R, T = optimise_c2c(
-            R, T, K=cam.k, C=conic_matrices[i],
-            p2d=cam.undistort_points(p2ds[i]),
-            p3dh=p3dh,
-        )
+        if force_circle:
+            R, T = optimise_c2c(
+                R, T, K=cam.k, C=conic_matrices[i],
+                p2d=cam.undistort_points(p2ds[i]),
+                p3dh=p3dh,
+            )
+        else:
+            R = R.ravel()
+            T = T.ravel()
         RT.append(R)
         RT.append(T)
         K.append(cam.k)
@@ -1570,7 +1585,7 @@ def get_optimised_camera_triplet_c2c(
     r1, t1, r2, t2, r3, t3 = optimise_triplet_c2c(
         *RT, *K, *conic_matrices,
         *[c.undistort_points(p) for c, p in zip(cameras, p2ds)],
-        p3dh
+        p3dh, force_circle
     )
 
     R_opt = [r1, r2, r3]

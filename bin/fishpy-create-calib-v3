@@ -1,0 +1,5 @@
+# find the path of fishpy
+SN=${0##*/}  # script name
+fishpy=${0%/bin/$SN}  # path to fishpy
+
+cp -r "$fishpy/script/calibrate-3-view" "$PWD"
