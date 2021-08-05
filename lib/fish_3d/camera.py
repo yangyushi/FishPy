@@ -232,9 +232,14 @@ class Camera():
             self.rotation = R.from_dcm(calib_result['Rc_ext'])
         self.update()
 
-    def read_int(self, pkl_file: str):
-        with open(pkl_file, 'rb') as f:
-            cam = pickle.load(f)
+    def read_int(self, another):
+        if type(another) == str:
+            with open(another, 'rb') as f:
+                cam = pickle.load(f)
+        elif type(another) == Camera:
+            cam = another
+        else:
+            raise TypeError("Unsupported type to load intrinsic parameters.")
         self.k = cam.k
         self.distortion = cam.distortion
         self.update()
@@ -329,16 +334,16 @@ class Camera():
         new_points = np.expand_dims(new_points, 1)  # (n, 2) --> (n, 1, 2)
         if want_uv:
             undistorted = cv2.undistortPoints(
-                    src=new_points,
-                    cameraMatrix=self.k,
-                    distCoeffs=self.distortion,
-                    P=self.k,
+                src=new_points,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion,
+                P=self.k,
             )
         else:
             undistorted = cv2.undistortPoints(
-                    src=new_points,
-                    cameraMatrix=self.k,
-                    distCoeffs=self.distortion,
+                src=new_points,
+                cameraMatrix=self.k,
+                distCoeffs=self.distortion,
             )
         return np.squeeze(undistorted)
 
@@ -699,7 +704,7 @@ def get_fundamental(cam_1: 'Camera', cam_2: 'Camera'):
             2. F @ x1 = l2  (epipolar line)
     """
     r12 = cam_2.r @ cam_1.r.T
-    t12 = cam_2.r @ (cam_2.o - cam_1.o)
+    t12 = np.ravel(cam_2.r @ (cam_2.o - cam_1.o))
     A = cam_1.k @ r12.T @ t12
     cross = np.array([
         [0, -A[2], A[1]],
