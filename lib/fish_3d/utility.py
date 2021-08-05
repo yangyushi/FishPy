@@ -166,14 +166,14 @@ def get_ABCD(corners, width, excess_rows) -> dict:
     (AB // CD, AC // BD)
 
     Args:
-        corners (:obj:`numpy.ndarray`): the coordinates of chessboard corners found by
+        corners (`numpy.ndarray`): the coordinates of chessboard corners found by
                                         ``cv2.findChessboardCorners``, shape (n, 2)
-        width (:obj:`int`): the number of corners in a row
-        excess_rows(:obj:`int`): if the chessboard is make of (m, n) corners (m > n)
+        width (`int`): the number of corners in a row
+        excess_rows(`int`): if the chessboard is make of (m, n) corners (m > n)
                                  then n is *width*, excess_rows = m - n
 
     Return:
-        :obj:`dict`: the locations of A, B, C, D respectively.
+        `dict`: the locations of A, B, C, D respectively.
     """
     points_Ah, points_Bh, points_Ch, points_Dh = [], [], [], []
     for er in range(excess_rows + 1):
@@ -202,7 +202,8 @@ def get_ABCD(corners, width, excess_rows) -> dict:
 
 def get_affinity(abcd):
     """
-    Getting the affinity matrix from a set of corners measured from a chessboard image
+    Getting the affinity matrix from a set of corners measured from a\
+        chessboard image
 
     what is ABCD?
 
@@ -215,10 +216,10 @@ def get_affinity(abcd):
         A +-------+ B
 
     Args:
-        abcd (:obj:`dict`): the measured coordinates of chessboard corners
+        abcd (`dict`): the measured coordinates of chessboard corners
 
     Return:
-        :obj:`numpy.ndarray`: the affine transformation
+        `numpy.ndarray`: the affine transformation
     """
     lAB = np.cross(abcd['A'], abcd['B'])  # (n, 3)
     lCD = np.cross(abcd['C'], abcd['D'])  # (n, 3)
@@ -244,7 +245,8 @@ def get_affinity(abcd):
 def get_similarity(abcd, H_aff):
     """
     Getting the similarity matrix from a set of corners measured from
-    what is ABCD?
+
+    What is ABCD?
 
     .. code-block:: none
 
@@ -255,11 +257,12 @@ def get_similarity(abcd, H_aff):
         A +-------+ B
 
     Args:
-        abcd (:obj:`dict`): the measured coordinates of chessboard corners
-        H_aff (:obj:`numpy.ndarray`): affinity that makes coordinates affinely recitified
+        abcd (`dict`): the measured coordinates of chessboard corners
+        H_aff (`numpy.ndarray`): affinity that makes coordinates affinely\
+            recitified
 
     Return:
-        :obj:`numpy.ndarray`: the similar transformation matrix
+        `numpy.ndarray`: the similar transformation matrix
     """
     abcd_aff = {}
     for letter in abcd:
@@ -326,9 +329,9 @@ def get_homography_image(image, rows, cols, camera_model=None):
     get the homography transformation from an image with a chess-board
 
     Args:
-        image (:obj:`numpy.ndarray`): a 2d image
-        rows (:obj:`int`): the number of *internal corners* inside each row
-        cols (:obj:`int`): the number of *internal corners* inside each column
+        image (`numpy.ndarray`): a 2d image
+        rows (`int`): the number of *internal corners* inside each row
+        cols (`int`): the number of *internal corners* inside each column
         camera_model (Camera): (optional) a Camera instance that stores the
                   distortion coefficients of the lens
     """
@@ -348,11 +351,13 @@ def get_homography_image(image, rows, cols, camera_model=None):
 
 def get_homography(camera, angle_num=10):
     """
-    Get the homography that simiarly recover the 2d image perpendicular to z-axis
+    Get the homography that simiarly recover the 2d image\
+        perpendicular to z-axis
 
     Args:
         camera (Camera): a Camera instance of current camera
-        angle_num (:obj:`int`): a virtual chessboard is rotated angle_num times for calculation
+        angle_num (`int`): a virtual chessboard is rotated angle_num\
+            times for calculation
     """
     angles = np.linspace(0, np.pi/2, angle_num)  # rotation_angle
 
@@ -381,7 +386,8 @@ def get_homography(camera, angle_num=10):
 
         abcd_3d_rot = R @ abcd_3d  # shape (3 dim, 4 corners)
 
-        abcd_3d_rot_h = np.vstack((abcd_3d_rot, np.ones((1, 4))))  # shape (4 dim, 4 corners)
+        # shape (4 dim, 4 corners)
+        abcd_3d_rot_h = np.vstack((abcd_3d_rot, np.ones((1, 4))))
 
         abcd_2dh = camera.p @ abcd_3d_rot_h
         abcd_2dh = (abcd_2dh / abcd_2dh[-1, :]).T  # shape (4 corners, 3 dim)
@@ -403,13 +409,15 @@ def update_orientation(orientations, locations, H, length=10):
     This is function is used to get a 'recitified' orientation
 
     Args:
-        orientation (:obj:`numpy.ndarray`): angles of the fish, sin(angle) --> x very sadly
-        locatons (:obj:`numpy.ndarray`): xy positons of fish in the image, not row-col
-        H (:obj:`numpy.ndarray`): the homography matrix
-        length (:obj:`int`): length of the orientation bar
+        orientation (`numpy.ndarray`): angles of the fish,\
+            sin(angle) -> x very sadly
+        locatons (`numpy.ndarray`): xy positons of fish in\
+            the image, not row-col
+        H (`numpy.ndarray`): the homography matrix
+        length (`int`): length of the orientation bar
 
     Return:
-        :obj:`numpy.ndarray`: the recitified orientations
+        `numpy.ndarray`: the recitified orientations
     """
     orient_rec = []
     for o, xy in zip(orientations, locations):
@@ -438,8 +446,8 @@ def get_orient_line(locations, orientations, length=10):
     Get the line for plot the orientations
 
     Args:
-        locations (:obj:`numpy.ndarray`): shape (n, 2)
-        orientations (:obj:`numpy.ndarray`): shape (n, )
+        locations (`numpy.ndarray`): shape (n, 2)
+        orientations (`numpy.ndarray`): shape (n, )
     """
     unit_vector = np.array((np.sin(orientations), np.cos(orientations)))
     oline_1 = locations - length * unit_vector
@@ -461,19 +469,20 @@ def polar_chop(image, H_sim, centre, radius, n_angle, n_radius, dist_coef, k):
     return the chopped result as a labelled image
 
     Args:
-        image (:obj:`numpy.ndarray`): 2d image as a numpy array
-        H_sim (:obj:`numpy.ndarray`): a homography (3 x 3 matrix) to similarly rectify the image
-        centre (:obj:`numpy.ndarray`): origin of the polar coordinate system
-        radius (:obj:`int`): maximum radius in the polar coordinate system
-        n_angle (:obj:`int`): number of bins in terms of angle
-        n_radius (:obj:`int`): number of bins in terms of radius
-        dist_coef (:obj:`numpy.ndarray`): distortion coefficients of the camera, shape (5, )
-                           k1, k2, p1, p2, k3 (from opencv by default)
-        k: (:obj:`numpy.ndarray`) camera calibration matrix (bible, P155)
+        image (`numpy.ndarray`): 2d image as a numpy array
+        H_sim (`numpy.ndarray`): a homography (3 x 3 matrix) to similarly\
+            rectify the image
+        centre (`numpy.ndarray`): origin of the polar coordinate system
+        radius (`int`): maximum radius in the polar coordinate system
+        n_angle (`int`): number of bins in terms of angle
+        n_radius (`int`): number of bins in terms of radius
+        dist_coef (`numpy.ndarray`): distortion coefficients of the camera\
+            , shape (5, ), k1, k2, p1, p2, k3 (from opencv by default)
+        k: (`numpy.ndarray`) camera calibration matrix (bible, P155)
 
     Return:
-        :obj:`numpy.array`: labelled image where each chopped regions were labelled with
-            different values
+        `numpy.array`: labelled image where each chopped regions were labelled\
+            with different values
     """
     # setting up bin edges
     be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # bin_edge
@@ -540,12 +549,12 @@ def get_polar_chop_spatial(radius, n_angle, n_radius):
         and the radius/angle values.
 
     Args:
-        radius (:obj:`int`): maximum radius in the polar coordinate system
-        n_angle (:obj:`int`): number of bins in terms of angle
-        n_radius (:obj:`int`): number of bins in terms of radius
+        radius (`int`): maximum radius in the polar coordinate system
+        n_angle (`int`): number of bins in terms of angle
+        n_radius (`int`): number of bins in terms of radius
 
     Return:
-        :obj:`dict`: { label_value : (angle, radius), ... }
+        `dict`: { label_value : (angle, radius), ... }
     """
     result = {}
     be_angle = np.linspace(0, 2 * np.pi, n_angle+1)  # be = bin edge
@@ -581,8 +590,8 @@ def box_count_polar_image(image, indices, invert=False, rawdata=False):
     Calculate the average density inside different regions inside an image
 
     Args:
-        image (:obj:`numpy.ndarray`): the image taken by the camera without undistortion
-        indices (:obj:`numpy.ndarray`): labelled image specifying different box regions
+        image (`numpy.ndarray`): the image taken by the camera without undistortion
+        indices (`numpy.ndarray`): labelled image specifying different box regions
     """
     if invert:
         data = image.max() - image.ravel()
@@ -598,7 +607,9 @@ def box_count_polar_image(image, indices, invert=False, rawdata=False):
         return np.std(intensities), np.min(intensities), np.mean(intensities)
 
 
-def box_count_polar_video(video, labels, cores=2, report=True, invert=False, rawdata=False):
+def box_count_polar_video(
+        video, labels, cores=2, report=True, invert=False, rawdata=False
+):
     if report:
         to_iter = tqdm(video)
     else:
@@ -615,13 +626,13 @@ def box_count_polar_video(video, labels, cores=2, report=True, invert=False, raw
 def get_overlap_pairs(trajs, num, rtol):
     """
     Args:
-        trajs (:obj:`list`): a collections of trajectories, each trajectory is
+        trajs (`list`): a collections of trajectories, each trajectory is
             a tuple, containing (positions [N, 3], reprojection_error)
-        num (:obj:`int`): the maximum number of allowed overlapped objects
-        rtol (:obj:`float`): the minimum distance between two non-overlapped objects
+        num (`int`): the maximum number of allowed overlapped objects
+        rtol (`float`): the minimum distance between two non-overlapped objects
 
     Return:
-        :obj:`list` of :obj:`tuple`: the indices of overlapped objects
+        `list` of `tuple`: the indices of overlapped objects
     """
     N, T = len(trajs), len(trajs[0][0])
     overlap_pairs = []
@@ -646,11 +657,11 @@ def convert_traj_format(traj, t0):
     be replaced by linear interpolation
 
     Args:
-        traj (:obj:`tuple`): one trajectory, represented by (positions, error)
-        t0 (:obj:`int`) : the starting frame of this trajectory
+        traj (`tuple`): one trajectory, represented by (positions, error)
+        t0 (`int`) : the starting frame of this trajectory
 
     Return:
-        :obj:`list` of :obj:`tuple`: a list of ONE trajectory
+        `list` of `tuple`: a list of ONE trajectory
             represented by (time, positions)
     """
     # detect head NAN
@@ -680,12 +691,12 @@ def fill_hole_1d(binary, size):
     Fill "holes" in a binary signal whose length is smaller than size
 
     Args:
-        binary (:obj:`numpy.ndarray`): a boolean numpy array
-        size (:obj:`int`): the holes whose length is smaller than size
+        binary (`numpy.ndarray`): a boolean numpy array
+        size (`int`): the holes whose length is smaller than size
             will be filled
 
     Return:
-        :obj:`numpy.ndarray`: the filled binary array
+        `numpy.ndarray`: the filled binary array
 
     Example:
         >>> binary = np.array([0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1])
@@ -709,11 +720,13 @@ def interpolate_nan(coordinates):
     replace nan with linear interpolation of a (n, 3) array along the first axis
 
     Args:
-        coordinates (:obj:`numpy.ndarray`): xyz coordinates of a trajectory, might contain nan
-        is_nan (:obj:`numpy.ndarray`): 1d bolean array showing if coordinates[i] is nan or not
+        coordinates (`numpy.ndarray`): xyz coordinates of a trajectory,\
+            might contain nan
+        is_nan (`numpy.ndarray`): 1d bolean array showing if coordinates[i]\
+            is nan or not
 
     Return:
-        :obj:`numpy.ndarray`: the interpolated coordinates array
+        `numpy.ndarray`: the interpolated coordinates array
 
     Example:
         >>> target = np.array([np.arange(100)] * 3).T.astype(float)
@@ -753,16 +766,15 @@ def get_valid_ctraj(trajectories, z_min, z_max):
     Extract valid trajectories (inside box boundary) from raw trajectories
 
     Args:
-        trajectories
-            :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]:
+        trajectories (`list` [ ( `numpy.ndarray`, `float` ) ]):\
             a collection of trajectories, each trajectory is (positions , error)
-        z_min (:obj:`float`): the minimum allowed z-coordinate of each trajectory
+        z_min (`float`): the minimum allowed z-coordinate of each trajectory\
             corresponding to the bottom of the boundary.
-        z_max (:obj:`float`): the maximum allowed z-coordinate of each trajectory
+        z_max (`float`): the maximum allowed z-coordinate of each trajectory\
             corresponding to the top of the boundary.
 
     Return:
-        :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]: valid trajectories
+        `list` [ ( `numpy.ndarray`, `float` ) ]: valid trajectories
     """
     valid_trajectories = []
     is_valid = True
@@ -782,23 +794,24 @@ def post_process_ctraj(trajs_3d, t0, z_min, z_max, num=5, rtol=10):
     Refining the trajectories obtained from cgreta, following three steps
 
         1. Removing trajectories that is outside the boundary (fish tank).
-        2. Removing trajectories that overlaps. Overlapping means for 2 trajectories,
-           there are more than :py:data:`num` positions whose distance is below :py:data:`rtol`
-        3. Convert the format of the trajectory, from (position, error) to (time, position)
+        2. Removing trajectories that overlaps. Overlapping means for\
+           2 trajectories, there are more than :py:data:`num` positions\
+           whose distance is below :py:data:`rtol`
+        3. Convert the format of the trajectory, from (position, error)\
+           to (time, position)
 
     Args:
-        trajs_3d
-            :obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]:
+        trajs_3d (`list` [ ( `numpy.ndarray`, `float` ) ]):\
             a collection of trajectories, each trajectory is (positions , error)
-        t0 (:obj:`int`): the starting frame of these trajectories.
-        z_min (:obj:`float`): the minimum allowed z-coordinate of each trajectory
+        t0 (`int`): the starting frame of these trajectories.
+        z_min (`float`): the minimum allowed z-coordinate of each trajectory\
             corresponding to the bottom of the boundary.
-        z_max (:obj:`float`): the maximum allowed z-coordinate of each trajectory
+        z_max (`float`): the maximum allowed z-coordinate of each trajectory\
             corresponding to the top of the boundary.
-        num (:obj:`int`): the maximum number of allowed overlapped positions.
+        num (`int`): the maximum number of allowed overlapped positions.
 
     Return:
-        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`numpy.ndarray`) ]:
+        `list` [ (`numpy.ndarray`, `numpy.ndarray`) ]:\
         a collection of refined trajectories, represented as (time, position)
     """
     # remove trajectories that is outside the tank
@@ -836,25 +849,27 @@ def get_short_trajs(
 
     Args:
         cameras (Camera): cameras for 3 views
-        freatrues_mv_mt (:obj:`list`): 2d features in different views at different frames
-        st_error_tol (:obj:`float`): the stereo reprojection error cut-off for stereo linking
-        tau (:obj:`int`): the length of trajectories in each batch; unit: frame
+        freatrues_mv_mt (`list`): 2d features in different views\
+            at different frames
+        st_error_tol (`float`): the stereo reprojection error cut-off\
+            for stereo linking
+        tau (`int`): the length of trajectories in each batch; unit: frame
             the overlap between different batches will be `tau // 2`
-        z_min (:obj:`float`): the minimum allowed z-positions for all trajectories
-        z_max (:obj:`float`): the maximum allowed z-positions for all trajectories
-        t1 (:obj:`int`): the time duration in the first iteration in GReTA
-        t2 (:obj:`int`): the time duration in the second iteration in GReTA
-        t3 (:obj:`int`): the time duration in the third iteration in GReTA
-        overlap_num (:obj:`int`): if two trajectories have more numbers of
+        z_min (`float`): the minimum allowed z-values for all trajectories
+        z_max (`float`): the maximum allowed z-values for all trajectories
+        t1 (`int`): the time duration in the first iteration in GReTA
+        t2 (`int`): the time duration in the second iteration in GReTA
+        t3 (`int`): the time duration in the third iteration in GReTA
+        overlap_num (`int`): if two trajectories have more numbers of
             overlapped positions than `overlap_num`, establish a link.
-        overlap_rtol (:obj:`float`): if two trajectories have more numbers of
+        overlap_rtol (`float`): if two trajectories have more numbers of
             overlapped positions, link them.
-        reproj_err_tol (:obj:`float`): the 3d positiosn whose reprojection error
+        reproj_err_tol (`float`): the 3d positiosn whose reprojection error
             is greater than this will not be re-constructed, instead a NAN
             is inserted into the trajectory
 
     Return:
-        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ]:
+        `list` [ (`numpy.ndarray`, `float`) ]:
             trajectories
     """
     shift = t1 * t2 * t3
@@ -878,20 +893,22 @@ def get_short_trajs(
                 features_mt_mv[-1].append( features_mv_mt[frame][view] )
         if (t2 == 1 and t3 == 1):
             ctrajs_3d = get_trajs_3d(
-                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
-                search_range=search_range, re_max=reproj_err_tol
+                features_mt_mv, stereo_matches, proj_mats, cam_origins,
+                c_max=500, search_range=search_range, re_max=reproj_err_tol
             )
         elif (t2 > 1 and t3 == 1):
             ctrajs_3d = get_trajs_3d_t1t2(
-                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
-                search_range=search_range, search_range_traj=search_range,
-                tau_1=t1, tau_2=t2, re_max=reproj_err_tol
+                features_mt_mv, stereo_matches, proj_mats, cam_origins,
+                c_max=500, search_range=search_range,
+                search_range_traj=search_range, tau_1=t1, tau_2=t2,
+                re_max=reproj_err_tol
             )
         elif (t2 > 1 and t3 > 1):
             ctrajs_3d = get_trajs_3d_t1t2t3(
-                features_mt_mv, stereo_matches, proj_mats, cam_origins, c_max=500,
-                search_range=search_range, search_range_traj=search_range,
-                tau_1=t1, tau_2=t2, tau_3=t3, re_max=reproj_err_tol
+                features_mt_mv, stereo_matches, proj_mats, cam_origins,
+                c_max=500, search_range=search_range,
+                search_range_traj=search_range, tau_1=t1, tau_2=t2, tau_3=t3,
+                re_max=reproj_err_tol
             )
         else:
             raise ValueError("unsatisfied condition: t3 > 1")
@@ -905,21 +922,20 @@ def get_short_trajs(
 
 def remove_spatial_overlap(trajectories, ntol, rtol):
     """
-    If two trajectories were overlap in the space, choose the one
-    with minimum reprojection error.
+    If two trajectories were overlap in the space, choose the one\
+        with minimum reprojection error.
 
     Args:
-        trajectories ( :obj:`list` of (:obj:`numpy.ndarray`, :obj:`float`) ):
-            a collection of trajectories, each trajectory is
-            (positions, reprojection_error)
-        ntol (:obj:`int`): if two trajectories have more numbers of
-            overlapped positions than `ntol`, establish a link.
-        rtol (:obj:`float`): if two trajectories have more numbers of
-            overlapped positions, choose the one with smaller reprojection error.
+        trajectories (`list` of (`numpy.ndarray`, `float`)): a collection\
+            of trajectories, each trajectory is (positions, reprojection_error)
+        ntol (`int`): if two trajectories have more numbers of overlapped\
+            positions than `ntol`, establish a link.
+        rtol (`float`): if two trajectories have more numbers of overlapped\
+            positions, choose the one with smaller reprojection error.
 
     Return:
-        :obj:`list` of (:obj:`numpy.ndarray`, :obj:`float`):
-            trajectories without spatial overlap
+        `list` of (`numpy.ndarray`, `float`): trajectories without\
+            spatial overlap
     """
     trajs_filtered = []
     for t in trajectories:
@@ -949,32 +965,38 @@ def remove_spatial_overlap(trajectories, ntol, rtol):
         return trajs_opt
 
 
-def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol, unique='conn'):
+def get_temporal_overlapped_pairs(
+        batch_1, batch_2, lag, ntol, rtol, unique='conn'
+):
     """
     Get pairs that link overlapped trajectories from two batches.
     The temporal size of trajectories in both batches should be the same.
 
     Args:
         batch_1
-            (:obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]):
+            (`list` [ ( `numpy.ndarray`, `float` ) ]):\
             each trajectory is (positions, error), time is `[t0, t0 + size]`
         batch_2
-            (:obj:`list` [ ( :obj:`numpy.ndarray`, :obj:`float` ) ]):
-            each trajectory is (positions, error), time is `[t0 + lag, t0 + size + lag]`
-        lag (:obj:`int`): The temporal lag between two batches
-        ntol (:obj:`int`): if two trajectories have more numbers of
+            (`list` [ ( `numpy.ndarray`, `float` ) ]):\
+            each trajectory is (positions, error), time is\
+            `[t0 + lag, t0 + size + lag]`
+        lag (`int`): The temporal lag between two batches
+        ntol (`int`): if two trajectories have more numbers of\
             overlapped positions than `ntol`, establish a link
-        rtol (:obj:`float`): positions whose distance is smaller than `rtol`
+        rtol (`float`): positions whose distance is smaller than `rtol`\
             are considered to be overlapped.
 
     Return:
-        :obj:`numpy.ndarray`: indices of a pair of overlapped trajectories, shape (n, 2)
+        `numpy.ndarray`: indices of a pair of overlapped trajectories,\
+            shape (n, 2)
     """
     rtol_sq = rtol ** 2
     dist_mat = np.empty((len(batch_1), len(batch_2), lag))  # (N1, N2, lag)
     for i, t1 in enumerate(batch_1):
         for j, t2 in enumerate(batch_2):
-            dist_sq = np.sum(np.power(t1[0][-lag:] - t2[0][:lag], 2), axis=1)  # (lag,)
+            dist_sq = np.sum(
+                np.power(t1[0][-lag:] - t2[0][:lag], 2), axis=1
+            )  # (lag,)
             dist_mat[i, j, :] = dist_sq
     with np.errstate(invalid='ignore'):  # ignore the case like NAN < 5
         conn_mat = np.sum(dist_mat < rtol_sq, axis=2)
@@ -1002,7 +1024,8 @@ def get_temporal_overlapped_pairs(batch_1, batch_2, lag, ntol, rtol, unique='con
 
 def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
     """
-    For trajectorie in many batches, extend trajectories if they were overlapped.
+    For trajectorie in many batches, extend them if they were overlapped.
+
     For instance
 
     .. code-block:: none
@@ -1017,18 +1040,18 @@ def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
 
     Args:
         trajectory_batches
-            (:obj:`list` [ :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ] ]):
+            (`list` [ `list` [ (`numpy.ndarray`, `float`) ] ]):
             trajectories in different batches
-        lag (:obj:`int`): the overlapped time between trajectories in two successive
-            batches.  TODO: fix the bug when lag is odd number
-        ntol (:obj:`int`): if two trajectories have more numbers of
+        lag (`int`): the overlapped time between trajectories in two\
+            successive batches.  TODO: fix the bug when lag is odd number
+        ntol (`int`): if two trajectories have more numbers of\
             overlapped positions than `ntol`, merge the two.
-        rtol (:obj:`float`): positions whose distance is smaller than `rtol`
+        rtol (`float`): positions whose distance is smaller than `rtol`\
             are considered to be overlapped.
 
     Return:
-        :obj:`list` [ (:obj:`numpy.ndarray`, :obj:`float`) ]:
-        a collection of resolved trajectories
+        `list` [ (`numpy.ndarray`, `float`) ]: a collection of resolved\
+            trajectories
     """
     extended, fragments = [], []
     t0_extended, t0_fragments = [], []
@@ -1056,7 +1079,9 @@ def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
             new_t0_extended += [t0_extended[pe] for pe, p1 in pairs_extend]
 
             # add non-extended previously extended trajectories into fragments
-            ne_pe_indices = np.setdiff1d(np.arange(len(extended)), pairs_extend.T[0])
+            ne_pe_indices = np.setdiff1d(
+                np.arange(len(extended)), pairs_extend.T[0]
+            )
             fragments    += [extended[idx]    for idx in ne_pe_indices]
             t0_fragments += [t0_extended[idx] for idx in ne_pe_indices]
 
@@ -1065,18 +1090,23 @@ def resolve_temporal_overlap(trajectory_batches, lag, ntol, rtol):
         )
         pne_trajs = [b0[ni] for ni in pne_indices]
 
-        # trajectories in current batch, but not matched to extended trajectories 
-        indice_not_extended = np.setdiff1d(np.arange(len(b1)), pairs_extend.T[1])
+        # trajectories in current batch, but not matched to
+        # extended trajectories 
+        indice_not_extended = np.setdiff1d(
+            np.arange(len(b1)), pairs_extend.T[1]
+        )
         b1_not_extended = [b1[idx] for idx in indice_not_extended]
 
-        pairs_new = get_temporal_overlapped_pairs(pne_trajs, b1_not_extended, lag, ntol, rtol)
+        pairs_new = get_temporal_overlapped_pairs(
+            pne_trajs, b1_not_extended, lag, ntol, rtol
+        )
         remap = np.arange(len(b1))[indice_not_extended]
         pairs_new[:, 1] = remap[pairs_new[:, 1]]  # remap to the indices of b1
 
         # extended previously not extended trajectories
         new_extended += [
             (
-                np.concatenate((pne_trajs[pn][0][:-lag], b1[p1][0]), axis=0),  # xyz coordinates
+                np.concatenate((pne_trajs[pn][0][:-lag], b1[p1][0]), axis=0),
                 pne_trajs[pn][1] + b1[p1][1]  # reprojection error
             ) for pn, p1 in pairs_new
         ]
@@ -1327,7 +1357,9 @@ def solve_overlap_lp(points, errors, diameter):
         model.minimize(objective)
         is_successful = model.solve()
         if is_successful:
-            indices = np.array([x.solution_value for x in x_vars], dtype=bool)
+            indices = np.array([
+                x.solution_value for x in x_vars
+            ], dtype=bool)
             return points[indices]
     return points[np.argmin(errors)][np.newaxis, :]
 
@@ -1357,7 +1389,9 @@ def refine_trajectory(trajectory, cameras, features, tol_2d):
     n_frame = len(trajectory)
     n_view = len(cameras)
 
-    traj_reproj = np.array([cam.project_refractive(trajectory) for cam in cameras])
+    traj_reproj = np.array([
+        cam.project_refractive(trajectory) for cam in cameras
+    ])
     traj_2d_nview = np.empty((n_view, n_frame, 2))
 
     mask = np.ones(n_frame).astype(bool)
@@ -1402,7 +1436,8 @@ def optimise_c2c(R, T, K, C, p2d, p3dh, method='Nelder-Mead'):
             :math:`\\in \\mathbb{R}^{3 \\times 3}`
         C (numpy.ndarray): the matrix representation of a conic,
             shape (3, 3). The conic is a projection of the circle.
-        p2d (numpy.ndarray): the 2d points for the PnP problem, shape (n, 2)
+        p2d (numpy.ndarray): the *undistorted* 2d points for the PnP problem,\
+            shape (n, 2)
         p3dh (numpy.ndarray): the homogeneous representations of 3d points\
             for the PnP problem, shape (n, 3)
 
@@ -1444,12 +1479,12 @@ def optimise_triplet_c2c(
         C1 (numpy.ndarray): the conic matrix from camera 1, shape (3, 3)
         C2 (numpy.ndarray): the conic matrix from camera 2, shape (3, 3)
         C3 (numpy.ndarray): the conic matrix from camera 3, shape (3, 3)
-        p2d1 (numpy.ndarray): the 2d features for the `solvePnP` method\
-            from camera 1, shape (n, 2)
-        p2d2 (numpy.ndarray): the 2d features for the `solvePnP` method\
-            from camera 2, shape (n, 2)
-        p2d3 (numpy.ndarray): the 2d features for the `solvePnP` method\
-            from camera 3, shape (n, 2)
+        p2d1 (numpy.ndarray): the *undistorted* 2d features for the PnP\
+            problem from camera 1, shape (n, 2)
+        p2d2 (numpy.ndarray): the *undistorted* 2d features for the PnP\
+            problem from camera 2, shape (n, 2)
+        p2d3 (numpy.ndarray): the *undistorted* 2d features for the PnP\
+            problem from camera 3, shape (n, 2)
         p3dh (numpy.ndarray): the homogeneous representations of 3d points\
             for the PnP problem, shape (n, 3)
 
@@ -1478,7 +1513,7 @@ def get_optimised_camera_c2c(
             be used as the initial guess for the optimisation.
         conic_mat (numpy.ndarray): the matrix representation of an ellipse.
             the parameter should be obtained from an undistorted image.
-        p2d (numpy.ndarray): the 2d locations for the PnP problem, shape (n, 2)
+        p2d (numpy.ndarray): the *undistorted* 2d locations for the PnP problem, shape (n, 2)
         p3d (numpy.ndarray): the 3d locations for the PnP problem, shape (n, 3)
         method (str): the name of the optimisation mathod. See scipy doc.
 
@@ -1505,7 +1540,7 @@ def get_optimised_camera_triplet_c2c(
     Args:
         cameras (list): three :obj:`Camera` instances
         conic_matrices(list): three conic matrices with shape (3, 3)
-        p2ds (list): three 2d locations whose shape is (n, 2)
+        p2ds (list): three *distorted* 2d locations whose shape is (n, 2)
         p3d (numpy.ndarray): the 3d locations, shape (n, 3)
         method (str): the method for the non-lienar optimisation
 
