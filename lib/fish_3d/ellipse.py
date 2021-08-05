@@ -8,6 +8,7 @@ import numpy as np
 from typing import List, Tuple
 from .camera import get_fundamental
 from .stereolink import triangulation_v3
+from scipy.spatial.transform import Rotation
 
 
 def get_conic_coef(xc, yc, a, b, rotation):
@@ -247,3 +248,136 @@ def match_ellipse_sloopy(cameras: List['Camera'], ellipses: List[List[float]], N
             p2h, p3h = pairs_homo[chosen]
             points.append(triangulation_v3((p1h, p2h, p3h), cameras))
     return np.array(points)
+
+
+def cost_conic(RT, K, C, p2d, p3dh):
+    """
+    Cost function to incorporate the conic measurement into camera calibration.
+    It is aimed to optimise the result of the cv2.solvePnP function.
+    The conic in the image should correspond to a circle in 3D @ plane Z=0.
+
+    Args:
+        RT (np.ndarray): the rotation and translation to be optimised.\
+            shape (6, )
+        K (np.ndarray): the intrinsic camera matrix, shape (3, 3)
+        C (np.ndarray): the matrix for the measured conic, shape (3, 3)
+        p2d (np.ndarray): 2d features for the solvePnP method, shape (n, 2)
+        p3dh (np.ndarray): the *homogeneous* representation of \
+            3d positions for the solvePnP method, shape (n, 4)
+
+    Return:
+        float: the geometric distance
+    """
+    R_mat = Rotation.from_rotvec(RT[:3]).as_matrix()  # (3, 3)
+    T = np.array(RT[3:])[:, np.newaxis]  # (3, 1)
+    P = np.concatenate((R_mat, T), axis=1)  # (3, 4)
+    P = K @ P
+    Q = P.T @ C @ P
+
+    p2d_proj = P @ p3dh.T
+    p2d_proj /= p2d_proj[-1]
+    p2d_proj = p2d_proj[:2].T
+
+    conic_coef = (
+        Q[0, 0], Q[0, 1] + Q[1, 0], Q[1, 1],
+        Q[0, 3] + Q[3, 0], Q[1, 3] + Q[3, 1],
+        Q[3, 3]
+    )
+
+    conic_mat = get_conic_matrix(conic_coef)
+    xc, yc, a, b, _ = get_geometric_coef(conic_mat)
+    # ensure the original PnP constrain
+    cost_val = np.sum((p2d - p2d_proj) ** 2) / len(p3dh)
+    # make sure the reconstructed circlej
+    cost_val += (a - b) ** 2
+    return cost_val
+
+
+def cost_conic_triple(
+        RT123, K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh
+):
+    """
+    Cost function to incorporate the conic measurement into camera calibration.
+    It is aimed to optimise the result of the cv2.solvePnP function.
+    The conic in the image should correspond to a circle in 3D @ plane Z=0.
+
+    Args:
+        RT123 (numpy.ndarray): the rotation and translation to be optimised,\
+            shape (18,)
+        K1 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 1
+        K2 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 2
+        K3 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 3
+        C1 (numpy.ndarray): the conic matrix from camera 1, shape (3, 3)
+        C2 (numpy.ndarray): the conic matrix from camera 2, shape (3, 3)
+        C3 (numpy.ndarray): the conic matrix from camera 3, shape (3, 3)
+        p2d1 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 1, shape (n, 2)
+        p2d2 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 2, shape (n, 2)
+        p2d3 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 3, shape (n, 2)
+        p3dh (numpy.ndarray): the *homogeneous* representation of \
+            3d positions for the solvePnP method, shape (n, 4)
+
+    Return:
+        float: the geometric distance
+    """
+
+    R1 = Rotation.from_rotvec(RT123[:3])
+    T1 = np.array(RT123[3:6])
+    R2 = Rotation.from_rotvec(RT123[6:9])
+    T2 = np.array(RT123[9:12])
+    R3 = Rotation.from_rotvec(RT123[12:15])
+    T3 = np.array(RT123[15:18])
+
+    P1 = K1 @ np.concatenate((R1.as_matrix(), T1[:, None]), axis=1)
+    P2 = K2 @ np.concatenate((R2.as_matrix(), T2[:, None]), axis=1)
+    P3 = K3 @ np.concatenate((R3.as_matrix(), T3[:, None]), axis=1)
+
+    Q1 = P1.T @ C1 @ P1
+    Q2 = P2.T @ C2 @ P2
+    Q3 = P3.T @ C3 @ P3
+
+    p2d_proj_1 = P1 @ p3dh.T
+    p2d_proj_1 /= p2d_proj_1[-1]
+    p2d_proj_1 = p2d_proj_1[:2].T
+
+    p2d_proj_2 = P2 @ p3dh.T
+    p2d_proj_2 /= p2d_proj_2[-1]
+    p2d_proj_2 = p2d_proj_2[:2].T
+
+    p2d_proj_3 = P3 @ p3dh.T
+    p2d_proj_3 /= p2d_proj_3[-1]
+    p2d_proj_3 = p2d_proj_3[:2].T
+
+    xc_1, yc_1, a_1, b_1, _ = get_geometric_coef(get_conic_matrix((
+        Q1[0, 0], 2 * Q1[0, 1], Q1[1, 1], 2 * Q1[0, 3], 2 * Q1[1, 3], Q1[3, 3]
+    )))
+    xc_2, yc_2, a_2, b_2, _ = get_geometric_coef(get_conic_matrix((
+        Q2[0, 0], 2 * Q2[0, 1], Q2[1, 1], 2 * Q2[0, 3], 2 * Q2[1, 3], Q2[3, 3]
+    )))
+    xc_3, yc_3, a_3, b_3, _ = get_geometric_coef(get_conic_matrix((
+        Q3[0, 0], 2 * Q3[0, 1], Q3[1, 1], 2 * Q3[0, 3], 2 * Q3[1, 3], Q3[3, 3]
+    )))
+
+
+    cost_val_pnp = np.sum((
+        np.sum((p2d1 - p2d_proj_1) ** 2),
+        np.sum((p2d2 - p2d_proj_2) ** 2),
+        np.sum((p2d3 - p2d_proj_3) ** 2),
+    ))
+
+    cost_val_centre = np.sum((
+        (xc_1 - xc_2) ** 2, (xc_1 - xc_3) ** 2,
+        (yc_1 - yc_2) ** 2, (yc_1 - yc_3) ** 2,
+    ))
+
+    cost_val_circle = np.sum((
+        (a_1 - a_2) **2, (a_1 - a_3) **2,
+        (a_1 - b_1) **2, (a_2 - b_2) **2, (a_3 - b_3) **2,
+    ))
+
+    return cost_val_pnp / len(p3dh) + cost_val_centre + cost_val_circle

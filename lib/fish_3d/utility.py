@@ -6,6 +6,8 @@ from scipy.spatial.distance import pdist, squareform
 from typing import List
 from joblib import Parallel, delayed
 from scipy import ndimage
+from scipy.optimize import minimize
+from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
@@ -15,6 +17,8 @@ from . import ray_trace
 from .cutility import join_pairs
 from .cstereo import match_v3, refractive_triangulate
 from .cgreta import get_trajs_3d_t1t2, get_trajs_3d_t1t2t3, get_trajs_3d
+from .camera import Camera
+from .ellipse import cost_conic, cost_conic_triple
 from docplex.mp.model import Model
 from itertools import product
 
@@ -1384,3 +1388,245 @@ def refine_trajectory(trajectory, cameras, features, tol_2d):
     new_traj[mask] = refined
 
     return new_traj
+
+
+def optimise_c2c(R, T, K, C, p2d, p3dh, method='Nelder-Mead'):
+    """
+    Optimise the camera extrinsic parameters by measuring the ellipse (conic)\
+    projected by a circle at plane :math:`\\pi_z = (0, 0, 1, 0)^T`.
+
+    Args:
+        R (numpy.ndarray): the rotation vector :math:`\\in so(3)`
+        T (numpy.ndarray): the translation vector :math:`\\in \\mathbb{R}^3`
+        K (numpy.ndarray): the calibration matrix
+            :math:`\\in \\mathbb{R}^{3 \\times 3}`
+        C (numpy.ndarray): the matrix representation of a conic,
+            shape (3, 3). The conic is a projection of the circle.
+        p2d (numpy.ndarray): the 2d points for the PnP problem, shape (n, 2)
+        p3dh (numpy.ndarray): the homogeneous representations of 3d points\
+            for the PnP problem, shape (n, 3)
+
+    Return:
+        tuple: the optimised :math:`\\mathbf{R} \\in so(3)` and\
+        :math:`\\mathbf{T} \\in \\mathbb{R}^3`
+    """
+    result = minimize(
+        fun=cost_conic, x0=np.concatenate((R, T)),
+        args=(K, C, p2d, p3dh),
+        method=method
+    )
+    return result.x[:3], result.x[3:]
+
+
+def optimise_triplet_c2c(
+    R1, T1, R2, T2, R3, T3, K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh,
+):
+    """
+    Optimise three camera extrinsic parameters by measuring the ellipse (conic)\
+    projected by a circle at plane :math:`\\pi_z = (0, 0, 1, 0)^T`.
+
+    Args:
+        R1 (numpy.ndarray): the rotation vector :math:`\\in so(3)` of camera 1
+        T1 (numpy.ndarray): the translation vector :math:`\\in \\mathbb{R}^3`\
+            of camera 1
+        R2 (numpy.ndarray): the rotation vector :math:`\\in so(3)` of camera 2
+        T2 (numpy.ndarray): the translation vector :math:`\\in \\mathbb{R}^3`\
+            of camera 2
+        R3 (numpy.ndarray): the rotation vector :math:`\\in so(3)` of camera 3
+        T3 (numpy.ndarray): the translation vector :math:`\\in \\mathbb{R}^3`\
+            of camera 3
+        K1 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 1
+        K2 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 2
+        K3 (numpy.ndarray): the calibration matrix\
+            :math:`\\in \\mathbb{R}^{3 \\times 3}` of camera 3
+        C1 (numpy.ndarray): the conic matrix from camera 1, shape (3, 3)
+        C2 (numpy.ndarray): the conic matrix from camera 2, shape (3, 3)
+        C3 (numpy.ndarray): the conic matrix from camera 3, shape (3, 3)
+        p2d1 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 1, shape (n, 2)
+        p2d2 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 2, shape (n, 2)
+        p2d3 (numpy.ndarray): the 2d features for the `solvePnP` method\
+            from camera 3, shape (n, 2)
+        p3dh (numpy.ndarray): the homogeneous representations of 3d points\
+            for the PnP problem, shape (n, 3)
+
+    Return:
+        tuple: the optimised :math:`\\mathbf{R} \\in so(3)` and\
+        :math:`\\mathbf{T} \\in \\mathbb{R}^3`
+
+    """
+    RT123 = np.concatenate((R1, T1, R2, T2, R3, T3))
+    result = minimize(
+        fun=cost_conic_triple, x0=RT123,
+        args=(K1, K2, K3, C1, C2, C3, p2d1, p2d2, p2d3, p3dh)
+    )
+    opt = result.x
+    return opt.reshape((6, 3), order="C")
+
+
+def get_optimised_camera_c2c(
+    camera, conic_mat, p2d, p3d, method='Nelder-Mead'
+):
+    """
+    Optimise the extrinsic parameter of the camera with a known 3D circle.
+
+    Args:
+        camera (Camera): a calibrated camera, its extrinsic parameters will
+            be used as the initial guess for the optimisation.
+        conic_mat (numpy.ndarray): the matrix representation of an ellipse.
+            the parameter should be obtained from an undistorted image.
+        p2d (numpy.ndarray): the 2d locations for the PnP problem, shape (n, 2)
+        p3d (numpy.ndarray): the 3d locations for the PnP problem, shape (n, 3)
+        method (str): the name of the optimisation mathod. See scipy doc.
+
+    Return:
+        Camera: a new camera with better extrinsic parameters.
+    """
+    R = camera.rotation.as_rotvec()
+    T = camera.t
+    K = camera.k
+    p3dh = np.concatenate((p3d, np.ones((len(p3d), 1))), axis=1)
+    opt = optimise_c2c(
+        R, T, K, camera.undistort_points(p2d), p3dh, conic_mat, method
+    )
+    return get_updated_camera(camera, *opt)
+
+
+def get_optimised_camera_triplet_c2c(
+    cameras, conic_matrices, p2ds, p3d, method="Nelder-Mead"
+):
+    """
+    Optimise 3 cameras with 2D-3D correspondances as well as a measured
+        conics corresponding to a 3D circle on the plane :math:`Z=0`.
+
+    Args:
+        cameras (list): three :obj:`Camera` instances
+        conic_matrices(list): three conic matrices with shape (3, 3)
+        p2ds (list): three 2d locations whose shape is (n, 2)
+        p3d (numpy.ndarray): the 3d locations, shape (n, 3)
+        method (str): the method for the non-lienar optimisation
+
+    Return:
+        list: three cameras whose extrinsic parameters were optimised
+            with the circle-to-conic correspondances.
+    """
+    p3dh = np.concatenate((p3d, np.ones((p3d.shape[0], 1))), axis=1)
+    RT, K = [], []
+    for i, cam in enumerate(cameras):
+        _, R, T = cv2.solvePnP(
+            objectPoints=p3d[None, :, :],
+            imagePoints=p2ds[i],
+            cameraMatrix=cam.k,
+            distCoeffs=cam.distortion,
+            flags=cv2.SOLVEPNP_ITERATIVE
+        )
+        R, T = optimise_c2c(
+            R, T, K=cam.k, C=conic_matrices[i],
+            p2d=cam.undistort_points(p2ds[i]),
+            p3dh=p3dh,
+        )
+        RT.append(R)
+        RT.append(T)
+        K.append(cam.k)
+
+    r1, t1, r2, t2, r3, t3 = optimise_triplet_c2c(
+        *RT, *K, *conic_matrices,
+        *[c.undistort_points(p) for c, p in zip(cameras, p2ds)],
+        p3dh
+    )
+
+    R_opt = [r1, r2, r3]
+    T_opt = [t1, t2, t3]
+    return [
+        get_updated_camera(c, r, t) for c, r, t in zip(cameras, R_opt, T_opt)
+    ]
+
+
+def get_updated_camera(camera, R, T):
+    """
+    Get the updated camera with new rotation and translation.
+
+    Args:
+        R (numpy.ndarray): the new rotation vector :math:`\\in so(3)`
+        T (numpy.ndarray): the new translation vector\
+            :math:`\\in \\mathbb{R}^3`
+
+    Return:
+        Camera: a new `Camera` instance whose extrinsic parameters\
+            were updated.
+    """
+    new_cam = Camera()
+    new_cam.k = camera.k.copy()
+    new_cam.distortion = camera.distortion.copy()
+    new_cam.rotation = Rotation.from_rotvec(R.ravel())
+    new_cam.t = T.ravel().copy()
+    new_cam.update()
+    return new_cam
+
+
+def get_average_euclidean_transform(Rotations, Translations, index):
+    """
+    Calculate the averaged *relative* rotation and translation from\
+        different noisy measurements. There is an unknown Euclidean\
+        ambiguity between the different measurements.
+
+    Args:
+        Rotations (np.ndarray): shape (n_measure, n_view, 3, 3)
+        Translations (np.ndarray): shape (n_measure, n_view, 3)
+        index (int): the transforms are bettwen different views\
+            and the view specified by the index
+
+    Return:
+        tuple: the relative rotations and translations. The shape of\
+            the elements are ((n_view, 3, 3), (n_view, 3))
+    """
+    n_measure, n_view = Rotations.shape[:2]
+    R0 = Rotations[:, index, :, :]  # (n_measure, 3, 3)
+    T0 = Translations[:, index, :]  # (n_measure, 3,)
+    Rij = np.einsum('nmik,njk->nmij', Rotations, R0)  # R = Ri @ R0^T
+    Tij = Translations - np.einsum('nmik,nk->nmi', Rij, T0)  # T = Ti - R @ T0
+    Rij = np.mean(Rij, axis=0)  # (n_view, 3, 3)
+    Tij = np.mean(Tij, axis=0)  # (n_view, 3,)
+    return Rij, Tij
+
+
+def get_cameras_with_averaged_euclidean_transform(cameras, index):
+    """
+    Update the extrinsic parameters of the cameras so that the relative\
+        rotation and translation between different views were replace by\
+        the average of different measurements.
+
+    Args:
+        cameras (list): a list of cameras, with "shape" (n_measure, n_view).
+        index (int): the transforms are bettwen different views\
+            and the view specified by the index
+
+    Return:
+        list: a list of cameras whose relative Euclidean transformations were\
+            replaced by the average over different measurements. The "shape"\
+            of the final result is `(n_measure, n_view)`.
+    """
+    n_measure = len(cameras)
+    n_view = len(cameras[0])
+    Rotations = np.empty((n_measure, n_view, 3, 3))
+    Translations = np.empty((n_measure, n_view, 3))
+    for i in range(n_measure):
+        for j in range(n_view):
+            Rotations[i, j, :, :] = cameras[i][j].r
+            Translations[i, j, :] = cameras[i][j].t
+    Rij, Tij = get_average_euclidean_transform(Rotations, Translations, index)
+    R0, T0 = Rotations[:, index, :, :], Translations[:, index, :]
+    Ri = np.einsum('mik,nkj->nmij', Rij, R0)  # (n_measure, n_view, 3, 3)
+    Ti = np.einsum('mik,nk->nmi', Rij, T0) + Tij  # (n_measure, n_view, 3)
+    cameras_updated = []
+    for i in range(n_measure):
+        ensemble = []
+        for j in range(n_view):
+            r = Rotation.from_matrix(Ri[i, j]).as_rotvec()
+            t = Ti[i, j]
+            ensemble.append(get_updated_camera(cameras[i][j], r, t))
+        cameras_updated.append(ensemble)
+    return cameras_updated
