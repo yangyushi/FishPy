@@ -541,12 +541,19 @@ class Viewer(QMainWindow):
 
     def __load_camera(self, index):
         camera_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the camera", "", "camera files (*.pkl);;"
+                self, "Select the camera", "", "camera files (*.pkl *.json);;"
                 )
         if camera_name:
-            with open(camera_name, 'rb') as f:
-                camera = pickle.load(f)
-            self.model.cameras[index] = camera
+            if camera_name[-4:] == ".pkl":
+                with open(camera_name, 'rb') as f:
+                    camera = pickle.load(f)
+                self.model.cameras[index] = camera
+            elif camera_name[-5:] == ".json":
+                camera = f3.Camera()
+                camera.load_json(camera_name)
+                self.model.cameras[index] = camera
+            else:
+                warn("Invalid Camera File Type")
 
     def __show_pannel(self):
         self.pannel.hide()
