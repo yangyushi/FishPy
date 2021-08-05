@@ -202,12 +202,13 @@ class StereoImageItem(pg.ImageItem):
     """
     Canvas for a 3 view setup.
 
-    self.model (Model): the model for the calculaion
-    self.index (int): the index of the view
-    self.line (pg.PolyLineROI): the line object for measuring the fish
-    self.plot (pg.ScatterPlotItem): scatter plot for plotting eppipolar line
-        of the *self.index* view
-    self.neighbours (StereoImageItem): the other matching views,
+    Attributes:
+        model (Model): the model for the calculaion
+        index (int): the index of the view
+        line (pg.PolyLineROI): the line object for measuring the fish
+        plot (pg.ScatterPlotItem): scatter plot for plotting eppipolar line
+            of the *self.index* view
+        neighbours (StereoImageItem): the other matching views,
     """
     def __init__(self, model, index, epipolar_plots, line, view):
         """

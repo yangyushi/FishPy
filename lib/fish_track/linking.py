@@ -739,19 +739,20 @@ def solve_unique(rows, cols, values, debug=False):
        ------>     ------->
        (first)     (second)
 
+
     Args:
         rows (np.ndarray): The indices of the first trajectories
         cols (np.ndarray): The indices of the second trajectories
-        values (np.ndarray): The distances between the prediction of first trajectory
-            and the start of the second trajectory. Essentially this is the error.
+        values (np.ndarray): The distances between the prediction of
+            first trajectory and the start of the second trajectory.
+            Essentially this is the error.
 
     Return:
         tupel: (
-            not-unique row indices,
-            not-unique col indices,
-            not-unique distances,
-            unique_links
+            not-unique row indices, not-unique col indices,
+            not-unique distances, unique_links
         )
+
     """
     unsolved_indices, unique_links = [], []
     elements_row, indices_row, counts_row = np.unique(rows, return_index=True, return_counts=True)

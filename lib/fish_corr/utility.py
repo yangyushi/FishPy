@@ -924,13 +924,18 @@ class Movie:
 
     def add(self, m2):
         """
+
         Attach another movie to the end of current movie.
+
         This function should be used in the case where a large
             recording is splited into different movie files.
 
         Args:
             m2 (Movie): another Movie instance to be attached to the
                 end of current movie.
+
+        Return:
+            None
         """
         offset = self.max_frame + 1
         for traj in m2.trajs:
@@ -1063,24 +1068,30 @@ class Movie:
 
         .. code-block::
 
-                 t0                      t1
-                  │                      │ 1. Fully accepted
-                  │     =========▶       │
-          ...................................................
-                  │                      │ 2. Trimmed
-                  │                      │
-                  │                  ====┼──▶
-             ─────┼===▶                  │
-                  │                      │
-             ─────┼======================┼───▶
-          ...................................................
-                  │                      │ 3. Ignored
-                  │                      │
-          ──────▶ │                      │ ──────▶
-        too_eraly │                      │ too late
-                  │                      │
-            ──────┴──────────────────────┴──────▶ Time
+                     t0                      t1
+                      │                      │ 1. Fully accepted
+                      │     =========▶       │
+              ...................................................
+                      │                      │ 2. Trimmed
+                      │                      │
+                      │                  ====┼──▶
+                 ─────┼===▶                  │
+                      │                      │
+                 ─────┼======================┼───▶
+              ...................................................
+                      │                      │ 3. Ignored
+                      │                      │
+              ──────▶ │                      │ ──────▶
+            too_eraly │                      │ too late
+                      │                      │
+                ──────┴──────────────────────┴──────▶ Time
 
+        Args:
+            t0 (int): the start frame index.
+            t1 (int): the end frame index.
+
+        Return:
+            list: the trimmed trajectories between t0 and t1.
         """
         result = []
         for traj in self.trajs:

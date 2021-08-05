@@ -32,8 +32,4 @@ Indices and tables
 The Author
 ==========
 
-Very unfortunately I wrote the entire package, quite often in a desperate manner. If you find anyting useful related to `FishPy <https://github.com/yangyushi/FishPy>`_ or to this documentation, you are making me very happy.
-
-Anyway, this is my email: yushi.yang@bristol.ac.uk.
-
-I even got a `website <https://yangyushi.github.io>`_.
+Very unfortunately I wrote the entire package by myself, quite often in a desperate way. I hope you find something useful from `FishPy <https://github.com/yangyushi/FishPy>`_ or from this documentation.

@@ -490,12 +490,14 @@ def get_nn_pbc(positions, box):
 
 def get_nn_with_velocity(positions, velocities, no_vertices=True):
     """
-    Calculate the NN distances and relative locations of NNs
-    The distances were rotated so that the *x-axis* is aligned with the *velocity* of different particles
+    Calculate the NN distances and relative locations of NNs.
+
+    The distances were rotated so that the *x-axis* is aligned
+        with the *velocity* of different particles
 
     Args:
-        positions (:obj:`numpy.ndarray`): positions of all particles in one frame
-        velocities (:obj:`numpy.ndarray`): velocities of all particles in one frame
+        positions (:obj:`numpy.ndarray`): positions of all particles in 1 frame
+        velocities (:obj:`numpy.ndarray`): velocities of all particles in 1 frame
         no_vertices (:obj:`bool`): if being True, ignore the vertices
 
     Return:
@@ -527,6 +529,7 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
 def get_nn_with_velocity_2d(positions, velocities, no_vertices=True):
     """
     Calculate the NN distances and relative locations of NNs
+
     The distances were rotated so that the *x-axis* is aligned with
         the *velocity* of different particles
 
