@@ -44,7 +44,6 @@ fish\_corr.voro module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

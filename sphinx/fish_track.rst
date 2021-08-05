@@ -28,6 +28,14 @@ fish\_track.nrook module
    :undoc-members:
    :show-inheritance:
 
+fish\_track.nrook module
+------------------------
+
+.. automodule:: fish_track.nrook
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fish\_track.oishi module
 ------------------------
 
@@ -59,7 +67,6 @@ fish\_track.utility module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

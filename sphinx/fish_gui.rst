@@ -36,6 +36,14 @@ fish\_gui.epipolar module
    :undoc-members:
    :show-inheritance:
 
+fish\_gui.measure\_line module
+------------------------------
+
+.. automodule:: fish_gui.measure_line
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fish\_gui.roi module
 --------------------
 
@@ -67,7 +75,6 @@ fish\_gui.tplight module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

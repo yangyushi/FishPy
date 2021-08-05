@@ -4,16 +4,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Miscellaneous Topics &#8212; FishPy  documentation</title>
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="FishPy Modules" href="modules.html" />
@@ -37,21 +36,21 @@
       <div class="content" role="main">
         
         
-  <div class="section" id="miscellaneous-topics">
+  <section id="miscellaneous-topics">
 <h1>Miscellaneous Topics<a class="headerlink" href="#miscellaneous-topics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="preprocess-videos">
+<section id="preprocess-videos">
 <h2>Preprocess videos<a class="headerlink" href="#preprocess-videos" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="analysing-results">
+</section>
+<section id="analysing-results">
 <h2>Analysing results<a class="headerlink" href="#analysing-results" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="gui-applications">
+</section>
+<section id="gui-applications">
 <h2>GUI applications<a class="headerlink" href="#gui-applications" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="working-with-hpc">
+</section>
+<section id="working-with-hpc">
 <h2>Working with HPC<a class="headerlink" href="#working-with-hpc" title="Permalink to this headline">¶</a></h2>
 <p>This section introduce how I use <cite>FishPy</cite> on the supercomputer, typically the “BlueCrystal” in the university of Bristol to extract 3D trajectories from videos.</p>
-<div class="section" id="organise-the-experimental-results">
+<section id="organise-the-experimental-results">
 <h3>Organise the Experimental Results<a class="headerlink" href="#organise-the-experimental-results" title="Permalink to this headline">¶</a></h3>
 <p>we need some auxiliary files for the tracking. And I organise my files like the follows. Here all the data is stored in a folder named <cite>observe_20190729_fish_20_small</cite>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>observe_20190729_fish_20_small/
@@ -90,15 +89,15 @@
     └── readme.md (notes about the experimental condition)
 </pre></div>
 </div>
-</div>
-<div class="section" id="upload-the-folder-to-the-hpc">
+</section>
+<section id="upload-the-folder-to-the-hpc">
 <h3>Upload the folder to the HPC<a class="headerlink" href="#upload-the-folder-to-the-hpc" title="Permalink to this headline">¶</a></h3>
 <p>I use the following command to upload my folder to the HPC.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scp -r observe_20190729_fish_20_small ab12345@bluecrystalp3.bris.ac.uk:~/fish_data
 </pre></div>
 </div>
-</div>
-<div class="section" id="start-the-project">
+</section>
+<section id="start-the-project">
 <h3>Start the project<a class="headerlink" href="#start-the-project" title="Permalink to this headline">¶</a></h3>
 <p>I wrote a lot of helper scripts for setting up the tracking projects. They are stored in the folder <cite>Fishpy/script/bin</cite>. I added this folder to my <cite>$HOME</cite> variable to use these script convinently. For starting a new tracking project, I would typically use the following command</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>fishpy-create-project
@@ -116,8 +115,8 @@ auto_process_2
 </pre></div>
 </div>
 <p>(running the <cite>fishpy-create-project</cite> again will not overwrite the existing folders.)</p>
-</div>
-<div class="section" id="configuring-the-project">
+</section>
+<section id="configuring-the-project">
 <h3>Configuring the Project<a class="headerlink" href="#configuring-the-project" title="Permalink to this headline">¶</a></h3>
 <p>To get the trajectories from <cite>video_1</cite>, we have to make several changes in the folder <cite>auto_process_1</cite>.</p>
 <p>In the file <cite>configure.sh</cite> should be modified. Here is an example. There are horribly lot of parameters. But the important ones will be highlighted.</p>
@@ -138,8 +137,8 @@ auto_process_2
 <span class="c1"># ... the rest of the file is ignored</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="executing-the-tracking">
+</section>
+<section id="executing-the-tracking">
 <h3>Executing the Tracking<a class="headerlink" href="#executing-the-tracking" title="Permalink to this headline">¶</a></h3>
 <p>If the configuration is good, I track the fish with the following three commands. On an hpc, I would typically submit these three jobs.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>qsub auto_track_2d.sh
@@ -152,8 +151,8 @@ qsub auto_link.sh
 qsub auto_track_greta.sh
 </pre></div>
 </div>
-</div>
-<div class="section" id="see-the-result">
+</section>
+<section id="see-the-result">
 <h3>See the Result<a class="headerlink" href="#see-the-result" title="Permalink to this headline">¶</a></h3>
 <p>If you get very lucky and obtained the final result, you can use the following command to visualise the 3D trajectories.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python see_trajs.py linking   <span class="c1"># if not using GReTA</span>
@@ -170,9 +169,9 @@ python stat_trajs.py greta     <span class="c1"># if using GReTA</span>
 display traj-stat.png
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
       </div>
@@ -190,7 +189,7 @@ display traj-stat.png
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, Yushi Yang.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
   </body>
 </html>
