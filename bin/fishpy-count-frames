@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+retreive the total number of frames in a pickled python file
+    if the data were dumped frame-by-frame
+"""
 import pickle
 import sys
 

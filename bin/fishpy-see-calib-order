@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+Check the calibration order manuall in a GUI
+"""
 from fish_gui import calib_order
 
 calib_order.check_order()
