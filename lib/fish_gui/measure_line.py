@@ -11,11 +11,11 @@ import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 from io import BytesIO
 from pyqtgraph.Qt import QtCore, QtGui
-from PyQt5.QtGui import QColor, QVector3D, QIcon, QTableWidgetItem
+from PyQt5.QtGui import QColor, QVector3D, QIcon
 from PyQt5.QtWidgets import QWidget, QMainWindow, QPushButton, QLabel,\
      QGridLayout, QApplication, QHBoxLayout, QLineEdit, QFileDialog, qApp,\
      QDesktopWidget, QMessageBox, QAction, QTableWidget, QAbstractScrollArea,\
-     QTableView
+     QTableView, QTableWidgetItem
 
 """
 Colors that I like
