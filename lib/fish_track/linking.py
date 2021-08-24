@@ -321,6 +321,10 @@ class ActiveLinker():
         links_all = self.__get_all_links(frames)
         labels = [ np.arange(len(frames[0])) ]  # default label in first frame
         label_set = set(labels[0].tolist())
+        if len(label_set) > 0:
+            new_label = max(label_set) + 1
+        else:
+            new_label = 0
         for frame, links in zip(frames[1:-1], links_all):
             old_labels = labels[-1]
             new_labels = np.empty(len(frame), dtype=int) # every particle will be labelled
@@ -331,9 +335,9 @@ class ActiveLinker():
                 new_labels[l[1]] = old_labels[l[0]]
             for s in slots:
                 if s not in linked:
-                    new_label = max(label_set) + 1
                     new_labels[s] = new_label
                     label_set.add(new_label)
+                    new_label += 1
             labels.append(new_labels)
         return labels
 

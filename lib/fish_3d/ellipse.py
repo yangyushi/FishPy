@@ -542,7 +542,6 @@ def cost_conic_triple(
         Q3[0, 0], 2 * Q3[0, 1], Q3[1, 1], 2 * Q3[0, 3], 2 * Q3[1, 3], Q3[3, 3]
     )))
 
-
     cost_val_pnp = np.sum((
         np.sum((p2d1 - p2d_proj_1) ** 2),
         np.sum((p2d2 - p2d_proj_2) ** 2),

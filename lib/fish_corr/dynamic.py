@@ -794,7 +794,7 @@ class AverageAnalyser():
                 norms = np.linalg.norm(velocities, axis=1)
                 norms[np.isclose(norms, 0)] = np.nan
                 orientations = velocities / norms[:, np.newaxis]
-                acf = utility.get_acf(orientations, size=sample_points)
+                acf = utility.get_acf(orientations, size=sample_points)  # (sample_points, )
                 acfs.append(acf)
             if len(acfs) == 0:
                 null_acf = np.zeros((1, sample_points))
@@ -802,7 +802,7 @@ class AverageAnalyser():
                 result.append(null_acf)
             else:
                 result.append(np.array(acfs))
-        return result
+        return result  # (n_block, n_traj, sample_points)
 
     @__caching('rotation')
     def scan_rotation(self, sample_points):

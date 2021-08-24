@@ -506,9 +506,9 @@ def get_vicsek_order(velocity_frames, min_number):
     Calculate the average Vicsek order parameters across different frames
 
     Args:
-        velocity_frames (:obj:`list`): the velocity of particles at different frames
-                                       "shape" (frame_num, particle_num, dimension)
-                                       it is not a numpy array because `particle_num` in each frame is different
+        velocity_frames (:obj:`list`): the velocity of particles at different frames\
+            "shape" (frame_num, particle_num, dimension)\
+            it is not a numpy array because `particle_num` in each frame is different
     """
     orders = np.empty(len(velocity_frames))
     for i, velocities in enumerate(velocity_frames):
