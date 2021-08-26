@@ -51,7 +51,7 @@ def add_shadow(x, sigma):
     return result / result.max()
 
 
-def get_kernels(images, pc_indices, cluster_num, plot=True, sigma=0):
+def get_kernels(images, pc_indices, cluster_num, plot=False, sigma=0):
     """
     1. calculate the principle component of different images
     2. project images on some principles
@@ -64,6 +64,7 @@ def get_kernels(images, pc_indices, cluster_num, plot=True, sigma=0):
         pc_indices (np.ndarray): indices of the principle components
         cluster_num (int): the number of clusters (k)
         sigma (float): the sigma of the "shadow" add around the kernel
+        plot (bool | str): the name of the plot
     """
     number, dim, dim = images.shape
 
@@ -100,9 +101,9 @@ def get_kernels(images, pc_indices, cluster_num, plot=True, sigma=0):
         for a in ax.ravel():
             a.set_xticks([])
             a.set_yticks([])
-        plt.tight_layout()
         plt.gcf().set_size_inches(15, 3)
-        plt.savefig('kernels.pdf')
+        plt.tight_layout()
+        plt.savefig(f'{plot}.pdf')
         plt.close()
 
     return shape_kernels
