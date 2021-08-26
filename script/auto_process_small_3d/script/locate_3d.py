@@ -27,6 +27,10 @@ def refine(positions, cost, max_num, eps):
     Return:
         numpy.ndarray: the refined positions, shape (max_num, dim)
     """
+    if positions.ndim == 1:
+        positions = positions[np.newaxis, :]
+    if len(positions) <= max_num:
+        return positions
     labels = DBSCAN(eps=eps, min_samples=1).fit(positions).labels_
     values = np.unique(labels)
     new_positions = np.empty((len(values), positions.shape[1]))  # (n, dim)
