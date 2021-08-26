@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import pickle
+from glob import glob
 import numpy as np
 import fish_3d as f3
 from fish_gui import measure_point
@@ -19,10 +20,26 @@ if len(sys.argv) not in [2, 3]:
 centres = measure_point()
 cameras = []
 input_folder = sys.argv[1]
-for i, cam_name in enumerate([f'{input_folder}/cam_{i+1}.pkl' for i in range(3)]):
-    with open(cam_name, 'rb') as f:
-        cameras.append(pickle.load(f))
-        cameras[-1].update()
+
+use_json = len(glob(f"{input_folder}/cam*.json")) > 0
+use_pkl = len(glob(f"{input_folder}/cam*.pkl")) > 0
+
+if use_json:
+    camera_names = glob(f'{input_folder}/cam*.json')
+    camera_names.sort()
+    for cam_name in camera_names:
+        with open(cam_name, 'rb') as f:
+            cam = f3.Camera()
+            cam.load_json(cam_name)
+            cameras.append(cam)
+elif use_pkl:
+    for cam_name in [f'{input_folder}/cam_{i+1}.pkl' for i in range(3)]:
+        with open(cam_name, 'rb') as f:
+            cameras.append(pickle.load(f))
+            cameras[-1].update()
+else:
+    exit("Can't find camera files in the input folder")
+
 centres = np.array(centres)
 
 # undistort these centres
