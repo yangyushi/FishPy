@@ -1,4 +1,0 @@
-# find the path of fishpy
-SN=${0##*/}  # script name
-fishpy=${0%/bin/$SN}  # path to fishpy
-cp -r "$fishpy/script/auto_process_2d" "$PWD"

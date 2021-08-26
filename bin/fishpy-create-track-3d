@@ -1,0 +1,8 @@
+# find the path of fishpy
+SN=${0##*/}  # script name
+fishpy=${0%/bin/$SN}  # path to fishpy
+
+cp -r "$fishpy/script/auto_track_3d" "$PWD"
+if [[ -n $1 ]]; then
+    mv "auto_track_3d" "auto_track_3d_$1"
+fi

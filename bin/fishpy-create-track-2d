@@ -2,7 +2,7 @@
 SN=${0##*/}  # script name
 fishpy=${0%/bin/$SN}  # path to fishpy
 
-cp -r "$fishpy/script/auto_process_small_3d" "$PWD"
+cp -r "$fishpy/script/auto_track_2d" "$PWD"
 if [[ -n $1 ]]; then
-    mv "auto_process_small_3d" "auto_process_small_3d_$1"
+    mv "auto_track_2d" "auto_track_2d_$1"
 fi
