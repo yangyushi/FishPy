@@ -66,7 +66,7 @@ def iter_image_sequence(folder, prefix='frame_', start=0):
         yield np.array(Image.open(name))
 
 
-def get_background_movie(file_name, length=1500, output='background.avi', fps=15, cache='deque'):
+def get_background_movie(file_name, length=1500, output='background.avi', fps=15, **kwargs):
     """
     Get a movie of background, being a box-average along time series with length of `length`
     Save bg every segment (25 frames), and save difference otherwise
@@ -78,43 +78,44 @@ def get_background_movie(file_name, length=1500, output='background.avi', fps=15
     frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     print(
-        f"Background movie calculation with {cache} method for cache" +\
-        f"for {frame_count} frames"
+        f"Background movie calculation with video ({frame_count} frames)," +\
+        f"background length is {length} frames."
     )
+
+    if length > frame_count:
+        raise ValueError("Background length is larger than video length")
 
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output, fourcc, fps, (width, height), False)
 
     bg_sum = np.zeros((height, width), dtype=np.float64)
 
-    if cache == 'deque':
-        history = deque()
-
-    for frame in range(frame_count):
+    # generate initial part of the background movie
+    for frame in range(length):
         success, image = vidcap.read()
         if not success:
             out.release()
             vidcap.release()
-            exit("failed to read the video")
+            raise RuntimeError("failed to read the video")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        if cache == 'deque':
-            history.append(image)
         bg_sum += image
 
-        if frame == length:
-            bg = (bg_sum / length).astype(np.uint8)
-            for _ in range(length):
-                out.write(bg)
-        elif frame > length:
-            if cache == 'deque':
-                bg_sum -= history.popleft()
-            elif cache == 'mean':
-                bg_sum -= bg_sum / length
-            else:
-                raise RuntimeError("Invalid cache method: ", cache)
-            bg = (bg_sum / length).astype(np.uint8)
-            out.write(bg)
+    bg = (bg_sum / length).astype(np.uint8)
+    for frame in range(length):
+        out.write(bg)
+
+    # generate the running average part of the background movie
+    for frame in range(frame_count - length):
+        success, image = vidcap.read()
+        if not success:
+            out.release()
+            vidcap.release()
+            raise RuntimeError("failed to read the video")
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        bg_sum = bg_sum - bg_sum / length + image
+        bg = (bg_sum / length).astype(np.uint8)
+        out.write(bg)
 
     out.release()
     vidcap.release()
