@@ -372,10 +372,13 @@ class ActiveLinker():
         max_value = np.hstack(labels).max()
         labels_numba = nList()
         frames_numba = nList()
-        [labels_numba.append(l) for l in labels]
-        [frames_numba.append(l) for l in frames]
+
+        for label, frame in zip(labels, frames):
+            labels_numba.append(label)
+            frames_numba.append(frame)
+
         trajectories = []
-        for target in range(max_value):  # find the trajectory for every label
+        for target in range(max_value + 1):  # find the trajectory for every label
             result = get_trajectory(labels_numba, frames_numba, target)
             time, positions = result
             trajectories.append(
