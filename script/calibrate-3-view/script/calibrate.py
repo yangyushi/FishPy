@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import configparser
+from scipy.spatial.transform import Rotation
 import fish_3d as f3
 import matplotlib.pyplot as plt
 import pickle
@@ -57,13 +58,16 @@ if not has_cameras:
         )
         camera_triplets.append(trip)
 
+    camera_triplets = f3.utility.remove_camera_triplet_outliers(camera_triplets, threshold=3.0)
+    n_triplets = len(camera_triplets)
 
     camera_triplets_mean = f3.utility.get_cameras_with_averaged_euclidean_transform(
         camera_triplets, index=0
     )
 
-    mean_z_error_vals = np.empty(n_image)
-    for i in range(n_image):
+    mean_z_error_vals = np.empty(n_triplets)
+
+    for i in range(n_triplets):
         trip = camera_triplets_mean[i]
         p2d = img_points[:, i, :, :]  # n_view, n, 2
         p3d_reproj = f3.cstereo.refractive_triangulate(

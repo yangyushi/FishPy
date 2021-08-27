@@ -1617,7 +1617,7 @@ def get_updated_camera(camera, R, T):
     return new_cam
 
 
-def get_average_euclidean_transform(Rotations, Translations, index):
+def get_relative_euclidean_transform(Rotations, Translations, index):
     """
     Calculate the averaged *relative* rotation and translation from\
         different noisy measurements. There is an unknown Euclidean\
@@ -1667,7 +1667,7 @@ def get_cameras_with_averaged_euclidean_transform(cameras, index):
         for j in range(n_view):
             Rotations[i, j, :, :] = cameras[i][j].r
             Translations[i, j, :] = cameras[i][j].t
-    Rij, Tij = get_average_euclidean_transform(Rotations, Translations, index)
+    Rij, Tij = get_relative_euclidean_transform(Rotations, Translations, index)
     R0, T0 = Rotations[:, index, :, :], Translations[:, index, :]
     Ri = np.einsum('mik,nkj->nmij', Rij, R0)  # (n_measure, n_view, 3, 3)
     Ti = np.einsum('mik,nk->nmi', Rij, T0) + Tij  # (n_measure, n_view, 3)
@@ -1680,3 +1680,36 @@ def get_cameras_with_averaged_euclidean_transform(cameras, index):
             ensemble.append(get_updated_camera(cameras[i][j], r, t))
         cameras_updated.append(ensemble)
     return cameras_updated
+
+
+def remove_camera_triplet_outliers(camera_triplets, threshold):
+    """
+    Remove camera triplets whose relative orientation/translation are very\
+        different.
+
+    Args:
+        camera_triplets (list): a collection of tuples with 3 cameras
+        threshold (float): if the delta value (delta = [x - mean] / std)\
+            is greater than the threshold, the camera triplet is considered\
+            to be an outlier.
+
+    Return:
+        list: a collection of tuples with 3 cameras, where outlier triplets\
+            were discarded.
+    """
+    Rotations = np.array([[c.r for c in trip] for trip in camera_triplets])
+    Translations = np.array([[c.t for c in trip] for trip in camera_triplets])
+    R0 = Rotations[:, 0, :, :]  # (n_measure, 3, 3)
+    T0 = Translations[:, 0, :]  # (n_measure, 3,)
+    Rij = np.einsum('nmik,njk->nmij', Rotations, R0)  # R = Ri @ R0^T
+    Tij = Translations - np.einsum('nmik,nk->nmi', Rij, T0)  # T = Ti - R @ T0
+
+    R12 = Rotation.from_matrix(Rij[:, 1]).as_rotvec()
+    R13 = Rotation.from_matrix(Rij[:, 2]).as_rotvec()
+    Z = np.concatenate((R12, R13, Tij[:, 1], Tij[:, 2]), axis=1)
+    Z = np.abs((Z - Z.mean(axis=0)[None, :]) / Z.std(axis=0)[None, :])
+    result = []
+    for ct, z in zip(camera_triplets, Z.max(axis=1)):
+        if z < threshold:
+            result.append(ct)
+    return result
