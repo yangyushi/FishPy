@@ -116,40 +116,27 @@ def get_points_from_order(corner_number, order='x123'):
     return obj_points
 
 
-def plot_cameras(axis, cameras, water_level=0, depth=400):
+def plot_cameras(axis, cameras, zorder=100, camera_size=100, focal_length=1, ray_length=100):
     origins = []
-    camera_size = 100
-    focal_len = 2
-    ray_length = 400
     camera_segments = [
-            np.array(([0, 0, 0], [1, -1, focal_len])) * camera_size,
-            np.array(([0, 0, 0], [-1, 1, focal_len])) * camera_size,
-            np.array(([0, 0, 0], [-1, -1, focal_len])) * camera_size,
-            np.array(([0, 0, 0], [1, 1, focal_len])) * camera_size,
-            np.array(([1, 1, focal_len], [1, -1, focal_len])) * camera_size,
-            np.array(([1, -1, focal_len], [-1, -1, focal_len])) * camera_size,
-            np.array(([-1, -1, focal_len], [-1, 1, focal_len])) * camera_size,
-            np.array(([-1, 1, focal_len], [1, 1, focal_len])) * camera_size
-            ]
+            np.array(([0, 0, 0], [1, -1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [-1, 1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [-1, -1, focal_length])) * camera_size,
+            np.array(([0, 0, 0], [1, 1, focal_length])) * camera_size,
+            np.array(([1, 1, focal_length], [1, -1, focal_length])) * camera_size,
+            np.array(([1, -1, focal_length], [-1, -1, focal_length])) * camera_size,
+            np.array(([-1, -1, focal_length], [-1, 1, focal_length])) * camera_size,
+            np.array(([-1, 1, focal_length], [1, 1, focal_length])) * camera_size
+        ]
     for cam in cameras:
         origin = -cam.r.T @ cam.t
         orient = cam.r.T @ np.array([0, 0, 1])
         origins.append(origin)
         for seg in camera_segments:
             to_plot = np.array([cam.r.T @ p + origin for p in seg])
-            axis.plot(*to_plot.T, color='b')
-        axis.scatter(*origin, color='w', edgecolor='k')
-        axis.quiver(*origin, *orient * ray_length, color='k')
-
-    xlim, ylim, zlim = np.array(origins).T
-    mid_x = np.mean(xlim)
-    mid_y = np.mean(ylim)
-    x = np.linspace(mid_x - 2e3, mid_x + 2e3, 11, endpoint=True)
-    y = np.linspace(mid_y - 2e3, mid_y + 2e3, 11, endpoint=True)
-    x, y = np.meshgrid(x, y)
-    axis.plot_surface(x, y, np.ones(x.shape) * water_level, alpha=0.3)
-    axis.set_zlim(-depth, 2000)
-    return axis
+            axis.plot(*to_plot.T, color='b', zorder=zorder)
+        axis.scatter(*origin, color='w', edgecolor='k', zorder=zorder)
+        axis.quiver(*origin, *orient * ray_length, color='k', zorder=zorder)
 
 
 def get_reproject_error(

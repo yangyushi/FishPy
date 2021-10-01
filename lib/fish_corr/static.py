@@ -124,8 +124,6 @@ def get_poda(positions, velocities):
         inside a cubic box with periodic boundary condition
         see the graphical illustration for the meaning of poda
 
-    (the idea is from Hartmut Löwen)
-
     .. code-block::
 
             ◥ orientation i

@@ -83,7 +83,7 @@ class Viewer(QMainWindow):
     def load(self):
         file_path, _ = QFileDialog.getOpenFileName(
                 self, "Select the image", "",
-                "image (*.tiff);;All Files (*)"
+                "image (*.tiff, *.jpg, *.jpeg, *.png);;All Files (*)"
                 )
 
         if file_path:
