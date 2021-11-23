@@ -570,6 +570,7 @@ class Camera():
         with open(fname, 'r') as f:
             data = json.load(f)
         self.unzip_essential(data)
+        return self
 
 def calib_mult_ext(
     cam_1, cam_2, cam_3, images_v1, images_v2, images_v3,

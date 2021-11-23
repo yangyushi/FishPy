@@ -1539,6 +1539,39 @@ def get_optimised_camera_c2c(
     return get_updated_camera(camera, *opt)
 
 
+def get_optimised_camera_triplet(cameras, p2ds, p3d):
+    """
+    Optimise 3 cameras with 2D-3D correspondances
+
+    Args:
+        cameras (list): three :obj:`Camera` instances
+        p2ds (list): three *distorted* 2d locations whose shape is (n, 2)
+        p3d (numpy.ndarray): the 3d locations, shape (n, 3)
+
+    Return:
+        list: three cameras whose extrinsic parameters were optimised
+            with the circle-to-conic correspondances.
+    """
+    p3dh = np.concatenate((p3d, np.ones((p3d.shape[0], 1))), axis=1)
+    R_opt, T_opt = [], []
+    for i, cam in enumerate(cameras):
+        _, R, T = cv2.solvePnP(
+            objectPoints=p3d[None, :, :],
+            imagePoints=p2ds[i],
+            cameraMatrix=cam.k,
+            distCoeffs=cam.distortion,
+            flags=cv2.SOLVEPNP_ITERATIVE
+        )
+        R = R.ravel()
+        T = T.ravel()
+        R_opt.append(R)
+        T_opt.append(T)
+
+    return [
+        get_updated_camera(c, r, t) for c, r, t in zip(cameras, R_opt, T_opt)
+    ]
+
+
 def get_optimised_camera_triplet_c2c(
     cameras, conic_matrices, p2ds, p3d, force_circle, method="Nelder-Mead"
 ):
@@ -1570,7 +1603,7 @@ def get_optimised_camera_triplet_c2c(
             flags=cv2.SOLVEPNP_ITERATIVE
         )
         if force_circle:
-            R, T = optimise_c2c(
+            R, T =optimise_c2c(
                 R, T, K=cam.k, C=conic_matrices[i],
                 p2d=cam.undistort_points(p2ds[i]),
                 p3dh=p3dh,
@@ -1593,6 +1626,30 @@ def get_optimised_camera_triplet_c2c(
     return [
         get_updated_camera(c, r, t) for c, r, t in zip(cameras, R_opt, T_opt)
     ]
+
+
+def get_cost_camera_triplet_c2c(cameras, conic_matrices, p2ds, p3d):
+    """
+    Optimise 3 cameras with 2D-3D correspondances as well as a measured
+        conics corresponding to a 3D circle on the plane :math:`Z=0`.
+
+    Args:
+        cameras (list): three :obj:`Camera` instances
+        conic_matrices(list): three conic matrices with shape (3, 3)
+        p2ds (list): three *distorted* 2d locations whose shape is (n, 2)
+        p3d (numpy.ndarray): the 3d locations, shape (n, 3)
+
+    Return:
+        float: the reprojected geometrical error.
+    """
+    p3dh = np.concatenate((p3d, np.ones((p3d.shape[0], 1))), axis=1)
+    RT, K = [], []
+    for i, cam in enumerate(cameras):
+        RT.append(Rotation.from_matrix(cam.r).as_rotvec())
+        RT.append(cam.t)
+        K.append(cam.k)
+    RT = np.concatenate(RT)
+    return cost_conic_triple(RT, *K, *conic_matrices, *p2ds, p3dh)
 
 
 def get_updated_camera(camera, R, T):
