@@ -558,3 +558,40 @@ def cost_conic_triple(
     ))
 
     return cost_val_pnp / len(p3dh) + cost_val_centre + cost_val_ellipse
+
+
+def reproject_conic(conic_mat, camera, return_kind="geometry"):
+    """
+    calculate the interaction between a quadratic and plane z=0
+
+    The quadratic is reprojected from a conic in the image plane.
+
+    The result is another conic.
+
+
+    Args:
+        conic_mat (np.ndarray): the matrix representation of a 2D conic.
+        camera (Camera): the camera instance
+        return_kind (str): specify the representation of the conic.
+
+    Return:
+        the conic in different possible representations
+    """
+    P = camera.p
+    Q = P.T @ conic_mat @ P
+
+    conic_coef = (
+        Q[0, 0], Q[0, 1] + Q[1, 0], Q[1, 1],
+        Q[0, 3] + Q[3, 0], Q[1, 3] + Q[3, 1],
+        Q[3, 3]
+    )
+
+    if return_kind == 'coefficient':
+        return conic_coef
+    elif return_kind == 'matrix':
+        return get_conic_matrix(conic_coef)
+    elif return_kind == 'geometry':
+        return get_geometric_coef(get_conic_matrix(conic_coef))
+    else:
+        raise ValueError("Unsupported return kind:", return_kind)
+
