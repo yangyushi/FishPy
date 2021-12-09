@@ -22,11 +22,11 @@ IMHO, the package is *good* in terms of these feaures,
 
 ### Dependencies
 
-- pybind11
-- Eigen3
-- Voro++
-- cplex
-- opencv-python
+- [pybind11](https://pybind11.readthedocs.io/en/stable/index.html)
+- [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
+- [Voro++](http://math.lbl.gov/voro++/)
+- [cplex](https://www.ibm.com/docs/en/icos)
+- [opencv-python-headless](https://pypi.org/project/opencv-python-headless/)
 - numba
 - pandas
 - pillow
