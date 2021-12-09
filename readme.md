@@ -25,7 +25,7 @@ IMHO, the package is *good* in terms of these feaures,
 - [pybind11](https://pybind11.readthedocs.io/en/stable/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [Voro++](http://math.lbl.gov/voro++/)
-- [cplex](https://www.ibm.com/docs/en/icos)
+- [cplex](https://pypi.org/project/cplex/) (you need to download the source code and compile, including the Python API.)
 - [opencv-python-headless](https://pypi.org/project/opencv-python-headless/)
 - numba
 - pandas
