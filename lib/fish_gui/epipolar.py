@@ -43,20 +43,24 @@ class Model():
         return float(self.env['depth'].text())
 
     def get_ep12(self, uv):
+        uv = self.camera_2.undistort(np.array(uv), want_uv=True)
         if self.is_valid:
             ep12 = f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_1, self.camera_2, self.image_2, self.water_level, self.depth, self.normal
                     )
-            return ep12
+            ep12 = self.camera_1.redistort_points(np.array(ep12).T)
+            return ep12.T
         else:
             return []
 
     def get_ep21(self, uv):
+        uv = self.camera_2.undistort(np.array(uv), want_uv=True)
         if self.is_valid:
             ep21 = f3.ray_trace.epipolar_la_draw(
                     uv, self.camera_2, self.camera_1, self.image_1, self.water_level, self.depth, self.normal
                     )
-            return ep21
+            ep21 = self.camera_2.redistort_points(np.array(ep21).T)
+            return ep21.T
         else:
             return []
 
@@ -76,7 +80,7 @@ class StereoImageItem(pg.ImageItem):
         self.buddy = buddy
 
     def mouseClickEvent(self, event):
-        edge = pg.mkPen(None)
+        edge = pg.mkPen(color=QColor(249, 82, 60), width=2)
         fill = pg.mkBrush(color=QColor(249, 82, 60))  # tomato in matplotlib
 
         pos = event.pos()
@@ -84,7 +88,10 @@ class StereoImageItem(pg.ImageItem):
         u, v = uv.x(), uv.y()
         self.plot.clear()
         self.buddy.clear()
-        self.plot.addPoints(x=[u], y=[v], pen=edge, brush=fill)
+        self.plot.setData(
+            x=[u], y=[v], pen=edge,
+            symbolBrush=fill, symbol='o'
+        )
         if self.label == 1:
             epipolar_line = self.model.get_ep12([u, v])
         elif self.label == 2:
@@ -92,7 +99,13 @@ class StereoImageItem(pg.ImageItem):
         else:
             raise ValueError("Wrong StereoImageItem Label, ", self.label)
         if len(epipolar_line) > 0:
-            self.buddy.addPoints(x=epipolar_line.T[0], y=epipolar_line.T[1], pen=edge, brush=fill)
+            self.buddy.setData(
+                x=epipolar_line.T[0],
+                y=epipolar_line.T[1],
+                pen=edge,
+                symbol=None
+                #brush=fill
+            )
 
 
 class Viewer(QMainWindow):
@@ -128,7 +141,7 @@ class Viewer(QMainWindow):
 
         self.btn_load_image_left = QPushButton('Load Image')
         self.btn_load_camera_left = QPushButton('Load Camera')
-        plot = pg.ScatterPlotItem()
+        plot = pg.PlotDataItem()
         canvas = StereoImageItem(self.model, label=1, plot=plot)
         canvas.setZValue(-100)
 
@@ -152,7 +165,7 @@ class Viewer(QMainWindow):
         layout = QGridLayout()
         window = pg.GraphicsLayoutWidget()
         view = window.addViewBox(row=0, col=0, lockAspect=True)
-        plot = pg.ScatterPlotItem()
+        plot = pg.PlotDataItem()
         canvas = StereoImageItem(self.model, label=2, plot=plot)
         canvas.setZValue(-100)
 
@@ -195,7 +208,8 @@ class Viewer(QMainWindow):
 
     def __load_image_left(self):
         image_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the image", "", "tiff images (*.tiff);;All Files (*)"
+                self, "Select the image", "",
+                "images (*.jpeg *.jpg *.png *.tiff);;All Files (*)"
                 )
         if image_name:
             img = np.array(Image.open(image_name))
@@ -205,7 +219,7 @@ class Viewer(QMainWindow):
     def __load_image_right(self):
         image_name, _ = QFileDialog.getOpenFileName(
                 self, "Select the image", "",
-                "tiff images (*.tiff);;All Files (*)"
+                "images (*.jpeg *.jpg *.png *.tiff);;All Files (*)"
                 )
         if image_name:
             img = np.array(Image.open(image_name))
@@ -215,18 +229,16 @@ class Viewer(QMainWindow):
     def __load_camera_left(self):
         """todo: draw the origin on the image"""
         camera_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the camera", "", "camera files (*.pkl);;"
+                self, "Select the camera", "", "camera files (*.json);;"
                 )
-        with open(camera_name, 'rb') as f:
-            camera = pickle.load(f)
+        camera = f3.Camera().load_json(camera_name)
         self.model.camera_1 = camera
 
     def __load_camera_right(self):
         camera_name, _ = QFileDialog.getOpenFileName(
-                self, "Select the camera", "", "camera files (*.pkl);;"
+                self, "Select the camera", "", "camera files (*.json);;"
                 )
-        with open(camera_name, 'rb') as f:
-            camera = pickle.load(f)
+        camera = f3.Camera().load_json(camera_name)
         self.model.camera_2 = camera
 
 
