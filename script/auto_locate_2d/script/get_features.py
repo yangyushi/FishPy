@@ -20,7 +20,7 @@ size_min = int(conf['locate']['size_min'])
 size_max = int(conf['locate']['size_max'])
 want_plot = bool(int(conf['locate']['want_plot']))
 line_length = int(conf['locate']['line_length'])
-dpi = 150
+dpi = 300
 
 
 for name in conf['rename']:
@@ -29,6 +29,8 @@ for name in conf['rename']:
         continue
 
     vid_name = os.path.join(folder, name + '-fg.avi')
+    if want_plot:
+        vid_raw = ft.read.iter_video(os.path.join(folder, name + '.mp4'))
     images = ft.read.iter_video(vid_name)
     kernels = np.load(f'{name}-shape-kernels.npy')
 
@@ -69,7 +71,8 @@ for name in conf['rename']:
         x, y, o, s, b, p = maxima
 
         if want_plot:
-            plt.figure(figsize=(image.shape[1]/dpi, image.shape[0]/dpi), dpi=dpi)
+            raw = next(vid_raw)
+            plt.figure(figsize=(raw.shape[1]/dpi, raw.shape[0]/dpi), dpi=dpi)
             length = line_length
 
             for i, m in enumerate(maxima.T):
@@ -79,18 +82,18 @@ for name in conf['rename']:
                 plt.plot(
                     [base[0] - length/2 * np.sin(angle), base[0] + length/2 * np.sin(angle)],
                     [base[1] - length/2 * np.cos(angle), base[1] + length/2 * np.cos(angle)],
-                    color='tomato', linewidth=1,
+                    color='tomato', linewidth=0.2,
                 )
 
-            plt.imshow(image, cmap='gray')
-            plt.scatter(x, y, color='w', edgecolor='tomato', marker='o', linewidth=1, s=12)
-            plt.xlim(0, image.shape[1])
-            plt.ylim(image.shape[0], 0)
+            plt.imshow(raw, cmap='gray')
+            plt.scatter(x, y, color='w', edgecolor='tomato', marker='o', linewidth=0.2, s=3, fc='none')
+            plt.xlim(0, raw.shape[1])
+            plt.ylim(raw.shape[0], 0)
             plt.gcf().set_frameon(False)
             plt.axis('off')
             plt.gcf().axes[0].get_xaxis().set_visible(False)
             plt.gcf().axes[0].get_yaxis().set_visible(False)
-            plt.savefig(f'{name}-oishi-locate-frame-{frame:04}.png', bbox_inches='tight', pad_inches=0)
+            plt.savefig(f'{name}-oishi-locate-frame-{frame:04}.pdf', bbox_inches='tight', pad_inches=0)
             plt.close()
 
     f_out.close()

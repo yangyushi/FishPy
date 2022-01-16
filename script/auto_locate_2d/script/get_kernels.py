@@ -31,8 +31,11 @@ for name in conf['rename']:
     shape_file_name = f'{name}-fish-shape-collection.npy'
     shapes = np.load(shape_file_name)
     if use_model:
+        print("using neural network to filter fish shapes")
         fail_mark = float(conf['locate']['fail_mark'])
         model = keras.models.load_model('script/shape_model.h5')
         shapes = ft.utility.validate(shapes, model, fail_mark)
-    kernels = ft.kernel.get_kernels(shapes, indices, cluster_num, sigma=0)
+    kernels = ft.kernel.get_kernels(
+        shapes, indices, cluster_num, sigma=0, save_name=name
+    )
     np.save(f'{name}-shape-kernels', kernels)
