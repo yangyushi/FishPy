@@ -11,5 +11,10 @@ sphinx/_**
 build*.sh
 !build.sh
 fish_3d/env
-test/project/auto_process_1
-test/project/video_1/*.avi
+test/project/**
+!test/project/video_1
+!test/project/calib_ext
+
+extern/voro++/bin/**
+extern/voro++/lib/**
+extern/voro++/include/**

@@ -1,5 +1,6 @@
-CPPFLAGS = -Ofast -Wall -I. -I${prefix}/include/voro++ -std=c++14 -fPIC -shared -mtune=native -march=native
-LFLAG = -L${prefix}/lib -lvoro++
+VORO = ../../extern/voro++
+CPPFLAGS = -Ofast -Wall -I. -I${VORO}/include/voro++ -std=c++14 -fPIC -shared -mtune=native -march=native
+LFLAG = -L${VORO}/lib -lvoro++
 PYFLAGS = `${PY} -m pybind11 --includes` `${PY}-config --ldflags`
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
@@ -12,3 +13,9 @@ tower_sample$(PYEXT): tower_sample.cpp
 	$(CC) $(CPPFLAGS) $(PYFLAGS) tower_sample.cpp -o tower_sample$(PYEXT)
 
 .PHONY: all
+
+
+.clean:
+	rm -f *.so
+	rm -f *.o
+	rm -f *.a
