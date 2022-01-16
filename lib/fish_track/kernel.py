@@ -5,7 +5,7 @@ from scipy.cluster import vq
 import matplotlib.pyplot as plt
 
 
-def vanilla_pca(images):
+def pca(images):
     """
     Args:
         images (np.ndarray): a collections of images to perform PCA
@@ -35,23 +35,13 @@ def plot_pca(dim, mean, pcs, name='pca'):
             ax.set_title(f'#{i}')
         ax.set_xticks([])
         ax.set_yticks([])
-    fig.set_size_inches(12, 8)
-    plt.savefig('pca.pdf')
+    fig.set_size_inches(7, 4)
+    plt.tight_layout()
+    plt.savefig(f'{name}.pdf')
     plt.close()
 
 
-def add_shadow(x, sigma):
-    """
-    Effectively add a negative zone around image x where x > x.mean
-    """
-    mask = (ndimage.grey_dilation(x, 3) > 0) * (x < x.max() * 0.1)
-    diff = ndimage.gaussian_filter(x, sigma)
-    diff *= mask
-    result = x - diff
-    return result / result.max()
-
-
-def get_kernels(images, pc_indices, cluster_num, plot=False, sigma=0):
+def get_kernels(images, pc_indices, cluster_num, save_name=False, *args, **kwargs):
     """
     1. calculate the principle component of different images
     2. project images on some principles
@@ -60,19 +50,19 @@ def get_kernels(images, pc_indices, cluster_num, plot=False, sigma=0):
     5. return the averaged images
 
     Args:
-        images (np.ndarray): images obtained from :meth:`fish_track.shape.get_shapes`
+        images (np.ndarray): images obtained from \
+            :meth:`fish_track.shape.get_shapes`
         pc_indices (np.ndarray): indices of the principle components
         cluster_num (int): the number of clusters (k)
-        sigma (float): the sigma of the "shadow" add around the kernel
-        plot (bool | str): the name of the plot
+        save_name (str): the name of the pca plot, if None there will be no plot
     """
     number, dim, dim = images.shape
 
     for_pca = np.reshape(images, (number, dim * dim))
-    pcs, variance, mean = vanilla_pca(for_pca)
+    pcs, variance, mean = pca(for_pca)
 
-    if plot:
-        plot_pca(dim, mean, pcs)
+    if save_name:
+        plot_pca(dim, mean, pcs, name=f'{save_name}-eigen-fish.pdf')
 
     projected = np.array([pcs[pc_indices] @ (img - img.mean()) for img in for_pca])
     features = vq.whiten(projected)
@@ -80,7 +70,7 @@ def get_kernels(images, pc_indices, cluster_num, plot=False, sigma=0):
 
     code, distance = vq.vq(features, centroids)
 
-    if plot:
+    if save_name:
         fig, ax = plt.subplots(1, cluster_num)
 
     shape_kernels = []
@@ -90,20 +80,17 @@ def get_kernels(images, pc_indices, cluster_num, plot=False, sigma=0):
         shape_images = images[img_indices]
         average = shape_images.mean(0)
         kernel = average.reshape(dim, dim)  # - np.mean(average)
-        #if sigma > 0:
-        #    kernel = add_shadow(kernel, sigma)
-        #kernel = kernel / np.sum(kernel > kernel.max() * 0.1)  # compensate for smaller kernels
-        if plot:
+        if save_name:
             ax[k].imshow(kernel)
         shape_kernels.append(kernel)
 
-    if plot:
+    if save_name:
         for a in ax.ravel():
             a.set_xticks([])
             a.set_yticks([])
         plt.gcf().set_size_inches(15, 3)
         plt.tight_layout()
-        plt.savefig(f'{plot}.pdf')
+        plt.savefig(f'{save_name}-kernels.pdf')
         plt.close()
 
     return shape_kernels
