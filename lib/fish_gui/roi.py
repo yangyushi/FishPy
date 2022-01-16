@@ -25,53 +25,6 @@ class Model():
         self.cursor = 0
 
     @property
-    def rand_max(self):
-        """randomly overlapping 10 images"""
-        step = 1
-        if not self.random:
-            while True:
-                for _ in range(step):
-                    try:
-                        img = next(self.images)
-                    except StopIteration:
-                        img = None
-                        break
-                if not isinstance(img, type(None)):
-                    self.random.append(img)
-                    step *= 2
-                else:
-                    break
-        return np.max(self.random, axis=0)
-
-    @property
-    def rand_min(self):
-        """randomly overlapping 10 images"""
-        step = 1
-        if not self.random:
-            while True:
-                for _ in range(step):
-                    try:
-                        img = next(self.images)
-                    except StopIteration:
-                        img = None
-                        break
-                if not isinstance(img, type(None)):
-                    self.random.append(img)
-                    step *= 2
-                else:
-                    break
-        return np.min(self.random, axis=0)
-
-
-    @property
-    def max(self):
-        return np.max(list(self.images), axis=0)
-
-    @property
-    def min(self):
-        return np.min(list(self.images), axis=0)
-
-    @property
     def next(self):
         if self.cursor == len(self.history) - 1:
             img = next(self.images)
@@ -132,31 +85,17 @@ class Viewer(QMainWindow):
         layout = QHBoxLayout()
         pannel.setLayout(layout)
         self.btn_load = QPushButton('load_video')
-        self.btn_max = QPushButton('Random Max')
-        self.btn_min = QPushButton('Random Min')
         self.btn_save = QPushButton('Save')
         self.btn_exit = QPushButton('Exit')
         layout.addWidget(self.btn_load)
-        layout.addWidget(self.btn_max)
-        layout.addWidget(self.btn_min)
         layout.addWidget(self.btn_save)
         layout.addWidget(self.btn_exit)
 
         self.btn_load.clicked.connect(self.load)
-        self.btn_max.clicked.connect(self.get_max)
-        self.btn_min.clicked.connect(self.get_min)
         self.btn_save.clicked.connect(self.save)
         self.btn_exit.clicked.connect(self.close)
 
         self.layout.addWidget(pannel, 1, 0)
-
-    def get_max(self):
-        image = self.model.rand_max
-        self.canvas.setImage(image)
-
-    def get_min(self):
-        image = self.model.rand_min
-        self.canvas.setImage(image)
 
     def load(self):
         video_name, _ = QFileDialog.getOpenFileName(
@@ -183,9 +122,3 @@ def measure_roi(images, roi):
     measure = Viewer(images, roi)
     app.exec_()
     return measure.roi
-
-if __name__ == "__main__":
-    import fish_track as ft
-    path = '/media/yushi/hdd/observe_20190502/5_fish_swarm/cam-1'
-    images = ft.read.iter_image_sequence(path)
-    measure_roi(images, [0, 100, 0, 100])
