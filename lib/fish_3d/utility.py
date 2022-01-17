@@ -8,6 +8,7 @@ from joblib import Parallel, delayed
 from scipy import ndimage
 from scipy.optimize import minimize
 from scipy.spatial.transform import Rotation
+from scipy.sparse.csgraph import connected_components
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
@@ -1342,7 +1343,7 @@ def solve_overlap_lp(points, errors, diameter):
     dist_mat = squareform(dists)  # (N, N)
     if N <= 1:
         return points
-    for n_target in range(N, 2, -1):
+    for n_target in range(N, 1, -1):
         model = Model(name="Overlap Model")
         x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
         # total number == n_target
@@ -1362,6 +1363,40 @@ def solve_overlap_lp(points, errors, diameter):
             ], dtype=bool)
             return points[indices]
     return points[np.argmin(errors)][np.newaxis, :]
+
+
+def solve_overlap_lp_fast(points, errors, diameter):
+    """
+    Remove overlapped particles using linear programming, following
+
+        1. minimize the total error
+        2. particles do not overlap
+        3. retain most particles
+
+    Args:
+        points (np.ndaray): particle locations, shape (N, dimension)
+        errors (np.ndarray): the error (cost) of each particle, shape (N, )
+        diameter (float): the minimium distance between non-overlap particles
+
+    Return:
+        np.ndarray: the optimised positions, shape (N', dimension)
+    """
+    N, dim = points.shape
+    dists = pdist(points)
+    aij = squareform(dists) < diameter
+    np.fill_diagonal(aij, 0)
+    n_cliques, labels = connected_components(aij, directed=False)
+    result = []
+    for val in range(n_cliques):
+        clique = np.nonzero(labels == val)[0]
+        if len(clique) == 1:
+            result.append(points[clique])
+        else:
+            result.append(
+                solve_overlap_lp(points[clique], errors[clique], diameter=diameter)
+            )
+    return np.concatenate(result, axis=0)
+
 
 
 def refine_trajectory(trajectory, cameras, features, tol_2d):
