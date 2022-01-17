@@ -17,19 +17,20 @@ cd extern/voro++
 make install
 cd ../..
 
+echo "building the fish_corr module"
+cd lib/fish_corr
+make clean
+make all
+cd ../..
+
+echo "building the fish_track module"
+cd lib/fish_track
+make clean
+make all
+cd ../..
+
 echo "building the fish_3d module"
 cd lib/fish_3d
 make clean
 make all
-
-echo "building the fish_corr module"
-cd ../fish_corr
-make clean
-make all
-
-echo "building the fish_track module"
-cd ../fish_track
-make clean
-make all
-
 cd ../..

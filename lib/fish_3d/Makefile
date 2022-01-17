@@ -1,14 +1,17 @@
-CPPFLAGS = -Wall -I${prefix}/include/eigen3 -std=c++11 -O3\
+EIGEN = ../../extern/eigen3
+PYBIND11 = ../../extern/pybind11/include
+
+CPPFLAGS = -I${EIGEN} -I${PYBIND11} -std=c++14 -O3\
 		   -I$(CPLEX_ROOT)/cplex/include\
 		   -I$(CPLEX_ROOT)/concert/include\
-		   -DIL_STD -I. -fPIC
+		   -DIL_STD -I. -fPIC\
+		   -Wno-unknown-warning-option
+
 LFLAG=-L$(CPLEX_ROOT)/cplex/lib/$(CPLEX_ARCH)/static_pic\
 	  -L/$(CPLEX_ROOT)/concert/lib/$(CPLEX_ARCH)/static_pic\
 	  -lilocplex -lconcert -lcplex -lm -lpthread -ldl
 
-PYFLAGS = $(shell ${PY} -m pybind11 --includes)\
-		  $(shell ${PY}-config --ldflags)
-
+PYFLAGS = $(shell ${PY}-config --include) $(shell ${PY}-config --ldflags)
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
 all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT) cutility$(PYEXT)

@@ -22,9 +22,6 @@ IMHO, the package is *good* in terms of these feaures,
 
 ### Dependencies
 
-- [pybind11](https://pybind11.readthedocs.io/en/stable/index.html)
-- [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-- [Voro++](http://math.lbl.gov/voro++/)
 - [cplex](https://pypi.org/project/cplex/) (you need to download the source code and compile, including the Python API.)
 - [opencv-python-headless](https://pypi.org/project/opencv-python-headless/)
 - numba
@@ -39,6 +36,7 @@ IMHO, the package is *good* in terms of these feaures,
 
 ### Install the package
 
-1. Change the content in `build.sh` accordingly, then execute `./build.sh` to build the python modules. This step is *hard*.
-2. [optional] Add the full path of folder `FishPy/lib` to the `PYTHONPATH`, so that the module can be imported in Python.
-3. [optional] Add the full path of folder `FishPy/bin` to the `PATH`, to use the scripts in `bin` folder.
+1. Download the code with command `git clone --recursive https://github.com/yangyushi/FishPy.git`. It is *important* to include the `--recursive` option, so that the `eigen` and `pybind11` will be downloaded.
+2. Change the content in `build.sh` accordingly, then execute `./build.sh` to build the python modules. This step is *hard*.
+3. [optional] Add the full path of folder `FishPy/lib` to the `PYTHONPATH`, so that the module can be imported in Python.
+4. [optional] Add the full path of folder `FishPy/bin` to the `PATH`, to use the scripts in `bin` folder.
