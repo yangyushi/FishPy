@@ -893,6 +893,26 @@ class Movie:
             self.__labels.update({frame: labels})
             return positions
 
+    def get_pair(self, f1, f2):
+        """
+        Return the same individuals in two frames.
+
+        Args:
+            f1 (int): the frame index for the first frame
+            f2 (int): the frame index for the first frame
+
+        Return:
+            (p1, p2): the matched positions in two time points. The positions\
+                were stored as numpy arrays. p1[i] and p2[i] referrs to the\
+                same identity
+        """
+        p1 = self[f1]
+        p2 = self[f2]
+        l1 = self.__labels[f1]
+        l2 = self.__labels[f2]
+        shared, idx1, idx2 = np.intersect1d(l1, l2, assume_unique=True, return_indices=True)
+        return p1[idx1], p2[idx2]
+
     def __get_velocities_single(self, frame):
         if frame > self.max_frame - 1:
             raise IndexError(f"frame {frame} does not velocities")
