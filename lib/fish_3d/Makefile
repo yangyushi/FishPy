@@ -11,7 +11,7 @@ LFLAG=-L$(CPLEX_ROOT)/cplex/lib/$(CPLEX_ARCH)/static_pic\
 	  -L/$(CPLEX_ROOT)/concert/lib/$(CPLEX_ARCH)/static_pic\
 	  -lilocplex -lconcert -lcplex -lm -lpthread -ldl
 
-PYFLAGS = $(shell ${PY}-config --include) $(shell ${PY}-config --ldflags)
+PYFLAGS = $(shell ${PY}-config --includes) $(shell ${PY}-config --ldflags)
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
 all: cgreta$(PYEXT) cstereo$(PYEXT) cray_trace$(PYEXT) ctemporal$(PYEXT) cutility$(PYEXT)

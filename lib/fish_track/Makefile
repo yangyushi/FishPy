@@ -4,7 +4,7 @@ PYBIND11 = ../../extern/pybind11/include
 CPPFLAGS = -Wall -I${EIGEN} -I${PYBIND11} -std=c++14 -fPIC -shared -O3\
 		   -Wno-unknown-warning-option
 
-PYFLAGS = $(shell ${PY}-config --include) $(shell ${PY}-config --ldflags)
+PYFLAGS = $(shell ${PY}-config --includes) $(shell ${PY}-config --ldflags)
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
 all: nrook$(PYEXT)
