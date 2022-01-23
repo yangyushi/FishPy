@@ -4,7 +4,7 @@ PYBIND11 = ../../extern/pybind11/include
 CPPFLAGS = -Ofast -Wall -I. -I${PYBIND11} -I${VORO}/include/voro++\
 		   -std=c++14 -fPIC -shared -mtune=native -march=native
 LFLAG = -L${VORO}/lib -lvoro++
-PYFLAGS = $(shell ${PY}-config --include) $(shell ${PY}-config --ldflags)
+PYFLAGS = $(shell ${PY}-config --includes) $(shell ${PY}-config --ldflags)
 PYEXT = $(shell ${PY}-config --extension-suffix)
 
 all: voro$(PYEXT) tower_sample$(PYEXT)

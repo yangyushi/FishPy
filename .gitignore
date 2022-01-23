@@ -15,6 +15,7 @@ test/project/**
 !test/project/video_1
 !test/project/calib_ext
 
-extern/voro++/bin/**
-extern/voro++/lib/**
-extern/voro++/include/**
+extern/voro++/bin
+extern/voro++/include
+extern/voro++/lib
+extern/voro++/src/voro++
