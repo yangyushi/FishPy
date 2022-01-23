@@ -374,8 +374,8 @@ class ActiveLinker():
         frames_numba = nList()
 
         for label, frame in zip(labels, frames):
-            labels_numba.append(label)
-            frames_numba.append(frame)
+            labels_numba.append(label.copy())
+            frames_numba.append(frame.copy())
 
         trajectories = []
         for target in range(max_value + 1):  # find the trajectory for every label
