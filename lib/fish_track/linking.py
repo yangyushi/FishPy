@@ -593,7 +593,7 @@ def build_dist_matrix_sparse(
                 if distance < dx:
                     rows.append(i)
                     cols.append(i+j+1)
-                    values.append(distance)
+                    values.append(distance + 1e-8)
     if len(values) == 0:
         return np.empty(0), {}, {}, np.empty((0, 2), dtype=int)
     rows = np.array(rows, dtype=int)
@@ -816,7 +816,6 @@ def relink(trajectories, dx, dt, blur=None, blur_velocity=None, cost='dist', deb
         trajs_ordered, dx=dx, dt=dt, debug=debug,
         cost=cost, time_filter=time_filter_link
     )
-
     if (len(dist_mat) == 0) and (len(unique_links) == 0):
         if debug: print("No conflict")
         return [(t.time, t.positions) for t in trajs_ordered]
