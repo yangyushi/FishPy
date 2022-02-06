@@ -1365,6 +1365,59 @@ def solve_overlap_lp(points, errors, diameter):
     return points[np.argmin(errors)][np.newaxis, :]
 
 
+def __solve_overlap_lp_phys(points, errors, diameter, beta, mu):
+    """
+    Remove overlapped particles using linear programming, following
+
+        1. minimize the total error and energy
+        2. particles do not overlap, with a soft boundary
+        3. retain most particles
+
+    Args:
+        points (np.ndaray): particle locations, shape (N, dimension)
+        errors (np.ndarray): the error (cost) of each particle, shape (N, )
+        diameter (float): the minimium distance between non-overlap particles
+        C (float): the inverse temperature
+        mu (float): the chemical potential
+
+    Return:
+        np.ndarray: the optimised positions, shape (N', dimension)
+    """
+    N, dim = points.shape
+    dists = pdist(points)
+    errors = errors - mu
+    if np.all(dists > diameter):  # do not optimise if no overlap
+        return points
+    dist_mat = squareform(dists)  # (N, N)
+    if N <= 1:
+        return points
+
+    model = Model(name="Overlap Model")
+    x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
+    slack_vars = model.continuous_var_matrix(
+        keys1=np.arange(N),
+        keys2=np.arange(N),
+        lb=0, ub=diameter, name="slack"
+    )
+    for i, j in product(np.arange(N), repeat=2):
+        if i != j:
+            model.add_constraint(
+                (dist_mat[i, j] - diameter) * x_vars[i] * x_vars[j] \
+                >=  - slack_vars[i, j]
+            )
+    energy = model.sum(slack_vars) * beta
+    objective = model.sum(x * e for x, e in zip(x_vars, errors))
+    model.minimize(objective + energy)
+    is_successful = model.solve()
+    if is_successful:
+        indices = np.array([
+            x.solution_value for x in x_vars
+        ], dtype=bool)
+        return points[indices]
+    else:
+        return points[np.argmin(errors)][np.newaxis, :]
+
+
 def solve_overlap_lp_fast(points, errors, diameter):
     """
     Remove overlapped particles using linear programming, following
@@ -1395,6 +1448,42 @@ def solve_overlap_lp_fast(points, errors, diameter):
             result.append(
                 solve_overlap_lp(
                     points[clique], errors[clique], diameter=diameter
+                )
+            )
+    return np.concatenate(result, axis=0)
+
+
+def solve_overlap_lp_phys(points, errors, diameter, beta, mu):
+    """
+    Remove overlapped particles using linear programming, following
+
+        1. minimize the total error
+        2. particles do not overlap
+        3. retain most particles
+
+    Args:
+        points (np.ndaray): particle locations, shape (N, dimension)
+        errors (np.ndarray): the error (cost) of each particle, shape (N, )
+        diameter (float): the minimium distance between non-overlap particles
+
+    Return:
+        np.ndarray: the optimised positions, shape (N', dimension)
+    """
+    N, dim = points.shape
+    dists = pdist(points)
+    aij = squareform(dists) < diameter
+    np.fill_diagonal(aij, 0)
+    n_cliques, labels = connected_components(aij, directed=False)
+    result = []
+    for val in range(n_cliques):
+        clique = np.nonzero(labels == val)[0]
+        if len(clique) == 1:
+            result.append(points[clique])
+        else:
+            result.append(
+                __solve_overlap_lp_phys(
+                    points[clique], errors[clique], diameter=diameter,
+                    beta=beta, mu=mu
                 )
             )
     return np.concatenate(result, axis=0)
