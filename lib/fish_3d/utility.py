@@ -1347,7 +1347,7 @@ def solve_overlap_lp(points, errors, diameter):
         model = Model(name="Overlap Model")
         x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
         # total number == n_target
-        model.add_constraint(model.sum(x_vars)==n_target)
+        model.add_constraint(model.sum(x_vars) == n_target)
         # no overlap
         for i, j in product(np.arange(N), repeat=2):
             if i != j:
@@ -1393,10 +1393,11 @@ def solve_overlap_lp_fast(points, errors, diameter):
             result.append(points[clique])
         else:
             result.append(
-                solve_overlap_lp(points[clique], errors[clique], diameter=diameter)
+                solve_overlap_lp(
+                    points[clique], errors[clique], diameter=diameter
+                )
             )
     return np.concatenate(result, axis=0)
-
 
 
 def refine_trajectory(trajectory, cameras, features, tol_2d):
