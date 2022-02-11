@@ -8,7 +8,8 @@ from scipy.optimize import least_squares, curve_fit
 from scipy.spatial import ConvexHull
 from scipy.special import gamma
 from scipy import ndimage
-from scipy.spatial.distance import pdist, cdist
+from scipy.spatial.distance import pdist
+from warnings import warn
 from matplotlib import cm
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -22,12 +23,16 @@ def get_acf(var, size=0, step=1):
 
     .. math::
 
-        Y[\tau] = \left\langle \sum_i^\text{ndim}{X\left[t, i\right] \cdot X\left[t+\tau, i\right]} \right\rangle
+        Y[\tau] = \left\langle \sum_i^\text{ndim}{X\left[t, i\right]
+        \cdot X\left[t+\tau, i\right]} \right\rangle
 
     Args:
-        var (:obj:`numpy.ndarray`): a continual nD variable.  the shape is (number, dimension)
-        size (:obj:`int`): the maximum size of :math:`\tau`, by default :math:`\tau` == len(var)
-        step (:obj:`int`): every ``step`` points in time were chosen as t0 in the calculation
+        var (:obj:`numpy.ndarray`): a continual nD variable.
+            the shape is (number, dimension)
+        size (:obj:`int`): the maximum size of :math:`\tau`,
+            by default :math:`\tau` == len(var)
+        step (:obj:`int`): every ``step`` points in time were
+            chosen as t0 in the calculation
 
     Return:
         :obj:`numpy.ndarray`: The auto-correlation function of the variable
@@ -44,11 +49,11 @@ def get_acf(var, size=0, step=1):
     for dt in range(0, size):
         stop = length - dt
         corr = np.sum(
-            flctn[: stop : step] * flctn[dt : stop + dt : step],
+            flctn[:stop:step] * flctn[dt:stop + dt:step],
             axis=1
         )
-        c0   = np.sum(
-            flctn[: stop : step] * flctn[: stop : step], axis=1
+        c0 = np.sum(
+            flctn[:stop:step] * flctn[:stop:step], axis=1
         )  # normalisation factor
         if np.nansum(c0) == 0:
             result[dt] = np.nan
@@ -65,7 +70,7 @@ def get_msd(trajectories, size, step=1):
         for tau in np.arange(0, size):
             if tau < length:
                 msd[i, tau] = np.sum(
-                    (traj[tau : length] - traj[: length - tau]) ** 2,
+                    (traj[tau:length] - traj[:length - tau]) ** 2,
                     axis=1
                 ).mean()
             else:
@@ -77,20 +82,20 @@ def get_acf_fft(var, size, nstep, nt):
     """
     not finished
     """
-    fft_len = 2 * size # Actual length of FFT data
+    fft_len = 2 * size  # Actual length of FFT data
 
     # Prepare data for FFT
     fft_inp = np.zeros(fft_len, dtype=np.complex_)
-    fft_inp[0:nstep] = v
+    fft_inp[0:nstep] = var
 
-    fft_out = np.fft.fft(fft_inp) # Forward FFT
-    fft_out = fft_out * np.conj ( fft_out ) # Square modulus
-    fft_inp = np.fft.ifft(fft_out) # Backward FFT (the factor of 1/fft_len is built in)
+    fft_out = np.fft.fft(fft_inp)  # Forward FFT
+    fft_out = fft_out * np.conj(fft_out)  # Square modulus
+    fft_inp = np.fft.ifft(fft_out)  # Backward FFT
     # Normalization factors associated with number of time origins
     n = np.linspace(nstep, nstep - nt, nt + 1, dtype=np.float_)
-    assert np.all(n > 0.5), 'Normalization array error' # Should never happen
-    c_fft = fft_inp[0 : nt + 1].real / n
-    return
+    assert np.all(n > 0.5), 'Normalization array error'
+    c_fft = fft_inp[0:nt + 1].real / n
+    return c_fft
 
 
 def get_centre(trajectories, frame):
@@ -130,7 +135,8 @@ def get_best_rotation(r1, r2):
     """
     Calculate the best rotation to relate two sets of vectors
 
-    See the paper [A solution for the best rotation to relate two sets of vectors] for detail
+    See the paper [A solution for the best rotation to relate\
+        two sets of vectors] for detail
 
     all the points were treated equally, which means w_n = 0 (in the paper)
 
@@ -165,11 +171,13 @@ def get_best_dilatation_rotation(r1, r2, init_guess=None):
     """
     if isinstance(init_guess, type(None)):
         init_guess = np.ones(r1.shape[1])
+
     def cost(L, r1, r2):
         Lambda = np.identity(r1.shape[1]) * np.array(L)
         r1t = r1 @ Lambda
         R = get_best_rotation(r1t, r2)
         return np.sum(np.linalg.norm(r2 - r1t @ R))
+
     result = least_squares(cost, init_guess, args=(r1, r2))
     L = np.identity(r1.shape[1]) * np.array(result['x'])
     r1t = r1 @ L
@@ -203,13 +211,16 @@ def get_rg_tensor(trajectories, target_num=0):
 
 class GCE:
     """
-    Estimating the Group Centre, trying to use knowledge of good frames to reduce the error
+    Estimating the Group Centre, trying to use knowledge of\
+        good frames to reduce the error
     """
     def __init__(self, trajs, good_frames=None):
         """
         Args:
-            trajs (:obj:`list` or :obj:`tuple`): a list/tuple of many Trajectory objects
-            trajectory: content ``{'positions': (frames, dimension) [:obj:`numpy.ndarray`], 'time': (frames,) [:obj:`numpy.ndarray`]}``
+            trajs (:obj:`list` or :obj:`tuple`): a list/tuple of many\
+                Trajectory objects
+            trajectory: content ``{'positions': (frames, dimension)\
+                [:obj:`numpy.ndarray`], 'time': (frames,) [:obj:`numpy.ndarray`]}``
             good_frames: frame number that the group centre can be well estimated
         """
         self.trajs = trajs
@@ -422,18 +433,28 @@ def get_vanilla_gr(frames, tank, bins, random_size):
 def get_biased_gr(frames, positions, bins, space_bin_number, **kwargs):
     """
     Args:
-        frames (:obj:`numpy.ndarray`): positions of all particles in different frames, shape (frame, n, dim)
-        positions (:obj:`numpy.ndarray`): all positions in the entire movie, shape (N, 3)
-        bins (:obj:`numpy.ndarray` or `int`): the bins for the distance histogram or the bin number
+        frames (:obj:`numpy.ndarray`): positions of all particles in different\
+            frames, shape (frame, n, dim)
+        positions (:obj:`numpy.ndarray`): all positions in the entire movie,\
+            shape (N, 3)
+        bins (:obj:`numpy.ndarray` or `int`): the bins for the distance\
+            histogram or the bin number
+
+    Return:
+        np.ndarray: the radial distribution function, with shape\
+            (len(bins) - 1, )
     """
-    bins_xyz = (
-        np.linspace(positions[:, 0].min(), positions[:, 0].max(), space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(positions[:, 1].min(), positions[:, 1].max(), space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(positions[:, 2].min(), positions[:, 2].max(), space_bin_number+1, endpoint=True).ravel(),
-    )
+    n, dim = positions.shape
+    bins_space = [
+        np.linspace(
+            positions[:, d].min(),
+            positions[:, d].max(),
+            space_bin_number+1, endpoint=True
+        ).ravel() for d in range(dim)
+    ]
     frames = list(frames)
     random_size = np.sum([len(f) for f in frames])
-    random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
+    random_gas = biased_discrete_nd(positions, bins_space, random_size)
     return get_gr(frames, bins, random_gas)
 
 
@@ -444,16 +465,18 @@ def get_biased_gr_randomly(frames, positions, bins, space_bin_number, **kwargs):
         positions (:obj:`numpy.ndarray`): all positions in the entire movie, shape (N, 3)
         bins (:obj:`numpy.ndarray` or `int`): the bins for the distance histogram or the bin number
     """
-    bins_xyz = (
-        np.linspace(positions[:, 0].min(), positions[:, 0].max(), space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(positions[:, 1].min(), positions[:, 1].max(), space_bin_number+1, endpoint=True).ravel(),
-        np.linspace(positions[:, 2].min(), positions[:, 2].max(), space_bin_number+1, endpoint=True).ravel(),
-    )
+    n, dim = positions.shape
+    bins_space = [
+        np.linspace(
+            positions[:, d].min(), positions[:, d].max(),
+            space_bin_number+1, endpoint=True
+        ).ravel() for d in range(dim)
+    ]
     frames = list(frames)
     random_indices = np.random.randint(0, len(frames), len(frames))
     random_frames = [frames[i] for i in random_indices]
     random_size = np.sum([len(f) for f in frames])
-    random_gas = biased_discrete_nd(positions, bins_xyz, random_size)
+    random_gas = biased_discrete_nd(positions, bins_space, random_size)
     return get_gr(random_frames, bins, random_gas)
 
 
@@ -995,21 +1018,28 @@ class Movie:
             frame (int / tuple): specifying a frame number or a range of frames
 
         Return:
-            :obj:`list`: velocities of all particle in one frame or many frames,
-                         the "shape" is (frame_num, particle_num, dimension)
-                         it is not a numpy array because `particle_num` in each frame is different
+            :obj:`list`: velocities of all particle in one frame or many frames\
+                 the "shape" is (frame_num, particle_num, dimension)\
+                 it is not a numpy array because `particle_num` in each\
+                frame is different.
         """
         if isinstance(frame, int):
             return self.__get_velocities_single(frame)
         elif isinstance(frame, tuple):
             if len(frame) in [2, 3]:
                 frame_slice = slice(*frame)
-                velocities = list(self.__get_slice(frame_slice, self.__get_velocities_single))
+                velocities = list(
+                    self.__get_slice(frame_slice, self.__get_velocities_single)
+                )
                 return velocities
             else:
-                raise IndexError(f"Invalid slice {frame}, use (start, stop) or (start, stop, step)")
+                raise IndexError(
+                    f"Invalid slice {frame}, use (start, stop, [step])"
+                )
         else:
-            raise KeyError(f"can't index/slice Movie with {type(frame)}, use a Tuple")
+            raise KeyError(
+                f"can't index/slice Movie with {type(frame)}, use a Tuple"
+            )
 
     def label(self, frame):
         if frame > self.max_frame:
@@ -1330,4 +1360,3 @@ def plot_spatial_3d(positions, r, bin_num, title='', figsize=(6, 3), axes=[],
         plt.savefig(savename)
     if show:
         plt.show()
-
