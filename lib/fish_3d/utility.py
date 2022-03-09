@@ -1347,7 +1347,7 @@ def solve_overlap_lp(points, errors, diameter):
         model = Model(name="Overlap Model")
         x_vars = [model.binary_var(name=f"x_{i}") for i in range(N)]
         # total number == n_target
-        model.add_constraint(model.sum(x_vars)==n_target)
+        model.add_constraint(model.sum(x_vars) == n_target)
         # no overlap
         for i, j in product(np.arange(N), repeat=2):
             if i != j:

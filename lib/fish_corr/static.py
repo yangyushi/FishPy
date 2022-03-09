@@ -468,14 +468,23 @@ def get_nn_pbc(positions, box):
     Return:
         tuple: nn_locations and nn_distances
     """
+    n, dim = positions.shape
     if type(box) in [float, int]:
-        box = np.array([box] * 3)
+        box = np.array([box] * dim)
     else:
         box = np.array(box)
-    bx, by, bz = box.ravel()
-    neighbours = np.array(list(
-        product([0, bx, -bx], [0, by, -by], [0, bz, -bz])
-    ))
+    if dim == 3:
+        bx, by, bz = box.ravel()
+        neighbours = np.array(list(
+            product([0, bx, -bx], [0, by, -by], [0, bz, -bz])
+        ))
+    elif dim == 2:
+        bx, by = box.ravel()
+        neighbours = np.array(list(
+            product([0, bx, -bx], [0, by, -by])
+        ))
+    else:
+        raise ValueError(dim, "dimensional calculation is not supported")
     neighbour_positions = np.concatenate([positions + n for n in neighbours])  # (x, n, dim)
     dist_matrix_nd = [cdist(positions, positions + n) for n in neighbours]
     np.fill_diagonal(dist_matrix_nd[0], np.inf)
@@ -494,9 +503,11 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
         with the *velocity* of different particles
 
     Args:
-        positions (:obj:`numpy.ndarray`): positions of all particles in 1 frame
-        velocities (:obj:`numpy.ndarray`): velocities of all particles in 1 frame
-        no_vertices (:obj:`bool`): if being True, ignore the vertices
+        positions (:obj:`numpy.ndarray`): positions of all particles in\
+            1 frame, shape (n, dim).
+        velocities (:obj:`numpy.ndarray`): velocities of all particles in\
+            1 frame, shape (n, dim).
+        no_vertices (:obj:`bool`): if being True, ignore the vertices.
 
     Return:
         tuple: nn_locations and nn_distances
@@ -517,7 +528,7 @@ def get_nn_with_velocity(positions, velocities, no_vertices=True):
     nn_indices = dist_matrix.argmin(axis=1)
     speed = np.linalg.norm(velocities, axis=1)
     if np.isclose(speed, 0).any():
-        return np.empty((0, 2)), nn_dists
+        return np.empty((0, 3)), nn_dists
     rot_mats = get_rot_mat(velocities, np.array((1.0, 0.0, 0.0)))
     nn_locations = positions[nn_indices] - focus
     nn_locations = np.array([r @ n for r, n in zip(rot_mats, nn_locations)])
