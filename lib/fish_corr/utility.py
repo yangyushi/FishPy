@@ -656,7 +656,10 @@ def fit_acf_exp(data, method='exp', want_par=False):
                     relaxation_time = (ie - b) / a
                     succeed = True
                     break
-            popt = [relaxation_time]
+            if succeed:
+                popt = [relaxation_time]
+            else:
+                raise RuntimeError("Can not find value close to 1/e!")
         else:
             raise RuntimeError
 
