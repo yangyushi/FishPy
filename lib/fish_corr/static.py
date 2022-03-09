@@ -2,7 +2,7 @@ import numpy as np
 from itertools import product
 from scipy.spatial import ConvexHull
 from scipy.optimize import root_scalar
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.spatial.transform import Rotation
 from scipy.stats import binned_statistic_2d
 from numba import njit, prange

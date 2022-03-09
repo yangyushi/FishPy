@@ -17,6 +17,30 @@ from numba import njit
 
 
 @njit
+def pairwise_dot(x):
+    """
+    Calculate the pair-wise dot product of quantity x. This function should
+        be called for calculating the spatial correlation of quantity x.
+        (~3x faster with numba on my machine)
+    Args:
+        x (:obj:`numpy.ndarray`): the quantity for pairwise dot calculation
+            the shape of x is (N, dimension)
+    Return:
+        :obj:`numpy.ndarray`: the pair-wise dot product of x as a 1D array.
+            The order of the result is the same as the pairwise distance
+            calculated from :obj:`scipy.spatial.distance.pdist`, or :obj:`pdist_pbc`
+    """
+    N = len(x)
+    result = np.empty(int((N * N - N) / 2))
+    idx = 0
+    for i in range(N):
+        for j in range(i+1, N):
+            result[idx] = x[i] @ x[j]
+            idx += 1
+    return result
+
+
+@njit
 def get_acf(var, size=0, step=1):
     r"""
     Calculate the auto-correlation function for a n-dimensional variable
