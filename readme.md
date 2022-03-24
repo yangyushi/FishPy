@@ -2,11 +2,13 @@
 
 # FishPy
 
+<img src="logo.jpg" width="200"></img>
+
 ## What is this
 
 This is the code I wrote for my PhD project in university of Bristol. The code produced these results:
 
-- https://www.biorxiv.org/content/10.1101/2021.09.01.458490v1
+- https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009394
 
 This is not meant to be used *easily* as I am the only contributer.
 I will work on making it more user-friendly but this is what I could do for now.
