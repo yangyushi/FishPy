@@ -22,7 +22,7 @@ def get_maxima(image: np.ndarray, threshold: float, window_size):
     mmap *= image > threshold
     labels, _ = ndimage.label(mmap)
     maxima = ndimage.center_of_mass(image, labels=labels, index=range(1, labels.max()+1))
-    if len(maxima) > 1:
+    if len(maxima) >= 1:
         maxima = np.flip(np.array(maxima), axis=1)
     else:
         maxima = np.empty((0, 2), dtype=int)
