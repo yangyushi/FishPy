@@ -27,15 +27,17 @@ def plot_pca(dim, mean, pcs, name='pca'):
     fig, axs = plt.subplots(2, 4)
     for i, ax in enumerate(axs.ravel()):
         if i == 0:
-            ax.set_title('mean')
-            ax.imshow(mean.reshape(dim, dim), cmap='bwr')
+            ax.set_title('Mean')
+            im = ax.imshow(mean.reshape(dim, dim), cmap='bwr')
+            plt.colorbar(im, ax=ax)
         else:
             p = pcs[i-1]
-            ax.imshow(p.reshape(dim, dim), cmap='bwr')
-            ax.set_title(f'#{i}')
+            im = ax.imshow(p.reshape(dim, dim), cmap='bwr')
+            plt.colorbar(im, ax=ax)
+            ax.set_title(f'Mode #{i}')
         ax.set_xticks([])
         ax.set_yticks([])
-    fig.set_size_inches(7, 4)
+    fig.set_size_inches(8, 3.2)
     plt.tight_layout()
     plt.savefig(f'{name}.pdf')
     plt.close()
